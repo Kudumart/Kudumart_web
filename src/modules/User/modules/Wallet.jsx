@@ -117,21 +117,37 @@ export default function Wallet() {
         ) : (
           <div className="mt-4">
             <div className="w-full flex md:flex-row flex-col gap-3 justify-between">
-              <div className="w-full flex flex-col gap-2">
-                <p className="text-kudu-roman-silver font-semibold text-sm md:text-base">
-                  Wallet Balance
-                </p>
-                <p className="text-lg md:text-2xl font-bold">
-                  {currency[0].symbol}
-                  {Number(profileData?.data?.wallet).toLocaleString("en-US")}
-                  {/* {currency[0].name === "Naira"
-                    ? userProfile.wallet
-                      ? Number(userProfile.wallet).toLocaleString("en-US")
-                      : "0"
-                    : userProfile.dollarWallet
-                      ? Number(userProfile.wallet).toLocaleString("en-US")
-                      : "0"}*/}
-                </p>
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex flex-col gap-2">
+                  <p className="text-kudu-roman-silver font-semibold text-sm md:text-base">
+                    Wallet Balance
+                  </p>
+                  <p className="text-lg md:text-2xl font-bold">
+                    {currency[0].symbol}
+                    {currency[0].name === "Naira"
+                      ? Number(profileData?.data?.wallet || 0).toLocaleString(
+                          "en-US",
+                        )
+                      : Number(
+                          profileData?.data?.dollarWallet || 0,
+                        ).toLocaleString("en-US")}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <p className="text-kudu-roman-silver font-semibold text-sm md:text-base">
+                    Pending Balance
+                  </p>
+                  <p className="text-lg md:text-2xl font-bold text-orange-400">
+                    {currency[0].symbol}
+                    {currency[0].name === "Naira"
+                      ? Number(
+                          profileData?.data?.pendingWallet || 0,
+                        ).toLocaleString("en-US")
+                      : Number(
+                          profileData?.data?.pendingDollarWallet || 0,
+                        ).toLocaleString("en-US")}
+                  </p>
+                </div>
               </div>
               <div className="">
                 <Button
