@@ -500,23 +500,35 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
 
         <div className="divider my-0"></div>
 
-        {user.location && (
-          <div className="py-2">
-            <div className="flex justify-between items-center mb-1">
-              <p className="text-sm font-semibold">Delivery Address</p>
-              <button
-                onClick={() => modalRef.showModal()}
-                className="btn btn-link btn-xs text-kudu-orange no-underline hover:underline p-0 min-h-0 h-auto"
-              >
-                Change default address
-              </button>
+        {user.location && (() => {
+          let locationData = user.location;
+          if (typeof user.location === 'string') {
+            try {
+              locationData = JSON.parse(user.location);
+            } catch (e) {
+              return null; // Don't render if location string is invalid
+            }
+          }
+
+          return (
+            <div className="py-2">
+              <div className="flex justify-between items-center mb-1">
+                <p className="text-sm font-semibold">Delivery Address</p>
+                <button
+                  onClick={() => modalRef.showModal()}
+                  className="btn btn-link btn-xs text-kudu-orange no-underline hover:underline p-0 min-h-0 h-auto"
+                >
+                  Change default address
+                </button>
+              </div>
+              <p className="text-sm text-base-content/60">
+                {locationData.city} {locationData.state},{" "}
+                {locationData.country}
+              </p>
             </div>
-            <p className="text-sm text-base-content/60">
-              {user.location.city} {user.location.state},{" "}
-              {user.location.country}
-            </p>
-          </div>
-        )}
+          );
+        })()}
+
 
         <div className="card-actions justify-center mt-4">
           {user.location ? (
