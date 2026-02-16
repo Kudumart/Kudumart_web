@@ -114,8 +114,8 @@ function SignUp() {
               type="button"
               onClick={() => setAccountType("Customer")}
               className={`flex-1 py-3 rounded-lg font-semibold transition-all ${accountType === "Customer"
-                  ? "bg-orange-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                ? "bg-orange-500 text-white shadow-md"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                 }`}
             >
               Customer
@@ -124,8 +124,8 @@ function SignUp() {
               type="button"
               onClick={() => setAccountType("Vendor")}
               className={`flex-1 py-3 rounded-lg font-semibold transition-all ${accountType === "Vendor"
-                  ? "bg-orange-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                ? "bg-orange-500 text-white shadow-md"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                 }`}
             >
               Vendor
@@ -188,7 +188,7 @@ function SignUp() {
                 Phone Number
               </label>
               <PhoneInput
-                country={ipInfo.country?.toLowerCase()}
+                country={ipInfo?.country?.toLowerCase()}
                 inputProps={{
                   name: "phoneNumber",
                   required: true,
