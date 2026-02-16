@@ -13,7 +13,7 @@ const useErrorHandler = () => {
                 toast.error(message);
             } else if (status >= 500) {
                 // Server errors (e.g., 500 Internal Server Error)
-                toast.error("A server error occurred. Please try again later.");
+                toast.error(message || "A server error occurred. Please try again later.");
             } else {
                 // Other errors
                 toast.error("An unexpected error occurred.");

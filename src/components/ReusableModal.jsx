@@ -13,7 +13,7 @@ const ReusableModal = () => {
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 backdrop-blur-md bg-black/30 flex items-center justify-center overflow-auto"
+      className="fixed inset-0 z-[1000] backdrop-blur-md bg-black/30 flex items-start justify-center overflow-auto pt-32"
       onClick={closeModal}
     >
       <div

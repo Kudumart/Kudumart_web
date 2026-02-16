@@ -9,16 +9,13 @@ import { useModal } from "../../../hooks/modal";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../../api/apiFactory";
+import { toast } from "react-toastify";
 
 export default function Wallet() {
   const { user } = useAppState();
-  // const [userProfile, setProfile] = useState(user);
-
   const { register, handleSubmit } = useForm();
-
   const navigate = useNavigate();
   const { openModal, closeModal } = useModal();
-
   const currency = useGeoLocatorCurrency();
   const { mutate } = useApiMutation();
 
@@ -30,6 +27,22 @@ export default function Wallet() {
     },
   });
 
+  const { data: walletStats, isLoading: isStatsLoading } = useQuery({
+    queryKey: ["wallet-stats"],
+    queryFn: async () => {
+      const response = await apiClient.get("/vendor/wallet/stats");
+      return response.data?.data;
+    },
+  });
+
+  const { data: transactions, isLoading: isTransactionsLoading } = useQuery({
+    queryKey: ["wallet-transactions"],
+    queryFn: async () => {
+      const response = await apiClient.get("/vendor/wallet/transactions");
+      return response.data?.data;
+    },
+  });
+
   const { data: bankData, isLoading: isBankLoading } = useQuery({
     queryKey: ["bank-info", user.id],
     queryFn: async () => {
@@ -38,13 +51,13 @@ export default function Wallet() {
     },
   });
 
-  const isLoading = isProfileLoading || isBankLoading;
+  const isLoading = isProfileLoading || isBankLoading || isStatsLoading;
 
   const onInitiateWithdrawal = (data) => {
     const payload = {
       ...data,
       bankInformationId: bankData?.data?.[0]?.id,
-      currency: currency[0].name === "Naira" ? "NGN" : "USD",
+      currency: data.currency || (currency[0].name === "Naira" ? "NGN" : "USD"),
     };
 
     mutate({
@@ -54,9 +67,10 @@ export default function Wallet() {
       headers: true,
       onSuccess: () => {
         closeModal();
+        toast.success("Withdrawal initiated successfully");
       },
-      onError: () => {
-        // Handle error
+      onError: (err) => {
+        toast.error(err?.response?.data?.message || "Failed to initiate withdrawal");
       },
     });
   };
@@ -66,27 +80,40 @@ export default function Wallet() {
       size: "sm",
       content: (
         <form
-          className="grid grid-cols-2 gap-1"
+          className="flex flex-col gap-4 p-4"
           onSubmit={handleSubmit(onInitiateWithdrawal)}
         >
-          <div className="col-span-2">
-            <label className="block text-sm font-medium mt-4 mb-2">
+          <h2 className="text-xl font-bold">Request Payout</h2>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Currency
+            </label>
+            <select
+              {...register("currency", { required: true })}
+              className="w-full px-4 py-3 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none text-sm"
+              defaultValue={currency[0].name === "Naira" ? "NGN" : "USD"}
+            >
+              <option value="NGN">Naira (₦)</option>
+              <option value="USD">Dollar ($)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
               Amount to Withdraw
             </label>
             <input
               type="number"
-              id="amount"
+              step="0.01"
               {...register("amount", { required: "Amount is required" })}
               placeholder="Enter amount"
-              className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-              style={{ outline: "none" }}
+              className="w-full px-4 py-3 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none text-sm"
               required
             />
           </div>
-          <div className="col-span-2 flex justify-center">
+          <div className="flex justify-center mt-4">
             <Button
               type="submit"
-              className="bg-kudu-orange text-white normal-case text-sm font-medium rounded-md hover:bg-orange-600"
+              className="bg-kudu-orange text-white w-full py-3 normal-case text-sm font-medium rounded-md hover:bg-orange-600"
             >
               Initiate Withdrawal
             </Button>
@@ -97,135 +124,158 @@ export default function Wallet() {
   };
 
   return (
-    <>
-      <div className="w-full p-6 bg-white shadow rounded-lg">
-        <div className="flex w-full justify-between">
-          <h2 className="text-lg font-bold mb-4">Wallet</h2>
-          <Button
-            className="bg-kudu-blue"
-            onClick={() => navigate("add-account")}
-            disabled={bankData?.data?.length > 0}
-          >
-            Add BANK ACCOUNT
-          </Button>
-        </div>
+    <div className="w-full p-6 bg-white shadow rounded-lg">
+      <div className="flex w-full justify-between items-center">
+        <h2 className="text-xl font-bold">Wallet</h2>
+        <Button
+          className="bg-kudu-blue normal-case py-2"
+          onClick={() => navigate("add-account")}
+          disabled={bankData?.data?.length > 0}
+        >
+          Add Bank Account
+        </Button>
+      </div>
 
-        {isLoading ? (
-          <div className="w-full h-96 flex items-center justify-center">
-            <Loader />
+      {isLoading ? (
+        <div className="w-full h-96 flex items-center justify-center">
+          <Loader />
+        </div>
+      ) : (
+        <div className="mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+              <p className="text-blue-600 font-medium text-sm mb-2">Available (NGN)</p>
+              <p className="text-2xl font-bold">₦{Number(walletStats?.availableNGN || 0).toLocaleString()}</p>
+            </div>
+            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+              <p className="text-green-600 font-medium text-sm mb-2">Available (USD)</p>
+              <p className="text-2xl font-bold">${Number(walletStats?.availableUSD || 0).toLocaleString()}</p>
+            </div>
+            <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100">
+              <p className="text-orange-600 font-medium text-sm mb-2">Pending (NGN)</p>
+              <p className="text-2xl font-bold">₦{Number(walletStats?.pendingNGN || 0).toLocaleString()}</p>
+            </div>
+            <div className="bg-purple-50 p-6 rounded-2xl border border-purple-100">
+              <p className="text-purple-600 font-medium text-sm mb-2">Pending (USD)</p>
+              <p className="text-2xl font-bold">${Number(walletStats?.pendingUSD || 0).toLocaleString()}</p>
+            </div>
           </div>
-        ) : (
-          <div className="mt-4">
-            <div className="w-full flex md:flex-row flex-col gap-3 justify-between">
-              <div className="w-full flex flex-col gap-2">
-                <p className="text-kudu-roman-silver font-semibold text-sm md:text-base">
-                  Wallet Balance
-                </p>
-                <p className="text-lg md:text-2xl font-bold">
-                  {currency[0].symbol}
-                  {Number(profileData?.data?.wallet).toLocaleString("en-US")}
-                  {/* {currency[0].name === "Naira"
-                    ? userProfile.wallet
-                      ? Number(userProfile.wallet).toLocaleString("en-US")
-                      : "0"
-                    : userProfile.dollarWallet
-                      ? Number(userProfile.wallet).toLocaleString("en-US")
-                      : "0"}*/}
-                </p>
+
+          <div className="mt-8 flex justify-end">
+            <Button
+              className="bg-kudu-orange px-8 py-3 rounded-xl shadow-lg shadow-kudu-orange/20"
+              onClick={() => initiateWithdrawal()}
+            >
+              Request Payout
+            </Button>
+          </div>
+
+          <div className="mt-12 bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-50 flex justify-between items-center">
+              <h3 className="font-bold text-gray-800">Transaction History</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 text-gray-500 text-sm uppercase">
+                  <tr>
+                    <th className="px-6 py-4 font-medium">Date</th>
+                    <th className="px-6 py-4 font-medium">Type</th>
+                    <th className="px-6 py-4 font-medium">Amount</th>
+                    <th className="px-6 py-4 font-medium">Status</th>
+                    <th className="px-6 py-4 font-medium">Note</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {transactions?.map((tx) => (
+                    <tr key={tx.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {new Date(tx.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-medium capitalize text-gray-800">{tx.transactionType.replace("_", " ")}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`text-sm font-bold ${tx.transactionType === "sale" ? "text-green-600" : "text-gray-800"}`}>
+                          {tx.currency === "NGN" ? "₦" : "$"}{Number(tx.amount).toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${tx.status === "completed" ? "bg-green-100 text-green-700" :
+                            tx.status === "pending" ? "bg-yellow-100 text-yellow-700" :
+                              "bg-red-100 text-red-700"
+                          }`}>
+                          {tx.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                        {tx.note}
+                      </td>
+                    </tr>
+                  ))}
+                  {(!transactions || transactions.length === 0) && (
+                    <tr>
+                      <td colSpan="5" className="px-6 py-12 text-center text-gray-400">
+                        No transactions found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="mt-12">
+            <h3 className="font-bold text-gray-800 mb-6">Bank Accounts</h3>
+            {bankData?.data?.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {bankData?.data?.map((bank, index) => (
+                  <div key={index} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h4 className="font-bold text-gray-900">{decodeURIComponent(bank?.bankInfo).split("&")[0].split("=")[1]}</h4>
+                        <p className="text-sm text-gray-500">Bank Account Details</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="bg-gray-100 text-gray-600 shadow-none normal-case"
+                        onClick={() => navigate(`edit-account/${bank.id}`)}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      {decodeURIComponent(bank?.bankInfo).split("&").map((item, i) => {
+                        const [key, value] = item.split("=");
+                        return value && value !== "undefined" ? (
+                          <div key={i} className="flex justify-between">
+                            <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+                            <span className="font-medium text-gray-900">{value}</span>
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="">
+            ) : (
+              <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                <img
+                  src="https://res.cloudinary.com/ddj0k8gdw/image/upload/v1736780988/Shopping_bag-bro_1_vp1yri.png"
+                  alt="No bank account"
+                  className="w-48 h-48 mx-auto opacity-50 mb-4"
+                />
+                <p className="text-gray-500 mb-6">No bank account added yet</p>
                 <Button
-                  className="bg-kudu-orange"
-                  onClick={() => initiateWithdrawal()}
+                  className="bg-kudu-blue normal-case"
+                  onClick={() => navigate("add-account")}
                 >
-                  Withdraw
+                  Add Bank Account
                 </Button>
               </div>
-            </div>
-
-            <div className="mt-20 md:mt-10 w-full">
-              {/* {JSON.stringify(bankData.data)}*/}
-              {bankData?.data?.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2  gap-4">
-                  {bankData?.data?.map((bank, index) => (
-                    <div
-                      data-theme="kudu"
-                      key={index}
-                      className="card bg-base-100 shadow-xl border border-gray-200"
-                    >
-                      <div className="card-body p-4">
-                        <div className="flex justify-between items-center mb-2">
-                          <h3 className="card-title text-md text-gray-800">
-                            {/* {JSON.stringify(bank)}*/}
-                            {/* {bank.bankName}*/}
-                          </h3>
-                          <button
-                            className="btn btn-primary btn-soft btn-sm"
-                            onClick={() => navigate(`edit-account/${bank.id}`)}
-                          >
-                            Edit
-                          </button>
-                        </div>
-                        <div className="card-title wrap-anywhere">
-                          {decodeURIComponent(bank?.bankInfo)}
-                        </div>
-                        {/* <p className="text-sm text-gray-600">
-                          <span className="font-medium">Account Number:</span>{" "}
-                          {bank.accountNumber}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Account Name:</span>{" "}
-                          {bank.accountName}
-                        </p>*/}
-                        {/* {bank.swiftCode && (
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Swift/BIC Code:</span>{" "}
-                            {bank.swiftCode}
-                          </p>
-                        )}
-                        {bank.routingNumber && (
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Routing Number:</span>{" "}
-                            {bank.routingNumber}
-                          </p>
-                        )}
-                        {bank.bankAddress && (
-                          <p className="text-sm text-gray-600">
-                            <span className="font-medium">Bank Address:</span>{" "}
-                            {bank.bankAddress}
-                          </p>
-                        )}*/}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-store">
-                  <div className="text-center">
-                    <img
-                      src="https://res.cloudinary.com/ddj0k8gdw/image/upload/v1736780988/Shopping_bag-bro_1_vp1yri.png"
-                      alt="Empty Store Illustration"
-                      className="w-80 h-80 mx-auto"
-                    />
-                  </div>
-                  <h1 className="text-center text-lg font-bold mb-4">
-                    No Account Added
-                  </h1>
-
-                  <div className="w-full flex justify-center p-1">
-                    <Button
-                      className="text-white"
-                      onClick={() => navigate("add-account")}
-                    >
-                      ADD BANK ACCOUNT
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-        )}
-      </div>
-    </>
+        </div>
+      )}
+    </div>
   );
 }

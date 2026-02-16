@@ -73,6 +73,7 @@ interface ProductItem {
   createdAt: string;
   updatedAt: string;
   store: ProductStore;
+  type?: string; // Product type (e.g., "dropship", "regular")
 }
 
 // Define the structure for a user object within a cart item.
@@ -179,6 +180,7 @@ interface Product {
   createdAt: string;
   updatedAt: string;
   store: Store;
+  type?: string; // Product type (e.g., "dropship", "regular")
 }
 
 // Define the structure for a single cart item.
@@ -283,74 +285,125 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
     let chargeAmount = 0;
 
     if (charge.calculation_type === "fixed") {
-      // Fixed charge: add the charge amount to base price, then multiply by quantity
-      chargeAmount = parseFloat(charge.charge_amount!) * quantity;
-      price = (basePrice + parseFloat(charge.charge_amount!)) * quantity;
+      chargeAmount = parseFloat(charge.charge_amount!);
+      // Use rounding to match backend precision
+      chargeAmount = Math.round(chargeAmount * 100) / 100;
+      price = (basePrice + chargeAmount) * quantity;
     } else if (charge.calculation_type === "percentage") {
-      // Percentage charge: calculate percentage of base price per unit, then multiply by quantity
-      const percentagePerUnit =
-        (basePrice * parseFloat(charge.charge_percentage!)) / 100;
-      chargeAmount = percentagePerUnit * quantity;
-      price = (basePrice + percentagePerUnit) * quantity;
+      chargeAmount = (basePrice * parseFloat(charge.charge_percentage!)) / 100;
+      // Round per-unit charge to 2 decimal places to match backend
+      chargeAmount = Math.round(chargeAmount * 100) / 100;
+      price = (basePrice + chargeAmount) * quantity;
     } else {
-      // Fallback: just use base price if calculation type is unknown
       price = initial_price;
       chargeAmount = 0;
     }
 
     return {
-      full_price: price,
+      full_price: Math.round(price * 100) / 100,
       base_price: initial_price,
-      charge_amount: chargeAmount,
+      charge_amount: chargeAmount * quantity,
       cart_items,
     };
   });
   console.log(charges);
 
-  const total_price = item_amounts.reduce((total, item) => {
+  const total_price = Math.round(item_amounts.reduce((total, item) => {
     return total + (item.full_price || 0);
-  }, 0);
+  }, 0) * 100) / 100;
 
-  const total_price_without_charges = item_amounts.reduce((total, item) => {
+  const total_price_without_charges = Math.round(item_amounts.reduce((total, item) => {
     return total + (item.base_price || 0);
-  }, 0);
+  }, 0) * 100) / 100;
+
+  const hasDropShip = cart.some(
+    (item) => item.product.type === "dropship",
+  );
+
+  const countryCode = useMemo(() => {
+    if (!user?.location) return "UK";
+    let country = "";
+    if (typeof user.location === "string") {
+      try {
+        const locObj = JSON.parse(user.location);
+        country = locObj.country || "";
+      } catch (e) {
+        country = user.location;
+      }
+    } else {
+      country = (user as any).location?.country || "";
+    }
+
+    country = country.toString().toLowerCase();
+    if (country.includes("nigeria")) return "NG";
+    if (country.includes("united states") || country.includes("usa")) return "US";
+    return "UK";
+  }, [user?.location]);
+
+  const deliveryFeeQuery = useQuery({
+    queryKey: ["deliveryFee", countryCode, hasDropShip],
+    queryFn: async () => {
+      if (!hasDropShip) return 0;
+      const response = await apiClient.get(
+        `/user/delivery-fees?shipToCountryCode=${countryCode}`,
+      );
+      return response.data?.data?.totalDeliveryFee || 0;
+    },
+    enabled: !!user?.location && hasDropShip,
+  });
+
+  const deliveryFee = deliveryFeeQuery.data || 0;
+  // Final price with rounding - delivery fee is always added for both Naira and Dollar
+  const final_total_price = Math.round((total_price + deliveryFee) * 100) / 100;
 
   const config = useMemo(
     () => ({
       reference: new Date().getTime().toString(),
-      email: user?.email || "user@example.com", // Use actual user email
-      amount: total_price * 100, // Amount in kobo.
+      email: user?.email || "user@example.com",
+      amount: Math.round(total_price * 100),
       publicKey: paymentKey,
-      currency: "NGN", // Specify the currency.
+      currency: "NGN",
     }),
     [paymentKey, total_price, user?.email],
   );
 
   const onSuccess = (reference: any) => {
-    const location =
-      typeof user.location !== "string"
-        ? [user.location.city, user.location.state, user.location.country]
-            .filter(Boolean) // Removes falsy values (null, undefined, empty string)
-            .join(" ")
-        : null;
+    const isNaira = ipInfo.currency_name === "Naira";
+
+    // Parse location details
+    let zipCode = "000000";
+    let addressStr = "";
+
+    if (typeof user.location === "string") {
+      try {
+        const locObj = JSON.parse(user.location);
+        zipCode = locObj.zipCode || "000000";
+        addressStr = `${locObj.city} ${locObj.state}, ${locObj.country}`;
+      } catch (e) {
+        addressStr = user.location;
+      }
+    } else if (user.location) {
+      zipCode = user.location.zipCode || "000000";
+      addressStr = [user.location.city, user.location.state, user.location.country]
+        .filter(Boolean)
+        .join(" ");
+    }
+
     const payload = {
       refId: reference.reference,
-      shippingAddress:
-        typeof user.location === "string"
-          ? `${JSON.parse(user.location).city} ${
-              JSON.parse(user.location).state
-            }, ${JSON.parse(user.location).country}`
-          : `${location}`,
+      shippingAddress: addressStr || "Default Address",
+      shippingAddressZipCode: zipCode,
     };
+
     mutate({
-      url: "/user/checkout",
+      url: isNaira ? "/user/checkout" : "/user/checkout/dollar",
       method: "POST",
       data: payload,
       headers: true,
       onSuccess: (response: any) => {
         navigate("/profile/orders");
       },
-      onError: (error: any) => {},
+      onError: (error: any) => { },
     } as any);
   };
 
@@ -359,7 +412,7 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
     // Handle modal closure if necessary.
   };
 
-  if (query.isFetching)
+  if (query.isFetching || (hasDropShip && deliveryFeeQuery.isFetching))
     return (
       <div className="w-full flex flex-col items-center justify-center p-4 rounded-lg bg-white py-6">
         <div className="animate-spin  text-xl font-bold opacity-80">...</div>
@@ -382,9 +435,6 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
     );
   }
   const charges_total = total_price - total_price_without_charges;
-  const hasDropShip = cart.some(
-    (item: any) => item["product"]["type"] == "dropship",
-  );
   // return <></>;
   return (
     <div
@@ -418,11 +468,21 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
             </span>
           </div>
 
-          {ipInfo.currency_name === "Naira" && total_price > 0 && (
+          {total_price > 0 && charges_total > 0 && (
             <div className="flex justify-between items-center">
               <span className="text-sm text-base-content/60">Charges</span>
               <span className="text-sm text-base-content/60">
-                ₦{charges_total.toLocaleString("en-US")}
+                {currency[0].symbol}
+                {charges_total.toLocaleString("en-US")}
+              </span>
+            </div>
+          )}
+
+          {hasDropShip && deliveryFee > 0 && ipInfo.currency_name !== "Naira" && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-base-content/60">Delivery Fee</span>
+              <span className="text-sm text-base-content/60">
+                $ {deliveryFee.toLocaleString("en-US")}
               </span>
             </div>
           )}
@@ -432,10 +492,7 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
               <span className="text-base font-bold">Total</span>
               <span className="text-base font-bold">
                 {currency[0].symbol}
-                {(ipInfo.currency_name === "Naira"
-                  ? total_price
-                  : total_price_without_charges
-                ).toLocaleString("en-US")}
+                {final_total_price.toLocaleString("en-US")}
               </span>
             </div>
           )}
@@ -468,18 +525,19 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
                 <DropShipNairaPayment
                   hasDropShip={hasDropShip}
                   total_price={total_price}
+                  deliveryFee={deliveryFee}
                   paymentKey={paymentKey}
                 ></DropShipNairaPayment>
               </div>
             ) : (
               <DollarPaymentButton
-                amount={total_price}
+                amount={final_total_price}
                 noWidth={false}
                 bgColor="bg-kudu-orange"
                 onSuccess={onSuccess}
               >
                 <span className="text-sm font-medium normal-case">
-                  Checkout ${formatNumberWithCommas(total_price)}
+                  Checkout ${formatNumberWithCommas(final_total_price)}
                 </span>
               </DollarPaymentButton>
             )

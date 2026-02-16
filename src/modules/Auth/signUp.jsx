@@ -16,6 +16,7 @@ function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [accountType, setAccountType] = useState("Customer");
   const dispatch = useDispatch();
 
   const { ipInfo } = useAppState();
@@ -38,8 +39,9 @@ function SignUp() {
 
   const onSubmit = (data) => {
     setIsLoading(true);
+    const url = accountType === "Vendor" ? "/auth/register/vendor" : "/auth/register/customer";
     mutate({
-      url: "/auth/register/customer",
+      url,
       method: "POST",
       data: { ...data, platform: "web" },
       onSuccess: (response) => {
@@ -47,7 +49,6 @@ function SignUp() {
         toast.success("Verification Sent to Email");
         setIsLoading(false);
         navigate("/login");
-        setIsLoading(false);
       },
       onError: () => {
         setIsLoading(false);
@@ -106,7 +107,31 @@ function SignUp() {
               />
             </Link>
           </div>
-          <h2 className="text-2xl font-bold mb-6 text-black-800">Sign Up</h2>
+          <h2 className="text-2xl font-bold mb-4 text-black-800">Sign Up</h2>
+
+          <div className="flex gap-4 mb-6">
+            <button
+              type="button"
+              onClick={() => setAccountType("Customer")}
+              className={`flex-1 py-3 rounded-lg font-semibold transition-all ${accountType === "Customer"
+                  ? "bg-orange-500 text-white shadow-md"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+            >
+              Customer
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountType("Vendor")}
+              className={`flex-1 py-3 rounded-lg font-semibold transition-all ${accountType === "Vendor"
+                  ? "bg-orange-500 text-white shadow-md"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+            >
+              Vendor
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
             {/* First Name Field */}
             <div>
