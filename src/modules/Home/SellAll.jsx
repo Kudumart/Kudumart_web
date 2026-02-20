@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "../Home/components/style.css";
+import "./components/style.css";
 import ProductListing from "./components/ProductListing";
 import ShoppingExperience from "./components/ShoppingExperience";
 import useApiMutation from "../../api/hooks/useApiMutation";

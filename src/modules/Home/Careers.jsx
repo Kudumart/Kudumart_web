@@ -1,5 +1,5 @@
 import { FaSearch, FaMapMarkerAlt, FaClock } from "react-icons/fa";
-import "../Home/components/style.css";
+import "./components/style.css";
 import ShoppingExperience from "./components/ShoppingExperience";
 import { useState } from "react";
 import { Link } from "react-router-dom";

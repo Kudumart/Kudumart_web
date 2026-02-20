@@ -1,4 +1,4 @@
-import "../Home/components/style.css";
+import "./components/style.css";
 
 
 const Cookies = () => {

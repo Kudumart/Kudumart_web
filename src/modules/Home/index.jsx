@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import "../Home/components/style.css";
+import "./components/style.css";
 import SearchSection from "./components/SearchSection";
 import PreviewSection from "./components/PreviewSection";
 import ShoppingExperience from "./components/ShoppingExperience";
 import GetApp from "./components/GetApp";
-import "../Home/components/style.css";
+import "./components/style.css";
 import useApiMutation from "../../api/hooks/useApiMutation";
 import ProductsSection from "./components/ProductsSection";
 import Loader from "../../components/Loader";
@@ -148,7 +148,7 @@ export default function NewHome() {
       onSuccess: (response) => {
         setAds(response.data.data);
       },
-      onError: () => {},
+      onError: () => { },
     });
   };
 

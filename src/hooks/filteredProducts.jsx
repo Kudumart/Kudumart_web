@@ -3,7 +3,7 @@ import useApiMutation from "../api/hooks/useApiMutation";
 import {
   useGeoLocatorCurrency,
   useGeoLocatorProduct,
-} from "../hooks/geoLocatorProduct";
+} from "./geoLocatorProduct";
 
 const useFilteredProducts = (initialData, categoryId) => {
   const { mutate } = useApiMutation();

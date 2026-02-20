@@ -1,4 +1,4 @@
-import "../Home/components/style.css";
+import "./components/style.css";
 import ShoppingExperience from "./components/ShoppingExperience";
 import GetApp from "./components/GetApp";
 import { Link } from "react-router-dom";

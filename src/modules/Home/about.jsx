@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../Home/components/style.css";
+import "./components/style.css";
 import ShoppingExperience from "./components/ShoppingExperience";
 import { Link } from "react-router-dom";
 
@@ -55,7 +55,7 @@ export default function About() {
                 title: "1. Register",
                 description:
                     "Register using your name, email, and phone number or via your Google account and verify your account with your email.",
-                    last:
+                last:
                     "Register using your name, email, and phone number or via your Google account and verify your account with your email. Complete your seller profile, including location and payment details.",
                 icon: "https://res.cloudinary.com/greenmouse-tech/image/upload/v1738150277/Group_1321314956_bqoeeg.png",
             },
@@ -63,16 +63,16 @@ export default function About() {
                 title: "2. Browse Product",
                 description:
                     "Search: To find particular products that pique your attention, use the search bar ",
-                     last:
+                last:
                     "Categories: Explore several product categories such as electronics, furniture, and fashion. ",
-                    end: "Filters: Use filters like price range, location, or item’s condition, to limit your options.",
+                end: "Filters: Use filters like price range, location, or item’s condition, to limit your options.",
                 icon: "https://res.cloudinary.com/greenmouse-tech/image/upload/v1740058465/We-Immersive/Group_1321314958_mhusqt.png",
             },
             {
                 title: "3. Pick A Buying Option",
                 description:
                     "a. Contact Seller: Communicate with the seller directly by using the Text or Chat options. Discuss the product, settle on a price, and decide on terms for delivery and payment. Be cautious when dealing with unverified vendors, prioritize meeting in public, secure areas, or making payments securely.",
-                    last:"b. Add to Cart : Check your cart to make sure all the information is accurate. Complete the purchase process by entering your shipping details Select a payment option, such as a digital wallet, bank transfer, or card Verify the order before completing the transaction.",
+                last: "b. Add to Cart : Check your cart to make sure all the information is accurate. Complete the purchase process by entering your shipping details Select a payment option, such as a digital wallet, bank transfer, or card Verify the order before completing the transaction.",
                 icon: "https://res.cloudinary.com/greenmouse-tech/image/upload/v1740058787/We-Immersive/Group_1321314956_v9b7t8.png",
             },
         ],

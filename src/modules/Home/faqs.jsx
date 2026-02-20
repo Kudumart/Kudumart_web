@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../Home/components/style.css";
+import "./components/style.css";
 import ShoppingExperience from "./components/ShoppingExperience";
 import GetApp from "./components/GetApp";
 import { useGetFaqClient } from "../../api/pages/faqs";
@@ -62,11 +62,10 @@ const FAQs = () => {
                 {faqCategories.map((category) => (
                   <li
                     key={category}
-                    className={`cursor-pointer py-4 px-5 rounded-lg ${
-                      activeCategory === category
+                    className={`cursor-pointer py-4 px-5 rounded-lg ${activeCategory === category
                         ? "bg-[#FF6F22] text-white"
                         : "text-black hover:bg-[#FF6F22] hover:text-white"
-                    }`}
+                      }`}
                     onClick={() => {
                       setActiveCategory(category);
                       setExpandedQuestion(null);

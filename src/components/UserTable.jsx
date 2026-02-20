@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { dateFormat } from "../helpers/dateHelper";
-import Table from "../components/ReviewTable";
+import Table from "./ReviewTable";
 import useApiMutation from "../api/hooks/useApiMutation";
 import { useModal } from "../hooks/modal";
 import ConfirmModal from "./ConfirmModal";
@@ -104,11 +104,10 @@ const UserTable = ({ data, totalData, refetch }) => {
                   label: "Status",
                   render: (value) => (
                     <span
-                      className={`py-1 px-3 rounded-full text-sm capitalize ${
-                        value === "active"
+                      className={`py-1 px-3 rounded-full text-sm capitalize ${value === "active"
                           ? "bg-green-100 text-green-600"
                           : "bg-red-100 text-red-600"
-                      }`}
+                        }`}
                     >
                       {value}
                     </span>

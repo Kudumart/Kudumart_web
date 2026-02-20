@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../Home/components/style.css";
+import "./components/style.css";
 
 const Privacy = () => {
   const principles = [
@@ -155,11 +155,10 @@ const Privacy = () => {
               {principles.map((principle, index) => (
                 <div
                   key={index}
-                  className={`border-b pb-6 mb-6 ${
-                    index === principles.length - 1
+                  className={`border-b pb-6 mb-6 ${index === principles.length - 1
                       ? "border-b-0 mb-0 pb-0"
                       : ""
-                  }`}
+                    }`}
                 >
                   <h3 className="text-lg font-semibold text-black mb-4">
                     {index + 1}. {principle.title}
@@ -179,9 +178,8 @@ const Privacy = () => {
               {policies.map((policie, index) => (
                 <div
                   key={index}
-                  className={`border-b pb-6 mb-6 ${
-                    index === policie.length - 1 ? "border-b-0 mb-0 pb-0" : ""
-                  }`}
+                  className={`border-b pb-6 mb-6 ${index === policie.length - 1 ? "border-b-0 mb-0 pb-0" : ""
+                    }`}
                 >
                   <h3 className="text-lg font-semibold text-black mb-4">
                     {index + 1}. {policie.title}
@@ -201,9 +199,8 @@ const Privacy = () => {
               {buyers.map((buyer, index) => (
                 <div
                   key={index}
-                  className={`border-b pb-6 mb-6 ${
-                    index === buyer.length - 1 ? "border-b-0 mb-0 pb-0" : ""
-                  }`}
+                  className={`border-b pb-6 mb-6 ${index === buyer.length - 1 ? "border-b-0 mb-0 pb-0" : ""
+                    }`}
                 >
                   <h3 className="text-lg font-semibold text-black mb-4">
                     {index + 1}. {buyer.title}
@@ -223,9 +220,8 @@ const Privacy = () => {
               {disputes.map((dispute, index) => (
                 <div
                   key={index}
-                  className={`border-b pb-6 mb-6 ${
-                    index === dispute.length - 1 ? "border-b-0 mb-0 pb-0" : ""
-                  }`}
+                  className={`border-b pb-6 mb-6 ${index === dispute.length - 1 ? "border-b-0 mb-0 pb-0" : ""
+                    }`}
                 >
                   <h3 className="text-lg font-semibold text-black mb-4">
                     {index + 1}. {dispute.title}
@@ -245,9 +241,8 @@ const Privacy = () => {
               {amendments.map((amendment, index) => (
                 <div
                   key={index}
-                  className={`border-b pb-6 mb-6 ${
-                    index === amendment.length - 1 ? "border-b-0 mb-0 pb-0" : ""
-                  }`}
+                  className={`border-b pb-6 mb-6 ${index === amendment.length - 1 ? "border-b-0 mb-0 pb-0" : ""
+                    }`}
                 >
                   <p className="text-black">{amendment.description}</p>
                 </div>
@@ -264,9 +259,8 @@ const Privacy = () => {
               {amendments.map((amendment, index) => (
                 <div
                   key={index}
-                  className={`border-b pb-6 mb-6 ${
-                    index === amendment.length - 1 ? "border-b-0 mb-0 pb-0" : ""
-                  }`}
+                  className={`border-b pb-6 mb-6 ${index === amendment.length - 1 ? "border-b-0 mb-0 pb-0" : ""
+                    }`}
                 >
                   <p className="text-black">{amendment.description}</p>
                 </div>
@@ -287,11 +281,10 @@ const Privacy = () => {
               {acceptances.map((acceptance, index) => (
                 <div
                   key={index}
-                  className={`border-b pb-6 mb-6 ${
-                    index === acceptance.length - 1
+                  className={`border-b pb-6 mb-6 ${index === acceptance.length - 1
                       ? "border-b-0 mb-0 pb-0"
                       : ""
-                  }`}
+                    }`}
                 >
                   <h3 className="text-lg font-semibold text-black mb-4">
                     {index + 1}. {acceptance.title}
@@ -311,9 +304,8 @@ const Privacy = () => {
               {users.map((user, index) => (
                 <div
                   key={index}
-                  className={`border-b pb-6 mb-6 ${
-                    index === user.length - 1 ? "border-b-0 mb-0 pb-0" : ""
-                  }`}
+                  className={`border-b pb-6 mb-6 ${index === user.length - 1 ? "border-b-0 mb-0 pb-0" : ""
+                    }`}
                 >
                   <h3 className="text-lg font-semibold text-black mb-4">
                     {index + 1}. {user.title}
@@ -333,9 +325,8 @@ const Privacy = () => {
               {sellers.map((seller, index) => (
                 <div
                   key={index}
-                  className={`border-b pb-6 mb-6 ${
-                    index === seller.length - 1 ? "border-b-0 mb-0 pb-0" : ""
-                  }`}
+                  className={`border-b pb-6 mb-6 ${index === seller.length - 1 ? "border-b-0 mb-0 pb-0" : ""
+                    }`}
                 >
                   <h3 className="text-lg font-semibold text-black mb-4">
                     {index + 1}. {seller.title}
