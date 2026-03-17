@@ -69,7 +69,10 @@ const SharePanel = ({ itemId, itemName, itemPath, onClose }) => {
     <div
       ref={ref}
       className="absolute bottom-full left-0 mb-2 z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-full"
-      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
     >
       <p className="text-xs font-semibold text-gray-500 mb-2">Share via</p>
       <div className="flex gap-2 flex-wrap mb-2">
@@ -94,12 +97,31 @@ const SharePanel = ({ itemId, itemName, itemPath, onClose }) => {
       >
         {copied ? (
           <>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#22c55e"
+              strokeWidth="2.5"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
             <span className="text-green-500">Link copied!</span>
           </>
         ) : (
           <>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+            </svg>
             <span>Copy Link</span>
           </>
         )}
@@ -247,13 +269,27 @@ const ProductListing = ({
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          setActiveShare(activeShare === item.id ? null : item.id);
+                          setActiveShare(
+                            activeShare === item.id ? null : item.id,
+                          );
                         }}
                         className="flex items-center gap-1 px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 transition-colors text-xs text-gray-500"
                       >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="18" cy="5" r="3" />
+                          <circle cx="6" cy="12" r="3" />
+                          <circle cx="18" cy="19" r="3" />
+                          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                         </svg>
                         <span>Share</span>
                       </button>
@@ -278,11 +314,7 @@ const ProductListing = ({
               {card}
             </div>
           ) : (
-            <Link
-              to={itemPath}
-              key={item.id}
-              className="h-full"
-            >
+            <Link to={itemPath} key={item.id} className="h-full">
               {card}
             </Link>
           );
