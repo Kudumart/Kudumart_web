@@ -137,7 +137,7 @@ export default function ViewProduct() {
 
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const shareUrl = `${window.location.origin}/product/${id}`;
   const shareTitle = (product as Product)?.name || "Check out this product";
 
   const sharePlatforms = [
