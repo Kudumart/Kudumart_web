@@ -151,7 +151,7 @@ export default function ViewProduct() {
       ),
     },
     {
-      name: "X (Twitter)",
+      name: "(Twitter)",
       url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`,
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="#000">
