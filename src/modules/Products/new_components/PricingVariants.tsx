@@ -165,10 +165,7 @@ const PricingVariants = ({ product }: { product: Product }) => {
             Please update your account with a <strong>street address</strong>{" "}
             and <strong>zip code</strong> to enable purchasing.
           </span>
-          <Link
-            to="/settings/profile"
-            className="btn btn-xs btn-ghost underline"
-          >
+          <Link to="/profile" className="btn btn-xs btn-ghost underline">
             Update Profile
           </Link>
         </div>
