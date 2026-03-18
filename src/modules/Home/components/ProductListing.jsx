@@ -224,17 +224,24 @@ const ProductListing = ({
                             ? "Verified"
                             : "Not Verified"}
                         </button>
-                        <span
-                          className={`absolute top-0 left-0 px-2 py-1 text-xs rounded font-medium text-white ${
-                            product.condition === "brand_new"
-                              ? "bg-[#34A853]"
-                              : "bg-orange-500"
-                          }`}
-                        >
-                          {capitalizeEachWord(
-                            product.condition.replace(/_/g, " "),
+                        <div className="absolute top-0 left-0 flex flex-col gap-1">
+                          <span
+                            className={`px-2 py-1 text-xs rounded font-medium text-white ${
+                              product.condition === "brand_new"
+                                ? "bg-[#34A853]"
+                                : "bg-orange-500"
+                            }`}
+                          >
+                            {capitalizeEachWord(
+                              product.condition.replace(/_/g, " "),
+                            )}
+                          </span>
+                          {product.type === "dropship" && (
+                            <span className="px-2 py-1 text-xs rounded font-medium text-white bg-blue-500">
+                              Dropship
+                            </span>
                           )}
-                        </span>
+                        </div>
                       </div>
                     </div>
 

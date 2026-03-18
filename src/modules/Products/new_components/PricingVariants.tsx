@@ -178,7 +178,7 @@ const PricingVariants = ({ product }: { product: Product }) => {
         onClick={() => {
           handleAddToCart();
         }}
-        disabled={true}
+        disabled={quantity < 1}
         className="btn btn-primary btn-block mt-2"
       >
         Add to Cart
