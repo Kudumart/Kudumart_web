@@ -1,6 +1,8 @@
 //@ts-nocheck
-import { useEffect, useState } from "react";
-import useApiMutation from "../../../../api/hooks/useApiMutation";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import apiClient from "../../../../api/apiFactory";
 import { formatNumberWithCommas } from "../../../../helpers/helperFactory";
 import { toast } from "react-toastify";
 import { X, Check, Tag } from "lucide-react";
@@ -13,95 +15,98 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "bg-gray-100 text-gray-700",
 };
 
-export default function Offers() {
-  const { mutate } = useApiMutation();
-  const [offers, setOffers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("");
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const limit = 10;
+const LIMIT = 10;
 
+const token = () => localStorage.getItem("kuduUserToken");
+const authHeaders = () => ({
+  headers: { Authorization: `Bearer ${token()}` },
+});
+
+export default function Offers() {
+  const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
   const [counterModal, setCounterModal] = useState<{
     open: boolean;
     offer: any | null;
   }>({ open: false, offer: null });
-  const [counterPrice, setCounterPrice] = useState("");
-  const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchOffers = (p = page, status = statusFilter) => {
-    setLoading(true);
-    const params = new URLSearchParams({
-      page: String(p),
-      limit: String(limit),
-    });
-    if (status) params.append("status", status);
-    mutate({
-      url: `/admin/offers?${params.toString()}`,
-      method: "GET",
-      headers: true,
-      hideToast: true,
-      onSuccess: (response) => {
-        setOffers(response.data.data || []);
-        setTotal(response.data.total || 0);
-        setLoading(false);
-      },
-      onError: () => setLoading(false),
-    });
-  };
+  // Filter form
+  const { register, watch, setValue } = useForm({
+    defaultValues: { status: "" },
+  });
+  const statusFilter = watch("status");
 
-  useEffect(() => {
-    fetchOffers();
-  }, []);
+  // Fetch offers
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-offers", page, statusFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(LIMIT),
+      });
+      if (statusFilter) params.append("status", statusFilter);
+      const res = await apiClient.get(
+        `/admin/offers?${params.toString()}`,
+        authHeaders(),
+      );
+      return res.data;
+    },
+  });
+
+  const offers: any[] = data?.data || [];
+  const total: number = data?.total || 0;
+  const totalPages = Math.ceil(total / LIMIT);
+
+  // Counter form
+  const {
+    register: registerCounter,
+    handleSubmit: handleCounterSubmit,
+    reset: resetCounter,
+    formState: { errors: counterErrors },
+  } = useForm({ defaultValues: { counterPrice: "" } });
+
+  // Respond mutation
+  const respondMutation = useMutation({
+    mutationFn: async ({
+      offerId,
+      status,
+      counterPrice,
+    }: {
+      offerId: string;
+      status: string;
+      counterPrice?: number;
+    }) => {
+      const res = await apiClient.put(
+        `/admin/offers/${offerId}`,
+        { status, ...(status === "countered" && { counterPrice }) },
+        authHeaders(),
+      );
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-offers"] });
+      setCounterModal({ open: false, offer: null });
+      resetCounter();
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to respond to offer",
+      );
+    },
+  });
 
   const handleStatusFilter = (status: string) => {
-    setStatusFilter(status);
+    setValue("status", status);
     setPage(1);
-    fetchOffers(1, status);
   };
 
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-    fetchOffers(newPage, statusFilter);
-  };
-
-  const respondToOffer = (
-    offerId: string,
-    status: string,
-    cprice?: number,
-  ) => {
-    setActionLoading(true);
-    mutate({
-      url: `/admin/offers/${offerId}`,
-      method: "PUT",
-      headers: true,
-      data: {
-        status,
-        ...(status === "countered" && { counterPrice: cprice }),
-      },
-      onSuccess: () => {
-        setActionLoading(false);
-        setCounterModal({ open: false, offer: null });
-        setCounterPrice("");
-        fetchOffers(page, statusFilter);
-      },
-      onError: () => setActionLoading(false),
+  const onCounterSubmit = ({ counterPrice }: { counterPrice: string }) => {
+    respondMutation.mutate({
+      offerId: counterModal.offer.id,
+      status: "countered",
+      counterPrice: parseFloat(counterPrice),
     });
   };
-
-  const handleCounter = () => {
-    if (!counterPrice || isNaN(parseFloat(counterPrice))) {
-      toast.error("Please enter a valid counter price");
-      return;
-    }
-    respondToOffer(
-      counterModal.offer.id,
-      "countered",
-      parseFloat(counterPrice),
-    );
-  };
-
-  const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="min-h-screen p-6 flex flex-col gap-6">
@@ -113,27 +118,27 @@ export default function Offers() {
             Manage buyer offers on products
           </p>
         </div>
+
+        {/* Status filter — backed by useForm */}
         <div className="flex items-center gap-2 flex-wrap">
-          {[
-            "",
-            "pending",
-            "accepted",
-            "rejected",
-            "countered",
-            "completed",
-          ].map((s) => (
-            <button
-              key={s}
-              onClick={() => handleStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                statusFilter === s
-                  ? "bg-kudu-orange text-white border-kudu-orange"
-                  : "bg-white text-gray-600 border-gray-300 hover:border-kudu-orange"
-              }`}
-            >
-              {s ? s.charAt(0).toUpperCase() + s.slice(1) : "All"}
-            </button>
-          ))}
+          {["", "pending", "accepted", "rejected", "countered", "completed"].map(
+            (s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => handleStatusFilter(s)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                  statusFilter === s
+                    ? "bg-kudu-orange text-white border-kudu-orange"
+                    : "bg-white text-gray-600 border-gray-300 hover:border-kudu-orange"
+                }`}
+              >
+                {s ? s.charAt(0).toUpperCase() + s.slice(1) : "All"}
+              </button>
+            ),
+          )}
+          {/* Hidden input so the field is registered */}
+          <input type="hidden" {...register("status")} />
         </div>
       </div>
 
@@ -143,37 +148,28 @@ export default function Offers() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  Buyer
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  Product
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  Listed Price
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  Offered Price
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  Counter Price
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  Message
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                  Actions
-                </th>
+                {[
+                  "Buyer",
+                  "Product",
+                  "Listed Price",
+                  "Offered Price",
+                  "Counter Price",
+                  "Message",
+                  "Status",
+                  "Date",
+                  "Actions",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left font-semibold text-gray-600"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {loading ? (
+              {isLoading ? (
                 <tr>
                   <td
                     colSpan={9}
@@ -275,9 +271,12 @@ export default function Offers() {
                         <div className="flex gap-1.5">
                           <button
                             title="Accept"
-                            disabled={actionLoading}
+                            disabled={respondMutation.isPending}
                             onClick={() =>
-                              respondToOffer(offer.id, "accepted")
+                              respondMutation.mutate({
+                                offerId: offer.id,
+                                status: "accepted",
+                              })
                             }
                             className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-50"
                           >
@@ -285,17 +284,22 @@ export default function Offers() {
                           </button>
                           <button
                             title="Counter"
-                            disabled={actionLoading}
-                            onClick={() => setCounterModal({ open: true, offer })}
+                            disabled={respondMutation.isPending}
+                            onClick={() =>
+                              setCounterModal({ open: true, offer })
+                            }
                             className="p-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors disabled:opacity-50"
                           >
                             <Tag size={15} />
                           </button>
                           <button
                             title="Reject"
-                            disabled={actionLoading}
+                            disabled={respondMutation.isPending}
                             onClick={() =>
-                              respondToOffer(offer.id, "rejected")
+                              respondMutation.mutate({
+                                offerId: offer.id,
+                                status: "rejected",
+                              })
                             }
                             className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
                           >
@@ -317,13 +321,13 @@ export default function Offers() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
             <span className="text-xs text-gray-400">
-              Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)}{" "}
+              Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, total)}{" "}
               of {total}
             </span>
             <div className="flex gap-1">
               <button
                 disabled={page === 1}
-                onClick={() => handlePageChange(page - 1)}
+                onClick={() => setPage((p) => p - 1)}
                 className="px-3 py-1 rounded border text-sm disabled:opacity-40 hover:bg-gray-50"
               >
                 Prev
@@ -331,7 +335,7 @@ export default function Offers() {
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                 <button
                   key={p}
-                  onClick={() => handlePageChange(p)}
+                  onClick={() => setPage(p)}
                   className={`px-3 py-1 rounded border text-sm ${
                     p === page
                       ? "bg-kudu-orange text-white border-kudu-orange"
@@ -343,7 +347,7 @@ export default function Offers() {
               ))}
               <button
                 disabled={page === totalPages}
-                onClick={() => handlePageChange(page + 1)}
+                onClick={() => setPage((p) => p + 1)}
                 className="px-3 py-1 rounded border text-sm disabled:opacity-40 hover:bg-gray-50"
               >
                 Next
@@ -360,9 +364,7 @@ export default function Offers() {
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-bold">Send Counter Offer</h2>
               <button
-                onClick={() =>
-                  setCounterModal({ open: false, offer: null })
-                }
+                onClick={() => setCounterModal({ open: false, offer: null })}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X size={20} />
@@ -389,39 +391,58 @@ export default function Offers() {
                 </span>
               </p>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-semibold">Counter Price</label>
-              <div className="flex items-center border border-gray-300 rounded-md overflow-hidden focus-within:border-kudu-orange transition-colors">
-                <span className="px-3 py-2 bg-gray-50 text-sm font-medium border-r border-gray-300">
-                  ₦
-                </span>
-                <input
-                  type="number"
-                  value={counterPrice}
-                  onChange={(e) => setCounterPrice(e.target.value)}
-                  placeholder="Enter counter price"
-                  className="flex-1 px-3 py-2 text-sm outline-none"
-                />
+            <form
+              onSubmit={handleCounterSubmit(onCounterSubmit)}
+              className="flex flex-col gap-4"
+            >
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold">Counter Price</label>
+                <div
+                  className={`flex items-center border rounded-md overflow-hidden transition-colors focus-within:border-kudu-orange ${
+                    counterErrors.counterPrice
+                      ? "border-red-400"
+                      : "border-gray-300"
+                  }`}
+                >
+                  <span className="px-3 py-2 bg-gray-50 text-sm font-medium border-r border-gray-300">
+                    ₦
+                  </span>
+                  <input
+                    type="number"
+                    placeholder="Enter counter price"
+                    className="flex-1 px-3 py-2 text-sm outline-none"
+                    {...registerCounter("counterPrice", {
+                      required: "Counter price is required",
+                      validate: (v) =>
+                        !isNaN(parseFloat(v)) || "Enter a valid number",
+                      min: { value: 1, message: "Price must be greater than 0" },
+                    })}
+                  />
+                </div>
+                {counterErrors.counterPrice && (
+                  <p className="text-red-500 text-xs">
+                    {counterErrors.counterPrice.message}
+                  </p>
+                )}
               </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                className="flex-1 py-2 px-4 rounded-md border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-colors"
-                onClick={() =>
-                  setCounterModal({ open: false, offer: null })
-                }
-              >
-                Cancel
-              </button>
-              <button
-                data-theme="kudu"
-                className="flex-1 btn btn-primary"
-                onClick={handleCounter}
-                disabled={actionLoading || !counterPrice}
-              >
-                {actionLoading ? "Sending..." : "Send Counter"}
-              </button>
-            </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  className="flex-1 py-2 px-4 rounded-md border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-colors"
+                  onClick={() => setCounterModal({ open: false, offer: null })}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  data-theme="kudu"
+                  className="flex-1 btn btn-primary"
+                  disabled={respondMutation.isPending}
+                >
+                  {respondMutation.isPending ? "Sending..." : "Send Counter"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
