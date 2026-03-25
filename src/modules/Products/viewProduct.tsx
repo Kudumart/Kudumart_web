@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Imgix from "react-imgix";
 import Loader from "../../components/Loader";
 import useApiMutation from "../../api/hooks/useApiMutation";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   currencyFormat,
   formatNumberWithCommas,
@@ -28,6 +28,8 @@ import {
   Share2,
   Link,
   Check,
+  X,
+  Tag,
 } from "lucide-react";
 import SafeHTML from "../../helpers/safeHTML";
 import { IoCart, IoChatbox } from "react-icons/io5";
@@ -40,6 +42,13 @@ export default function ViewProduct() {
   const [quantity, setQuantity] = useState(0);
   const [disabled, setDisabled] = useState(true);
   const { openModal } = useModal();
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [offerPrice, setOfferPrice] = useState("");
+  const [offerMessage, setOfferMessage] = useState("");
+  const [currentOffer, setCurrentOffer] = useState<any>(null);
+  const [offerLoading, setOfferLoading] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [pendingCheckout, setPendingCheckout] = useState(false);
 
   const { mutate: addItemToCart, isLoading } = useAddToCart();
 
@@ -48,6 +57,7 @@ export default function ViewProduct() {
   const { mutate } = useApiMutation();
 
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
 
   const navigate = useNavigate();
   const getProductDetails = async () => {
@@ -97,9 +107,128 @@ export default function ViewProduct() {
     }
   };
 
+  const fetchMyOffer = () => {
+    mutate({
+      url: `/user/offers?limit=50`,
+      method: "GET",
+      headers: true,
+      hideToast: true,
+      onSuccess: (response) => {
+        const offers: any[] = response.data.data || [];
+        const offer = offers.find((o) => o.productId === id);
+        if (offer) {
+          setCurrentOffer(offer);
+          const stored = localStorage.getItem(`kudu_offer_${id}`);
+          if (stored && offer.status === "accepted") {
+            setPendingCheckout(true);
+          }
+        }
+      },
+      onError: () => {},
+    });
+  };
+
+  const submitOffer = () => {
+    if (!offerPrice || isNaN(parseFloat(offerPrice))) {
+      toast.error("Please enter a valid offer price");
+      return;
+    }
+    setOfferLoading(true);
+    mutate({
+      url: `/user/products/${id}/offers`,
+      method: "POST",
+      headers: true,
+      data: {
+        offeredPrice: parseFloat(offerPrice),
+        ...(offerMessage.trim() && { message: offerMessage }),
+      },
+      onSuccess: (response) => {
+        setCurrentOffer(response.data.data);
+        setOfferLoading(false);
+      },
+      onError: () => setOfferLoading(false),
+    });
+  };
+
+  const respondToCounter = (status: "accepted" | "rejected") => {
+    setOfferLoading(true);
+    mutate({
+      url: `/user/offers/${currentOffer.id}/respond`,
+      method: "PUT",
+      headers: true,
+      data: { status },
+      onSuccess: (response) => {
+        setCurrentOffer(response.data.data);
+        setOfferLoading(false);
+      },
+      onError: () => setOfferLoading(false),
+    });
+  };
+
+  const handleInitiatePayment = () => {
+    setOfferLoading(true);
+    mutate({
+      url: `/user/offers/${currentOffer.id}/initiate-payment`,
+      method: "POST",
+      headers: true,
+      hideToast: true,
+      onSuccess: (response) => {
+        const { refId, paystackDetails } = response.data.data;
+        localStorage.setItem(
+          `kudu_offer_${id}`,
+          JSON.stringify({ offerId: currentOffer.id, refId }),
+        );
+        setOfferLoading(false);
+        window.location.href = paystackDetails.authorization_url;
+      },
+      onError: () => setOfferLoading(false),
+    });
+  };
+
+  const handleCheckout = () => {
+    if (!shippingAddress.trim()) {
+      toast.error("Please enter your shipping address");
+      return;
+    }
+    const stored = localStorage.getItem(`kudu_offer_${id}`);
+    const refId = stored
+      ? JSON.parse(stored).refId
+      : searchParams.get("refId");
+    if (!refId) {
+      toast.error("Payment reference not found. Please retry payment.");
+      return;
+    }
+    setOfferLoading(true);
+    mutate({
+      url: `/user/offers/${currentOffer.id}/checkout`,
+      method: "POST",
+      headers: true,
+      data: { refId, shippingAddress: shippingAddress.trim() },
+      onSuccess: (response) => {
+        setCurrentOffer((prev: any) => ({
+          ...prev,
+          status: "completed",
+          trackingNumber: response.data.data.trackingNumber,
+        }));
+        localStorage.removeItem(`kudu_offer_${id}`);
+        setPendingCheckout(false);
+        setOfferLoading(false);
+      },
+      onError: () => setOfferLoading(false),
+    });
+  };
+
   useEffect(() => {
     getProductDetails();
-    user ? getSavedProducts() : null;
+    if (user) {
+      getSavedProducts();
+      fetchMyOffer();
+    }
+    const refId = searchParams.get("refId");
+    if (refId) {
+      setPendingCheckout(true);
+      setShowOfferModal(true);
+    }
   }, []);
 
   const addToBookMark = () => {
@@ -610,7 +739,7 @@ export default function ViewProduct() {
                   <></>
                 )}
                 <div className="w-full flex flex-col gap-3 py-5 md:px-8 px-8 rounded-md bg-white shadow shadow-md">
-                  <p className="text-lg font-bold">Safety Tips</p>
+                  <p className="text-lg font-bold">Safetyss Tips</p>
                   <ul
                     className="text-sm font-medium md:px-4 flex flex-col gap-2"
                     style={{ listStyle: "disc" }}
@@ -675,6 +804,24 @@ export default function ViewProduct() {
                   </div>
                 ) : (
                   <></>
+                )}
+
+                {(product.vendor?.isVerified || product.admin) && user && (
+                  <div className="w-full flex flex-col gap-3 py-5 md:px-8 px-4 rounded-md bg-white shadow shadow-md">
+                    <button
+                      data-theme="kudu"
+                      className="w-full py-2 px-4 flex justify-center gap-2 rounded-md border border-kudu-orange text-kudu-orange hover:bg-kudu-orange hover:text-white transition-colors font-medium text-sm"
+                      type="button"
+                      onClick={() => setShowOfferModal(true)}
+                    >
+                      <Tag size={18} />
+                      <span>
+                        {currentOffer
+                          ? `Offer: ${currentOffer.status.charAt(0).toUpperCase() + currentOffer.status.slice(1)}`
+                          : "Make an Offer"}
+                      </span>
+                    </button>
+                  </div>
                 )}
 
                 {user && (
@@ -773,6 +920,262 @@ export default function ViewProduct() {
           </div>
         </div>
       </div>
+
+      {/* Make an Offer Modal */}
+      {showOfferModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md flex flex-col overflow-y-auto max-h-[90vh]">
+            {/* Header */}
+            <div className="flex justify-between items-center px-6 pt-6 pb-2">
+              <h2 className="text-lg font-bold">Make an Offer</h2>
+              <button
+                onClick={() => setShowOfferModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="px-6 pb-6 flex flex-col gap-4">
+              {/* Product summary */}
+              <div className="flex gap-3 p-3 bg-gray-50 rounded-lg">
+                {product.additional_images?.[0] && (
+                  <img
+                    src={product.additional_images[0]}
+                    alt={product.name}
+                    className="w-14 h-14 rounded-md object-cover flex-shrink-0"
+                  />
+                )}
+                <div className="flex flex-col justify-center min-w-0">
+                  <p className="text-sm font-semibold truncate">{product.name}</p>
+                  <p className="text-sm text-gray-500">
+                    Listed at {product?.store?.currency?.symbol || "₦"}{" "}
+                    {formatNumberWithCommas(parseFloat(product?.price))}
+                  </p>
+                </div>
+              </div>
+
+              {/* Offer form — no offer yet */}
+              {!currentOffer && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-semibold">Your Offer Price</label>
+                    <div className="flex items-center border border-gray-300 rounded-md overflow-hidden focus-within:border-kudu-orange transition-colors">
+                      <span className="px-3 py-2 bg-gray-50 text-sm font-medium border-r border-gray-300">
+                        {product?.store?.currency?.symbol || "₦"}
+                      </span>
+                      <input
+                        type="number"
+                        value={offerPrice}
+                        onChange={(e) => setOfferPrice(e.target.value)}
+                        placeholder="Enter your offer"
+                        className="flex-1 px-3 py-2 text-sm outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-semibold">
+                      Message{" "}
+                      <span className="text-gray-400 font-normal">(optional)</span>
+                    </label>
+                    <textarea
+                      value={offerMessage}
+                      onChange={(e) => setOfferMessage(e.target.value)}
+                      placeholder="e.g. Can you do this price?"
+                      rows={3}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-kudu-orange resize-none transition-colors"
+                    />
+                  </div>
+                  <button
+                    data-theme="kudu"
+                    className="btn btn-primary w-full"
+                    onClick={submitOffer}
+                    disabled={offerLoading || !offerPrice}
+                  >
+                    {offerLoading ? "Submitting..." : "Submit Offer"}
+                  </button>
+                </div>
+              )}
+
+              {/* Pending */}
+              {currentOffer?.status === "pending" && (
+                <div className="flex flex-col items-center gap-3 py-4 text-center">
+                  <div className="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <Tag size={24} className="text-yellow-600" />
+                  </div>
+                  <p className="font-semibold text-lg">Offer Under Review</p>
+                  <p className="text-sm text-gray-500">
+                    Your offer of{" "}
+                    <strong>
+                      {product?.store?.currency?.symbol || "₦"}{" "}
+                      {formatNumberWithCommas(parseFloat(currentOffer.offeredPrice))}
+                    </strong>{" "}
+                    is being reviewed by the seller.
+                  </p>
+                  <div className="w-full p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-xs text-yellow-700">
+                      You'll receive a notification once the seller responds.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Accepted — initiate payment */}
+              {currentOffer?.status === "accepted" && !pendingCheckout && (
+                <div className="flex flex-col items-center gap-3 py-4 text-center">
+                  <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+                    <Check size={24} className="text-green-600" />
+                  </div>
+                  <p className="font-semibold text-lg">Offer Accepted!</p>
+                  <p className="text-sm text-gray-500">
+                    Your offer of{" "}
+                    <strong>
+                      {product?.store?.currency?.symbol || "₦"}{" "}
+                      {formatNumberWithCommas(parseFloat(currentOffer.offeredPrice))}
+                    </strong>{" "}
+                    has been accepted. Proceed to payment to complete your order.
+                  </p>
+                  <button
+                    data-theme="kudu"
+                    className="btn btn-primary w-full"
+                    onClick={handleInitiatePayment}
+                    disabled={offerLoading}
+                  >
+                    {offerLoading ? "Processing..." : "Proceed to Payment"}
+                  </button>
+                </div>
+              )}
+
+              {/* Accepted — checkout form (returning from Paystack) */}
+              {currentOffer?.status === "accepted" && pendingCheckout && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
+                    <Check size={16} className="text-green-600 flex-shrink-0" />
+                    <p className="text-sm text-green-700 font-medium">
+                      Payment received! Enter your shipping address to complete the order.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-sm font-semibold">Shipping Address</label>
+                    <textarea
+                      value={shippingAddress}
+                      onChange={(e) => setShippingAddress(e.target.value)}
+                      placeholder="e.g. 12 Allen Avenue, Lagos"
+                      rows={3}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-kudu-orange resize-none transition-colors"
+                    />
+                  </div>
+                  <button
+                    data-theme="kudu"
+                    className="btn btn-primary w-full"
+                    onClick={handleCheckout}
+                    disabled={offerLoading || !shippingAddress.trim()}
+                  >
+                    {offerLoading ? "Placing Order..." : "Complete Order"}
+                  </button>
+                </div>
+              )}
+
+              {/* Countered */}
+              {currentOffer?.status === "countered" && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col items-center gap-3 py-2 text-center">
+                    <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Tag size={24} className="text-blue-600" />
+                    </div>
+                    <p className="font-semibold text-lg">Counter Offer Received</p>
+                    <p className="text-sm text-gray-500">
+                      The seller has countered your offer of{" "}
+                      <strong>
+                        {product?.store?.currency?.symbol || "₦"}{" "}
+                        {formatNumberWithCommas(parseFloat(currentOffer.offeredPrice))}
+                      </strong>
+                    </p>
+                  </div>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                    <p className="text-xs text-gray-500 mb-1">Counter Price</p>
+                    <p className="text-2xl font-bold text-blue-700">
+                      {product?.store?.currency?.symbol || "₦"}{" "}
+                      {formatNumberWithCommas(parseFloat(currentOffer.counterPrice))}
+                    </p>
+                  </div>
+                  <p className="text-sm text-center text-gray-500">
+                    Do you accept this counter offer?
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      className="flex-1 py-2 px-4 rounded-md border border-red-300 text-red-600 font-medium text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
+                      onClick={() => respondToCounter("rejected")}
+                      disabled={offerLoading}
+                    >
+                      {offerLoading ? "..." : "Decline"}
+                    </button>
+                    <button
+                      data-theme="kudu"
+                      className="flex-1 btn btn-primary"
+                      onClick={() => respondToCounter("accepted")}
+                      disabled={offerLoading}
+                    >
+                      {offerLoading ? "..." : "Accept"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Rejected */}
+              {currentOffer?.status === "rejected" && (
+                <div className="flex flex-col items-center gap-3 py-4 text-center">
+                  <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+                    <X size={24} className="text-red-600" />
+                  </div>
+                  <p className="font-semibold text-lg">Offer Declined</p>
+                  <p className="text-sm text-gray-500">
+                    Unfortunately your offer of{" "}
+                    <strong>
+                      {product?.store?.currency?.symbol || "₦"}{" "}
+                      {formatNumberWithCommas(parseFloat(currentOffer.offeredPrice))}
+                    </strong>{" "}
+                    was not accepted.
+                  </p>
+                  <button
+                    className="w-full py-2 px-4 rounded-md border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-colors"
+                    onClick={() => setShowOfferModal(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+
+              {/* Completed */}
+              {currentOffer?.status === "completed" && (
+                <div className="flex flex-col items-center gap-3 py-4 text-center">
+                  <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+                    <Check size={24} className="text-green-600" />
+                  </div>
+                  <p className="font-semibold text-lg">Order Placed!</p>
+                  <p className="text-sm text-gray-500">
+                    Your order has been placed successfully.
+                  </p>
+                  {currentOffer.trackingNumber && (
+                    <div className="w-full p-3 bg-green-50 border border-green-200 rounded-md">
+                      <p className="text-xs text-gray-500 mb-1">Tracking Number</p>
+                      <p className="text-base font-bold text-green-700">
+                        {currentOffer.trackingNumber}
+                      </p>
+                    </div>
+                  )}
+                  <button
+                    className="w-full py-2 px-4 rounded-md border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-colors"
+                    onClick={() => setShowOfferModal(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

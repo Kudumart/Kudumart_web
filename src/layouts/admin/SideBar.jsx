@@ -30,7 +30,7 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
     pages: false,
     jobs: false,
     notifications: false, // Added for notifications dropdown
-    // aliexpress: false, // Removed for AliExpress dropdown
+    aliexpress: false,
   });
   const { openModal } = useModal();
   const navigate = useNavigate();
@@ -45,8 +45,8 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
       pages: type === "pages" ? !prevState.pages : false,
       jobs: type === "jobs" ? !prevState.jobs : false,
       notifications:
-        type === "notifications" ? !prevState.notifications : false, // Handler for notifications dropdown
-      // aliexpress: type === "aliexpress" ? !prevState.aliexpress : false, // Handler for AliExpress dropdown
+        type === "notifications" ? !prevState.notifications : false,
+      aliexpress: type === "aliexpress" ? !prevState.aliexpress : false,
     }));
   };
 
@@ -204,7 +204,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
-
             {/* New Services Section */}
             <div className="relative">
               <button
@@ -246,7 +245,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
-
             <div className="relative">
               <button
                 onClick={() => handleChildren("stores")}
@@ -285,7 +283,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
-
             <div className="relative">
               <button
                 onClick={() => handleChildren("orders")}
@@ -337,7 +334,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               </i>
               <span className={`text-md font-semibold`}>Transactions</span>
             </Link>
-
             <Link
               to={"/admin/withdrawal-request"}
               className={`flex items-center px-4 h-[57px] rounded-lg transition ${
@@ -353,7 +349,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 Withdrawal Request
               </span>
             </Link>
-
             <div className="relative">
               <button
                 onClick={() => handleChildren("pages")}
@@ -393,7 +388,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
-
             <div className="relative">
               <button
                 onClick={() => handleChildren("jobs")}
@@ -417,7 +411,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
-
             <Link
               to={"/admin/adverts"}
               className={`flex items-center px-4 h-[57px] rounded-lg transition ${
@@ -432,8 +425,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               <span className={`text-md font-semibold`}>Adverts</span>
             </Link>
 
-            {/* AliExpress Section - Disabled/Hidden */}
-            {/*
             <div className="relative">
               <button
                 onClick={() => handleChildren("aliexpress")}
@@ -466,8 +457,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
-            */}
-
             <Link
               to={"subscriptions"}
               className={`flex items-center px-4 h-[57px] rounded-lg text-[#7F7F7F] hover:bg-gray-100 transition`}
@@ -496,7 +485,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               </i>
               <span className={`text-md font-semibold`}>Subscription</span>
             </Link>
-
             <Link
               to={"user-inquiries"}
               className={`flex items-center px-4 h-[57px] rounded-lg text-[#7F7F7F] hover:bg-gray-100 transition`}
@@ -506,7 +494,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               </i>
               <span className={`text-md font-semibold`}>User Inquiries</span>
             </Link>
-
             {/* Notifications Link */}
             <div className="relative">
               <button
@@ -540,7 +527,6 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
-
             <div className="w-full h-px px-4 border-mobiSilverDivider border-bottom border"></div>
           </nav>
 
