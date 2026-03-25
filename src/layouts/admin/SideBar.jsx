@@ -15,7 +15,8 @@ import {
   FileText,
   Search,
   ChevronDown,
-  Bell, // Added Bell icon for notifications
+  Bell,
+  Tag,
 } from "lucide-react";
 
 const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
@@ -321,6 +322,20 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
+            <Link
+              to={"/admin/offers"}
+              onClick={() => handleMenuClick()}
+              className={`flex items-center px-4 h-[57px] rounded-lg transition ${
+                isActive("/admin/offers")
+                  ? "bg-[#FFF1E9] text-black"
+                  : "text-[#7F7F7F] hover:bg-gray-100"
+              }`}
+            >
+              <i className="mr-5">
+                <Tag size={20} />
+              </i>
+              <span className={`text-md font-semibold`}>Offers</span>
+            </Link>
             <Link
               to={"/admin/transactions"}
               className={`flex items-center px-4 h-[57px] rounded-lg transition ${
