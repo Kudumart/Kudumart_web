@@ -191,9 +191,7 @@ export default function ViewProduct() {
       return;
     }
     const stored = localStorage.getItem(`kudu_offer_${id}`);
-    const refId = stored
-      ? JSON.parse(stored).refId
-      : searchParams.get("refId");
+    const refId = stored ? JSON.parse(stored).refId : searchParams.get("refId");
     if (!refId) {
       toast.error("Payment reference not found. Please retry payment.");
       return;
@@ -834,9 +832,7 @@ export default function ViewProduct() {
                       >
                         <Bookmark color="rgba(255, 255, 255, 1)" size={18} />
                         <span className="text-sm font-semibold">
-                          {bookmarked
-                            ? "Added to your saved list"
-                            : "Add to your saved list"}
+                          {bookmarked ? "Favorited" : "Add to Favorites"}
                         </span>
                       </Button>
                     </span>
@@ -947,7 +943,9 @@ export default function ViewProduct() {
                   />
                 )}
                 <div className="flex flex-col justify-center min-w-0">
-                  <p className="text-sm font-semibold truncate">{product.name}</p>
+                  <p className="text-sm font-semibold truncate">
+                    {product.name}
+                  </p>
                   <p className="text-sm text-gray-500">
                     Listed at {product?.store?.currency?.symbol || "₦"}{" "}
                     {formatNumberWithCommas(parseFloat(product?.price))}
@@ -959,7 +957,9 @@ export default function ViewProduct() {
               {!currentOffer && (
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1">
-                    <label className="text-sm font-semibold">Your Offer Price</label>
+                    <label className="text-sm font-semibold">
+                      Your Offer Price
+                    </label>
                     <div className="flex items-center border border-gray-300 rounded-md overflow-hidden focus-within:border-kudu-orange transition-colors">
                       <span className="px-3 py-2 bg-gray-50 text-sm font-medium border-r border-gray-300">
                         {product?.store?.currency?.symbol || "₦"}
@@ -976,7 +976,9 @@ export default function ViewProduct() {
                   <div className="flex flex-col gap-1">
                     <label className="text-sm font-semibold">
                       Message{" "}
-                      <span className="text-gray-400 font-normal">(optional)</span>
+                      <span className="text-gray-400 font-normal">
+                        (optional)
+                      </span>
                     </label>
                     <textarea
                       value={offerMessage}
@@ -1008,7 +1010,9 @@ export default function ViewProduct() {
                     Your offer of{" "}
                     <strong>
                       {product?.store?.currency?.symbol || "₦"}{" "}
-                      {formatNumberWithCommas(parseFloat(currentOffer.offeredPrice))}
+                      {formatNumberWithCommas(
+                        parseFloat(currentOffer.offeredPrice),
+                      )}
                     </strong>{" "}
                     is being reviewed by the seller.
                   </p>
@@ -1031,9 +1035,12 @@ export default function ViewProduct() {
                     Your offer of{" "}
                     <strong>
                       {product?.store?.currency?.symbol || "₦"}{" "}
-                      {formatNumberWithCommas(parseFloat(currentOffer.offeredPrice))}
+                      {formatNumberWithCommas(
+                        parseFloat(currentOffer.offeredPrice),
+                      )}
                     </strong>{" "}
-                    has been accepted. Proceed to payment to complete your order.
+                    has been accepted. Proceed to payment to complete your
+                    order.
                   </p>
                   <button
                     data-theme="kudu"
@@ -1052,11 +1059,14 @@ export default function ViewProduct() {
                   <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md">
                     <Check size={16} className="text-green-600 flex-shrink-0" />
                     <p className="text-sm text-green-700 font-medium">
-                      Payment received! Enter your shipping address to complete the order.
+                      Payment received! Enter your shipping address to complete
+                      the order.
                     </p>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-sm font-semibold">Shipping Address</label>
+                    <label className="text-sm font-semibold">
+                      Shipping Address
+                    </label>
                     <textarea
                       value={shippingAddress}
                       onChange={(e) => setShippingAddress(e.target.value)}
@@ -1083,12 +1093,16 @@ export default function ViewProduct() {
                     <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center">
                       <Tag size={24} className="text-blue-600" />
                     </div>
-                    <p className="font-semibold text-lg">Counter Offer Received</p>
+                    <p className="font-semibold text-lg">
+                      Counter Offer Received
+                    </p>
                     <p className="text-sm text-gray-500">
                       The seller has countered your offer of{" "}
                       <strong>
                         {product?.store?.currency?.symbol || "₦"}{" "}
-                        {formatNumberWithCommas(parseFloat(currentOffer.offeredPrice))}
+                        {formatNumberWithCommas(
+                          parseFloat(currentOffer.offeredPrice),
+                        )}
                       </strong>
                     </p>
                   </div>
@@ -1096,7 +1110,9 @@ export default function ViewProduct() {
                     <p className="text-xs text-gray-500 mb-1">Counter Price</p>
                     <p className="text-2xl font-bold text-blue-700">
                       {product?.store?.currency?.symbol || "₦"}{" "}
-                      {formatNumberWithCommas(parseFloat(currentOffer.counterPrice))}
+                      {formatNumberWithCommas(
+                        parseFloat(currentOffer.counterPrice),
+                      )}
                     </p>
                   </div>
                   <p className="text-sm text-center text-gray-500">
@@ -1133,7 +1149,9 @@ export default function ViewProduct() {
                     Unfortunately your offer of{" "}
                     <strong>
                       {product?.store?.currency?.symbol || "₦"}{" "}
-                      {formatNumberWithCommas(parseFloat(currentOffer.offeredPrice))}
+                      {formatNumberWithCommas(
+                        parseFloat(currentOffer.offeredPrice),
+                      )}
                     </strong>{" "}
                     was not accepted.
                   </p>
@@ -1158,7 +1176,9 @@ export default function ViewProduct() {
                   </p>
                   {currentOffer.trackingNumber && (
                     <div className="w-full p-3 bg-green-50 border border-green-200 rounded-md">
-                      <p className="text-xs text-gray-500 mb-1">Tracking Number</p>
+                      <p className="text-xs text-gray-500 mb-1">
+                        Tracking Number
+                      </p>
                       <p className="text-base font-bold text-green-700">
                         {currentOffer.trackingNumber}
                       </p>

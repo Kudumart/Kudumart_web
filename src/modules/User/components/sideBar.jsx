@@ -102,7 +102,7 @@ const ProfileSideBar = ({ close }) => {
       vendor: null,
     },
     {
-      label: "Bookmarked Items",
+      label: "Favorites",
       icon: <Bookmark size={19} color="#FF6F22" />,
       route: "bookmark",
       vendor: null,
