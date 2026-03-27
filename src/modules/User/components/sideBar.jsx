@@ -81,7 +81,7 @@ const ProfileSideBar = ({ close }) => {
     {
       label: "Offers",
       icon: <Tag size={20} color="#FF6F22" />,
-      route: "/vendor/offers",
+      route: "/profile/offers",
       vendor: true,
     },
     {
