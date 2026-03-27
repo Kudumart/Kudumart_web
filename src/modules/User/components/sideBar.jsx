@@ -20,6 +20,7 @@ import {
   Wallet2,
   Settings2,
   WorkflowIcon,
+  Tag,
 } from "lucide-react";
 
 const ProfileSideBar = ({ close }) => {
@@ -75,6 +76,12 @@ const ProfileSideBar = ({ close }) => {
       label: "Services",
       icon: <WorkflowIcon size={20} color="#FF6F22" />,
       route: "services",
+      vendor: true,
+    },
+    {
+      label: "Offers",
+      icon: <Tag size={20} color="#FF6F22" />,
+      route: "/vendor/offers",
       vendor: true,
     },
     {

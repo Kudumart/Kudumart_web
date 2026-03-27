@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import apiClient from "../../../../api/apiFactory";
-import { formatNumberWithCommas } from "../../../../helpers/helperFactory";
+import apiClient from "../../../api/apiFactory";
+import { formatNumberWithCommas } from "../../../helpers/helperFactory";
 import { toast } from "react-toastify";
 import { X, Check, Tag, Eye } from "lucide-react";
 
@@ -17,12 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const LIMIT = 10;
 
-const token = () => localStorage.getItem("kuduUserToken");
-const authHeaders = () => ({
-  headers: { Authorization: `Bearer ${token()}` },
-});
-
-export default function Offers() {
+export default function VendorOffers() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [counterModal, setCounterModal] = useState<{
@@ -34,25 +29,20 @@ export default function Offers() {
     offer: any | null;
   }>({ open: false, offer: null });
 
-  // Filter form
   const { register, watch, setValue } = useForm({
     defaultValues: { status: "" },
   });
   const statusFilter = watch("status");
 
-  // Fetch offers
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-offers", page, statusFilter],
+    queryKey: ["vendor-offers", page, statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: String(page),
         limit: String(LIMIT),
       });
       if (statusFilter) params.append("status", statusFilter);
-      const res = await apiClient.get(
-        `/admin/offers?${params.toString()}`,
-        authHeaders(),
-      );
+      const res = await apiClient.get(`/vendor/offers?${params.toString()}`);
       return res.data;
     },
   });
@@ -61,7 +51,6 @@ export default function Offers() {
   const total: number = data?.total || 0;
   const totalPages = Math.ceil(total / LIMIT);
 
-  // Counter form
   const {
     register: registerCounter,
     handleSubmit: handleCounterSubmit,
@@ -69,7 +58,6 @@ export default function Offers() {
     formState: { errors: counterErrors },
   } = useForm({ defaultValues: { counterPrice: "" } });
 
-  // Respond mutation
   const respondMutation = useMutation({
     mutationFn: async ({
       offerId,
@@ -80,15 +68,14 @@ export default function Offers() {
       status: string;
       counterPrice?: number;
     }) => {
-      const res = await apiClient.put(
-        `/admin/offers/${offerId}`,
-        { status, ...(status === "countered" && { counterPrice }) },
-        authHeaders(),
-      );
+      const res = await apiClient.put(`/vendor/offers/${offerId}`, {
+        status,
+        ...(status === "countered" && { counterPrice }),
+      });
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-offers"] });
+      queryClient.invalidateQueries({ queryKey: ["vendor-offers"] });
       setCounterModal({ open: false, offer: null });
       resetCounter();
     },
@@ -119,11 +106,10 @@ export default function Offers() {
         <div>
           <h1 className="text-2xl font-bold">Offers</h1>
           <p className="text-sm text-gray-500">
-            Manage buyer offers on products
+            Manage buyer offers on your products
           </p>
         </div>
 
-        {/* Status filter — backed by useForm */}
         <div className="flex items-center gap-2 flex-wrap">
           {["", "pending", "accepted", "rejected", "countered", "completed"].map(
             (s) => (
@@ -141,7 +127,6 @@ export default function Offers() {
               </button>
             ),
           )}
-          {/* Hidden input so the field is registered */}
           <input type="hidden" {...register("status")} />
         </div>
       </div>
@@ -279,46 +264,46 @@ export default function Offers() {
                         >
                           <Eye size={15} />
                         </button>
-                      {offer.status === "pending" ? (
-                        <>
-                          <button
-                            title="Accept"
-                            disabled={respondMutation.isPending}
-                            onClick={() =>
-                              respondMutation.mutate({
-                                offerId: offer.id,
-                                status: "accepted",
-                              })
-                            }
-                            className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-50"
-                          >
-                            <Check size={15} />
-                          </button>
-                          <button
-                            title="Counter"
-                            disabled={respondMutation.isPending}
-                            onClick={() =>
-                              setCounterModal({ open: true, offer })
-                            }
-                            className="p-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors disabled:opacity-50"
-                          >
-                            <Tag size={15} />
-                          </button>
-                          <button
-                            title="Reject"
-                            disabled={respondMutation.isPending}
-                            onClick={() =>
-                              respondMutation.mutate({
-                                offerId: offer.id,
-                                status: "rejected",
-                              })
-                            }
-                            className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
-                          >
-                            <X size={15} />
-                          </button>
-                        </>
-                      ) : null}
+                        {offer.status === "pending" ? (
+                          <>
+                            <button
+                              title="Accept"
+                              disabled={respondMutation.isPending}
+                              onClick={() =>
+                                respondMutation.mutate({
+                                  offerId: offer.id,
+                                  status: "accepted",
+                                })
+                              }
+                              className="p-1.5 rounded-md bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-50"
+                            >
+                              <Check size={15} />
+                            </button>
+                            <button
+                              title="Counter"
+                              disabled={respondMutation.isPending}
+                              onClick={() =>
+                                setCounterModal({ open: true, offer })
+                              }
+                              className="p-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                            >
+                              <Tag size={15} />
+                            </button>
+                            <button
+                              title="Reject"
+                              disabled={respondMutation.isPending}
+                              onClick={() =>
+                                respondMutation.mutate({
+                                  offerId: offer.id,
+                                  status: "rejected",
+                                })
+                              }
+                              className="p-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors disabled:opacity-50"
+                            >
+                              <X size={15} />
+                            </button>
+                          </>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -398,7 +383,10 @@ export default function Offers() {
                 <p className="text-xs text-gray-500">
                   Listed Price:{" "}
                   <span className="font-medium text-gray-700">
-                    ₦ {formatNumberWithCommas(parseFloat(detailModal.offer.product?.price || 0))}
+                    ₦{" "}
+                    {formatNumberWithCommas(
+                      parseFloat(detailModal.offer.product?.price || 0),
+                    )}
                   </span>
                 </p>
               </div>
@@ -406,13 +394,20 @@ export default function Offers() {
 
             {/* Buyer */}
             <div className="flex flex-col gap-1">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Buyer</p>
-              <p className="font-medium">
-                {detailModal.offer.buyer?.firstName} {detailModal.offer.buyer?.lastName}
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                Buyer
               </p>
-              <p className="text-sm text-gray-500">{detailModal.offer.buyer?.email}</p>
+              <p className="font-medium">
+                {detailModal.offer.buyer?.firstName}{" "}
+                {detailModal.offer.buyer?.lastName}
+              </p>
+              <p className="text-sm text-gray-500">
+                {detailModal.offer.buyer?.email}
+              </p>
               {detailModal.offer.buyer?.phoneNumber && (
-                <p className="text-sm text-gray-500">{detailModal.offer.buyer.phoneNumber}</p>
+                <p className="text-sm text-gray-500">
+                  {detailModal.offer.buyer.phoneNumber}
+                </p>
               )}
             </div>
 
@@ -421,21 +416,29 @@ export default function Offers() {
               <div className="flex flex-col gap-1 p-3 bg-gray-50 rounded-lg">
                 <p className="text-xs text-gray-400">Listed Price</p>
                 <p className="font-semibold text-sm">
-                  ₦ {formatNumberWithCommas(parseFloat(detailModal.offer.product?.price || 0))}
+                  ₦{" "}
+                  {formatNumberWithCommas(
+                    parseFloat(detailModal.offer.product?.price || 0),
+                  )}
                 </p>
               </div>
               <div className="flex flex-col gap-1 p-3 bg-orange-50 rounded-lg">
                 <p className="text-xs text-gray-400">Offered Price</p>
                 <p className="font-semibold text-sm text-kudu-orange">
-                  ₦ {formatNumberWithCommas(parseFloat(detailModal.offer.offeredPrice))}
+                  ₦{" "}
+                  {formatNumberWithCommas(
+                    parseFloat(detailModal.offer.offeredPrice),
+                  )}
                 </p>
               </div>
               <div className="flex flex-col gap-1 p-3 bg-blue-50 rounded-lg">
                 <p className="text-xs text-gray-400">Counter Price</p>
                 <p className="font-semibold text-sm text-blue-600">
-                  {detailModal.offer.counterPrice
-                    ? `₦ ${formatNumberWithCommas(parseFloat(detailModal.offer.counterPrice))}`
-                    : <span className="text-gray-300">—</span>}
+                  {detailModal.offer.counterPrice ? (
+                    `₦ ${formatNumberWithCommas(parseFloat(detailModal.offer.counterPrice))}`
+                  ) : (
+                    <span className="text-gray-300">—</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -443,7 +446,9 @@ export default function Offers() {
             {/* Message */}
             {detailModal.offer.message && (
               <div className="flex flex-col gap-1">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Buyer's Message</p>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  Buyer's Message
+                </p>
                 <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
                   {detailModal.offer.message}
                 </p>
@@ -454,17 +459,18 @@ export default function Offers() {
             <div className="flex items-center justify-between">
               <span
                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  STATUS_COLORS[detailModal.offer.status] || "bg-gray-100 text-gray-600"
+                  STATUS_COLORS[detailModal.offer.status] ||
+                  "bg-gray-100 text-gray-600"
                 }`}
               >
-                {detailModal.offer.status.charAt(0).toUpperCase() + detailModal.offer.status.slice(1)}
+                {detailModal.offer.status.charAt(0).toUpperCase() +
+                  detailModal.offer.status.slice(1)}
               </span>
               <span className="text-xs text-gray-400">
-                {new Date(detailModal.offer.createdAt).toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {new Date(detailModal.offer.createdAt).toLocaleDateString(
+                  "en-GB",
+                  { day: "2-digit", month: "long", year: "numeric" },
+                )}
               </span>
             </div>
 
@@ -537,7 +543,10 @@ export default function Offers() {
                       required: "Counter price is required",
                       validate: (v) =>
                         !isNaN(parseFloat(v)) || "Enter a valid number",
-                      min: { value: 1, message: "Price must be greater than 0" },
+                      min: {
+                        value: 1,
+                        message: "Price must be greater than 0",
+                      },
                     })}
                   />
                 </div>
