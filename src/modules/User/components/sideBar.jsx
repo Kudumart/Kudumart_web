@@ -89,6 +89,14 @@ const ProfileSideBar = ({ close }) => {
       icon: <Star size={20} stroke="#FF6F22" />,
       route: "interestedAuctions",
       vendor: null,
+      user: true,
+    },
+    {
+      label: "My Offers",
+      icon: <Star size={20} stroke="#FF6F22" />,
+      route: "myOffers",
+      vendor: null,
+      user: true,
     },
     {
       label: "Advert",
@@ -134,12 +142,14 @@ const ProfileSideBar = ({ close }) => {
     },
   ];
 
-  const filteredItems = navItems.filter(
-    (item) =>
+  const filteredItems = navItems.filter((item) => {
+    if (isVendor && item.user) return false;
+    return (
       (isVendor && item.vendor) ||
       (!isVendor && item.vendor === false) ||
-      item.vendor === null,
-  );
+      item.vendor === null
+    );
+  });
 
   const handleVendorModal = () => {
     openModal({

@@ -28,6 +28,8 @@ import VendorServices from "../modules/User/modules/vendor-services";
 import VendorCreateService from "../modules/User/modules/vendor-services.create";
 import { VendorViewService } from "../modules/User/modules/vendor-view-service";
 import VendorEditService from "../modules/User/modules/vendor-edit-service";
+import VendorOffers from "../modules/Vendor/modules/VendorOffers";
+import MyOffers from "../modules/User/MyOffers";
 
 export const userRoutes = [
   {
@@ -84,6 +86,10 @@ export const userRoutes = [
             element: <AddNewAuctionProduct />,
           },
           {
+            path: "offers",
+            element: <VendorOffers />,
+          },
+          {
             path: "products/edit/:id",
             element: <UpdateProduct />,
           },
@@ -110,6 +116,10 @@ export const userRoutes = [
           {
             path: "interestedAuctions",
             element: <InterestedAuctions />,
+          },
+          {
+            path: "myoffers",
+            element: <MyOffers />,
           },
           {
             path: "wallet",

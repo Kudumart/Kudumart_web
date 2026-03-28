@@ -74,10 +74,16 @@ export default function VendorOffers() {
       });
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any, variables) => {
       queryClient.invalidateQueries({ queryKey: ["vendor-offers"] });
       setCounterModal({ open: false, offer: null });
       resetCounter();
+      const messages: Record<string, string> = {
+        accepted: "Offer accepted successfully.",
+        rejected: "Offer rejected.",
+        countered: "Counter offer sent successfully.",
+      };
+      toast.success(data?.message || messages[variables.status] || "Done.");
     },
     onError: (error: any) => {
       toast.error(
@@ -111,22 +117,27 @@ export default function VendorOffers() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {["", "pending", "accepted", "rejected", "countered", "completed"].map(
-            (s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => handleStatusFilter(s)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                  statusFilter === s
-                    ? "bg-kudu-orange text-white border-kudu-orange"
-                    : "bg-white text-gray-600 border-gray-300 hover:border-kudu-orange"
-                }`}
-              >
-                {s ? s.charAt(0).toUpperCase() + s.slice(1) : "All"}
-              </button>
-            ),
-          )}
+          {[
+            "",
+            "pending",
+            "accepted",
+            "rejected",
+            "countered",
+            "completed",
+          ].map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => handleStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                statusFilter === s
+                  ? "bg-kudu-orange text-white border-kudu-orange"
+                  : "bg-white text-gray-600 border-gray-300 hover:border-kudu-orange"
+              }`}
+            >
+              {s ? s.charAt(0).toUpperCase() + s.slice(1) : "All"}
+            </button>
+          ))}
           <input type="hidden" {...register("status")} />
         </div>
       </div>
