@@ -72,8 +72,9 @@ export default function Offers() {
   const { data: mineData, isLoading: mineLoading } = useQuery({
     queryKey: ["admin-offers-mine", minePage, mineStatus],
     queryFn: async () => {
+      const params = buildParams(minePage, mineStatus);
       const res = await apiClient.get(
-        `/vendor/offers?${buildParams(minePage, mineStatus)}`,
+        `/admin/offers?ownerType=admin&${params}`,
         authHeaders(),
       );
       return res.data;
@@ -131,44 +132,7 @@ export default function Offers() {
     },
   });
 
-  const vendorRespondMutation = useMutation({
-    mutationFn: async ({
-      offerId,
-      status,
-      counterPrice,
-    }: {
-      offerId: string;
-      status: string;
-      counterPrice?: number;
-    }) => {
-      const res = await apiClient.put(
-        `/vendor/offers/${offerId}`,
-        { status, ...(status === "countered" && { counterPrice }) },
-        authHeaders(),
-      );
-      return res.data;
-    },
-    onSuccess: (data: any, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-offers-mine"] });
-      setCounterModal({ open: false, offer: null });
-      resetCounter();
-      const messages: Record<string, string> = {
-        accepted: "Offer accepted.",
-        rejected: "Offer rejected.",
-        countered: "Counter offer sent.",
-      };
-      toast.success(data?.message || messages[variables.status] || "Done.");
-    },
-    onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || "Failed to respond to offer.",
-      );
-    },
-  });
-
-  // Active mutation depends on which tab is open
-  const activeMutation =
-    tab === "mine" ? vendorRespondMutation : respondMutation;
+  const activeMutation = respondMutation;
 
   const handleStatusFilter = (s: string) => {
     setStatusFilter(s);
