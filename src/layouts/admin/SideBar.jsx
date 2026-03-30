@@ -136,6 +136,13 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                     All Vendors
                   </Link>
                   <Link
+                    to={"/admin/sub-admins/roles"}
+                    onClick={() => handleMenuClick(() => handleChildren(""))}
+                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Roles
+                  </Link>
+                  <Link
                     to={"/admin/sub-admins"}
                     onClick={() => handleMenuClick(() => handleChildren(""))}
                     className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
