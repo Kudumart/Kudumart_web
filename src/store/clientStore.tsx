@@ -19,3 +19,10 @@ export const useCountrySelect = () => {
 };
 const store = getDefaultStore();
 export const countryvalue = store.get(country_atom);
+
+const perms_atom = atomWithStorage("permissions", null);
+
+export const usePermissions = () => {
+  const [perms, setPerms] = useAtom(perms_atom);
+  return { perms, setPerms };
+};
