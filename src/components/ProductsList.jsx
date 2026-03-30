@@ -142,7 +142,7 @@ const ProductListing = ({
             </div>
           ) : (
             <Link
-              to={`/${item.variants.length > 0 ? "product-dropship" : "product"}/${item.id}`}
+              to={`/${item?.variants?.length > 0 ? "product-dropship" : "product"}/${item.id}`}
               key={item.id}
               className="h-full"
             >

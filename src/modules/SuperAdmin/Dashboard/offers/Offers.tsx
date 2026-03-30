@@ -168,7 +168,8 @@ export default function Offers() {
   });
 
   // Active mutation depends on which tab is open
-  const activeMutation = tab === "mine" ? vendorRespondMutation : respondMutation;
+  const activeMutation =
+    tab === "mine" ? vendorRespondMutation : respondMutation;
 
   const handleStatusFilter = (s: string) => {
     setStatusFilter(s);
