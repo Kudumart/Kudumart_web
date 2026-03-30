@@ -282,6 +282,10 @@ export const adminRoutes = [
         path: "permissions",
         element: <Permissions />,
       },
+      // {
+      //   path: "roles",
+      //   element: <Permissions />,
+      // },
       { path: "aliexpress", element: <AliExpressDropShip /> },
       { path: "offers", element: <Offers /> },
     ],
