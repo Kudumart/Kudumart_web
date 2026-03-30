@@ -3,6 +3,7 @@ import Imgix from "react-imgix";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useModal } from "../../hooks/modal";
 import LogOutModal from "../../components/LogOut";
+import { usePermissions } from "../../store/clientStore";
 import { FaLaptop } from "react-icons/fa";
 import { IoCashOutline } from "react-icons/io5";
 import {
@@ -22,6 +23,10 @@ import {
 const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
+  const { perms } = usePermissions();
+  // null = superadmin (full access); array = sub-admin (restricted)
+  const hasPerm = (name) => perms === null || perms.some((p) => p.name === name);
+  const isSuperAdmin = perms === null;
   const [dropdownStates, setDropdownStates] = useState({
     stores: false,
     orders: false,
@@ -106,6 +111,7 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               </i>
               <span className="text-md font-semibold">Dashboard</span>
             </Link>
+            {(hasPerm("view-customers") || hasPerm("view-vendors") || isSuperAdmin) && (
             <div className="relative">
               <button
                 onClick={() => handleChildren("users")}
@@ -121,6 +127,7 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               </button>
               {dropdownStates.users && (
                 <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-50 border border-gray-200">
+                  {hasPerm("view-customers") && (
                   <Link
                     to={"/admin/all-customers"}
                     onClick={() => handleMenuClick(() => handleChildren(""))}
@@ -128,6 +135,8 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                   >
                     All Customers
                   </Link>
+                  )}
+                  {hasPerm("view-vendors") && (
                   <Link
                     to={"/admin/all-vendors"}
                     onClick={() => handleMenuClick(() => handleChildren(""))}
@@ -135,6 +144,9 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                   >
                     All Vendors
                   </Link>
+                  )}
+                  {isSuperAdmin && (
+                  <>
                   <Link
                     to={"/admin/sub-admins/roles"}
                     onClick={() => handleMenuClick(() => handleChildren(""))}
@@ -156,9 +168,13 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                   >
                     Permissions
                   </Link>
+                  </>
+                  )}
                 </div>
               )}
             </div>
+            )}
+            {hasPerm("view-products") && (
             <div className="relative">
               <button
                 onClick={() => handleChildren("products")}
@@ -212,7 +228,9 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
+            )}
             {/* New Services Section */}
+            {hasPerm("view-services") && (
             <div className="relative">
               <button
                 onClick={() => handleChildren("services")}
@@ -253,6 +271,8 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
+            )}
+            {hasPerm("view-stores") && (
             <div className="relative">
               <button
                 onClick={() => handleChildren("stores")}
@@ -291,6 +311,8 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
+            )}
+            {hasPerm("view-orders") && (
             <div className="relative">
               <button
                 onClick={() => handleChildren("orders")}
@@ -329,6 +351,7 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
+            )}
             <Link
               to={"/admin/offers"}
               onClick={() => handleMenuClick()}
@@ -343,6 +366,7 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               </i>
               <span className={`text-md font-semibold`}>Offers</span>
             </Link>
+            {hasPerm("view-transactions") && (
             <Link
               to={"/admin/transactions"}
               className={`flex items-center px-4 h-[57px] rounded-lg transition ${
@@ -356,6 +380,8 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               </i>
               <span className={`text-md font-semibold`}>Transactions</span>
             </Link>
+            )}
+            {hasPerm("view-withdrawals") && (
             <Link
               to={"/admin/withdrawal-request"}
               className={`flex items-center px-4 h-[57px] rounded-lg transition ${
@@ -371,6 +397,8 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 Withdrawal Request
               </span>
             </Link>
+            )}
+            {hasPerm("view-pages") && (
             <div className="relative">
               <button
                 onClick={() => handleChildren("pages")}
@@ -410,6 +438,8 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
+            )}
+            {hasPerm("view-jobs") && (
             <div className="relative">
               <button
                 onClick={() => handleChildren("jobs")}
@@ -433,6 +463,8 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                 </div>
               )}
             </div>
+            )}
+            {hasPerm("view-adverts") && (
             <Link
               to={"/admin/adverts"}
               className={`flex items-center px-4 h-[57px] rounded-lg transition ${
@@ -446,6 +478,7 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               </i>
               <span className={`text-md font-semibold`}>Adverts</span>
             </Link>
+            )}
 
             <div className="relative">
               <button

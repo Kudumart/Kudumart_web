@@ -3,10 +3,12 @@ import { useDispatch } from 'react-redux';
 import { Button } from '@material-tailwind/react';
 import { setCurrencyData, setIPInfo, setKuduUser } from '../reducers/userSlice';
 import { useModal } from '../hooks/modal';
+import { usePermissions } from '../store/clientStore';
 
 const LogOutModal = ({redirect, mode}) => {
     const dispatch = useDispatch();
     const { closeModal } = useModal();
+    const { setPerms } = usePermissions();
 
     const { mutate } = useApiMutation();
 
@@ -19,6 +21,7 @@ const LogOutModal = ({redirect, mode}) => {
             onSuccess: (response) => {
                 dispatch(setKuduUser(null));
                 dispatch(setCurrencyData(null));
+                setPerms(null);
                 localStorage.clear();
                 redirect();
                 closeModal();

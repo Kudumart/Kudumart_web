@@ -5,6 +5,8 @@ import useApiMutation from "../../api/hooks/useApiMutation";
 import { useDispatch } from "react-redux";
 import { setKuduUser } from "../../reducers/userSlice";
 import { isTokenValid } from "../../helpers/tokenValidator";
+import { usePermissions } from "../../store/clientStore";
+import apiClient from "../../api/apiFactory";
 
 function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,6 +39,7 @@ function AdminLogin() {
   } = useForm();
 
   const { mutate } = useApiMutation();
+  const { perms, setPerms } = usePermissions();
 
   const onSubmit = (data) => {
     setIsLoading(true);
@@ -48,26 +51,32 @@ function AdminLogin() {
       url: "/auth/admin/login",
       method: "POST",
       data: data,
-      onSuccess: (response) => {
-        console.log("✅ [AdminLogin] Login successful:", response.data);
-        console.log("🏪 [AdminLogin] Storing token and user data...");
-
-        // Store token and user data
+      onSuccess: async (response) => {
+        const userData = response.data.data;
         localStorage.setItem("kuduUserToken", response.data.token);
-        dispatch(setKuduUser(response.data.data));
+        dispatch(setKuduUser(userData));
 
-        console.log(
-          "📦 [AdminLogin] Token stored:",
-          response.data.token?.substring(0, 20) + "...",
-        );
-        console.log("👤 [AdminLogin] User data stored:", response.data.data);
+        const roleId = userData?.roleId || userData?.role?.id;
+        if (roleId) {
+          try {
+            const res = await apiClient.get(
+              `/admin/role/view/permissions?roleId=${roleId}`,
+            );
+            const data = res.data;
+            const permList =
+              data?.data?.permissions ||
+              (Array.isArray(data?.data) ? data.data : null) ||
+              (Array.isArray(data?.permissions) ? data.permissions : null) ||
+              [];
+            setPerms(permList);
+          } catch {
+            setPerms([]);
+          }
+        } else {
+          setPerms(null); // superadmin — full access
+        }
 
         setIsLoading(false);
-
-        // Force immediate redirect
-        console.log(
-          "🔄 [AdminLogin] Attempting redirect to /admin/dashboard...",
-        );
         window.location.href = "/admin/dashboard";
       },
       onError: (error) => {
