@@ -21,7 +21,6 @@ const authHeaders = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem("kuduUserToken")}` },
 });
 
-// An offer belongs to a vendor if the product has a vendorId
 const isVendorOffer = (offer: any) => !!offer?.product?.vendorId;
 
 type Tab = "all" | "mine";
@@ -257,7 +256,6 @@ export default function Offers() {
                 {[
                   "Buyer",
                   "Product",
-                  "Owner",
                   "Listed Price",
                   "Offered Price",
                   "Counter Price",
@@ -279,7 +277,7 @@ export default function Offers() {
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={10}
+                    colSpan={9}
                     className="px-4 py-12 text-center text-gray-400"
                   >
                     Loading offers...
@@ -288,7 +286,7 @@ export default function Offers() {
               ) : offers.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={10}
+                    colSpan={9}
                     className="px-4 py-12 text-center text-gray-400"
                   >
                     <div className="flex flex-col items-center gap-2">
@@ -299,7 +297,6 @@ export default function Offers() {
                 </tr>
               ) : (
                 offers.map((offer) => {
-                  const vendorOffer = isVendorOffer(offer);
                   return (
                     <tr
                       key={offer.id}
@@ -331,19 +328,6 @@ export default function Offers() {
                             {offer.product?.name}
                           </span>
                         </div>
-                      </td>
-
-                      {/* Owner */}
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            vendorOffer
-                              ? "bg-purple-100 text-purple-700"
-                              : "bg-orange-100 text-orange-700"
-                          }`}
-                        >
-                          {vendorOffer ? "Vendor" : "Admin"}
-                        </span>
                       </td>
 
                       {/* Listed Price */}
@@ -418,12 +402,8 @@ export default function Offers() {
                             <Eye size={15} />
                           </button>
 
-                          {/* "All Offers" tab: gate vendor offers; "My Offers" tab: always actionable */}
-                          {tab === "all" && vendorOffer ? (
-                            <span className="text-xs text-purple-500 font-medium whitespace-nowrap">
-                              Handled by vendor
-                            </span>
-                          ) : offer.status === "pending" ? (
+                          {/* "My Offers" tab only: show accept/counter/reject for pending offers */}
+                          {tab === "mine" && offer.status === "pending" && (
                             <>
                               <button
                                 title="Accept"
@@ -462,7 +442,7 @@ export default function Offers() {
                                 <X size={15} />
                               </button>
                             </>
-                          ) : null}
+                          )}
                         </div>
                       </td>
                     </tr>
