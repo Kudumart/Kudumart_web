@@ -8,7 +8,7 @@ import useAppState from "../../hooks/appState";
 import SwitchVendorModal from "../../modules/User/components/switchVendor";
 import FlyoutMenu from "./FlyoutMenu";
 import SearchBar from "./SearchBar";
-import { Mail, Bell, ShoppingCart } from "lucide-react";
+import { Mail, Bell, ShoppingCart, Heart } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { setKuduUser } from "../../reducers/userSlice";
 import { useNotification } from "../../api/notification";
@@ -68,6 +68,12 @@ export default function Header({ openMenu }) {
       slug: "profile/notification",
       svg: <Bell size={20} color="#5f5959" />,
       info: getUnreadNotifications(notifications),
+    },
+    {
+      value: "Bookmark",
+      slug: "profile/bookmark",
+      svg: <Heart size={20} color="#5f5959" />,
+      info: 0,
     },
   ];
 
