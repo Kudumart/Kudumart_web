@@ -229,7 +229,7 @@ export default function Offers() {
       <div className="flex border-b border-gray-200 gap-1">
         {(
           [
-            { key: "all", label: "All Offers" },
+            { key: "all", label: "Vendor Offers" },
             { key: "mine", label: "My Offers" },
           ] as { key: Tab; label: string }[]
         ).map(({ key, label }) => (
