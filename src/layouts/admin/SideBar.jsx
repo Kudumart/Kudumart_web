@@ -28,7 +28,8 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
   const { user } = useAppState();
   const isSuperAdmin = user?.role?.name === "superadmin";
   const hasPerm = (name) =>
-    isSuperAdmin || (Array.isArray(perms) && perms.some((p) => p.name === name));
+    isSuperAdmin ||
+    (Array.isArray(perms) && perms.some((p) => p.name === name));
   const [dropdownStates, setDropdownStates] = useState({
     stores: false,
     orders: false,
