@@ -490,63 +490,6 @@ const AdminRoles = () => {
         </QueryCage>
 
         {/* Permissions Table — view only, no edit/delete */}
-        <QueryCage query={permissionsQuery}>
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden mt-8">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  All Permissions
-                </h3>
-                {/* <button
-                  onClick={openCreatePermissionModal}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-                >
-                  + Add Permission
-                </button>*/}
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px]">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="text-left py-4 px-6 font-medium text-gray-900 min-w-[200px]">
-                      Permission Name
-                    </th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-900 min-w-[150px]">
-                      Date Created
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {permissions.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan="2"
-                        className="text-center py-8 text-gray-500"
-                      >
-                        No permissions found
-                      </td>
-                    </tr>
-                  ) : (
-                    permissions.map((permission, index) => (
-                      <tr
-                        key={permission.id || index}
-                        className="hover:bg-gray-50"
-                      >
-                        <td className="py-4 px-6 text-gray-900">
-                          {permission.name}
-                        </td>
-                        <td className="py-4 px-6 text-gray-600">
-                          {formatDate(permission.createdAt)}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </QueryCage>
       </div>
 
       {/* Edit Role Modal */}
