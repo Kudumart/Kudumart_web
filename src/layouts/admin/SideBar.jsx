@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useModal } from "../../hooks/modal";
 import LogOutModal from "../../components/LogOut";
 import { usePermissions } from "../../store/clientStore";
+import useAppState from "../../hooks/appState";
 import { FaLaptop } from "react-icons/fa";
 import { IoCashOutline } from "react-icons/io5";
 import {
@@ -24,9 +25,10 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
   const { perms } = usePermissions();
-  // null = superadmin (full access); array = sub-admin (restricted)
-  const hasPerm = (name) => perms === null || perms.some((p) => p.name === name);
-  const isSuperAdmin = perms === null;
+  const { user } = useAppState();
+  const isSuperAdmin = user?.role?.name === "superadmin";
+  const hasPerm = (name) =>
+    isSuperAdmin || (Array.isArray(perms) && perms.some((p) => p.name === name));
   const [dropdownStates, setDropdownStates] = useState({
     stores: false,
     orders: false,
@@ -111,246 +113,258 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               </i>
               <span className="text-md font-semibold">Dashboard</span>
             </Link>
-            {(hasPerm("view-customers") || hasPerm("view-vendors") || isSuperAdmin) && (
-            <div className="relative">
-              <button
-                onClick={() => handleChildren("users")}
-                className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-[#FFF1E9] w-full"
-              >
-                <i className="mr-5">
-                  <Users size={20} />
-                </i>
-                <span className="text-md font-semibold">Users</span>
-                <i className="ml-5 right-0">
-                  <ChevronDown size={20} />
-                </i>
-              </button>
-              {dropdownStates.users && (
-                <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-50 border border-gray-200">
-                  {hasPerm("view-customers") && (
-                  <Link
-                    to={"/admin/all-customers"}
-                    onClick={() => handleMenuClick(() => handleChildren(""))}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    All Customers
-                  </Link>
-                  )}
-                  {hasPerm("view-vendors") && (
-                  <Link
-                    to={"/admin/all-vendors"}
-                    onClick={() => handleMenuClick(() => handleChildren(""))}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    All Vendors
-                  </Link>
-                  )}
-                  {isSuperAdmin && (
-                  <>
-                  <Link
-                    to={"/admin/sub-admins/roles"}
-                    onClick={() => handleMenuClick(() => handleChildren(""))}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Roles
-                  </Link>
-                  <Link
-                    to={"/admin/sub-admins"}
-                    onClick={() => handleMenuClick(() => handleChildren(""))}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Sub Admins
-                  </Link>
-                  <Link
-                    to={"/admin/permissions"}
-                    onClick={() => handleMenuClick(() => handleChildren(""))}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Permissions
-                  </Link>
-                  </>
-                  )}
-                </div>
-              )}
-            </div>
+            {(hasPerm("view-customers") ||
+              hasPerm("view-vendors") ||
+              isSuperAdmin) && (
+              <div className="relative">
+                <button
+                  onClick={() => handleChildren("users")}
+                  className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-[#FFF1E9] w-full"
+                >
+                  <i className="mr-5">
+                    <Users size={20} />
+                  </i>
+                  <span className="text-md font-semibold">Users</span>
+                  <i className="ml-5 right-0">
+                    <ChevronDown size={20} />
+                  </i>
+                </button>
+                {dropdownStates.users && (
+                  <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-50 border border-gray-200">
+                    {hasPerm("view-customers") && (
+                      <Link
+                        to={"/admin/all-customers"}
+                        onClick={() =>
+                          handleMenuClick(() => handleChildren(""))
+                        }
+                        className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        All Customers
+                      </Link>
+                    )}
+                    {hasPerm("view-vendors") && (
+                      <Link
+                        to={"/admin/all-vendors"}
+                        onClick={() =>
+                          handleMenuClick(() => handleChildren(""))
+                        }
+                        className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        All Vendors
+                      </Link>
+                    )}
+                    {isSuperAdmin && (
+                      <>
+                        <Link
+                          to={"/admin/sub-admins/roles"}
+                          onClick={() =>
+                            handleMenuClick(() => handleChildren(""))
+                          }
+                          className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Roles
+                        </Link>
+                        <Link
+                          to={"/admin/sub-admins"}
+                          onClick={() =>
+                            handleMenuClick(() => handleChildren(""))
+                          }
+                          className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Sub Admins
+                        </Link>
+                        <Link
+                          to={"/admin/permissions"}
+                          onClick={() =>
+                            handleMenuClick(() => handleChildren(""))
+                          }
+                          className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Permissions
+                        </Link>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
             {hasPerm("view-products") && (
-            <div className="relative">
-              <button
-                onClick={() => handleChildren("products")}
-                className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
-              >
-                <i className="mr-5">
-                  <Package size={20} />
-                </i>
-                <span className="text-md font-semibold">Products</span>
-                <i className="ml-5 right-0">
-                  <ChevronDown size={20} />
-                </i>
-              </button>
-              {dropdownStates.products && (
-                <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-10">
-                  <Link
-                    to={"products-sell"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    All Products
-                  </Link>
-                  <Link
-                    to={"my-products"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    My Products
-                  </Link>
-                  <Link
-                    to={"auction-products"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Auction Products
-                  </Link>
-                  <Link
-                    to={"products-categories"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Categories
-                  </Link>
-                  <Link
-                    to={"products-categories/sub-category"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Product SubCategories
-                  </Link>
-                </div>
-              )}
-            </div>
+              <div className="relative">
+                <button
+                  onClick={() => handleChildren("products")}
+                  className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
+                >
+                  <i className="mr-5">
+                    <Package size={20} />
+                  </i>
+                  <span className="text-md font-semibold">Products</span>
+                  <i className="ml-5 right-0">
+                    <ChevronDown size={20} />
+                  </i>
+                </button>
+                {dropdownStates.products && (
+                  <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-10">
+                    <Link
+                      to={"products-sell"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      All Products
+                    </Link>
+                    <Link
+                      to={"my-products"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      My Products
+                    </Link>
+                    <Link
+                      to={"auction-products"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Auction Products
+                    </Link>
+                    <Link
+                      to={"products-categories"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Categories
+                    </Link>
+                    <Link
+                      to={"products-categories/sub-category"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Product SubCategories
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
             {/* New Services Section */}
             {hasPerm("view-services") && (
-            <div className="relative">
-              <button
-                onClick={() => handleChildren("services")}
-                className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
-              >
-                <i className="mr-5">
-                  {/* Replace with a relevant icon for services if available, e.g., a wrench or gears */}
-                  <Package size={20} />
-                </i>
-                <span className="text-md font-semibold">Services</span>
-                <i className="ml-5 right-0">
-                  <ChevronDown size={20} />
-                </i>
-              </button>
-              {dropdownStates.services && (
-                <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-10">
-                  <Link
-                    to={"services"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Services
-                  </Link>
-                  <Link
-                    to={"services/categories"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Service Categories
-                  </Link>
-                  {/* <Link
+              <div className="relative">
+                <button
+                  onClick={() => handleChildren("services")}
+                  className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
+                >
+                  <i className="mr-5">
+                    {/* Replace with a relevant icon for services if available, e.g., a wrench or gears */}
+                    <Package size={20} />
+                  </i>
+                  <span className="text-md font-semibold">Services</span>
+                  <i className="ml-5 right-0">
+                    <ChevronDown size={20} />
+                  </i>
+                </button>
+                {dropdownStates.services && (
+                  <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-10">
+                    <Link
+                      to={"services"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Services
+                    </Link>
+                    <Link
+                      to={"services/categories"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Service Categories
+                    </Link>
+                    {/* <Link
                     to={"services/sub-categories"}
                     onClick={() => handleChildren("")}
                     className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
                   >
                     Service Sub-Categories
                   </Link>*/}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
             )}
             {hasPerm("view-stores") && (
-            <div className="relative">
-              <button
-                onClick={() => handleChildren("stores")}
-                className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
-              >
-                <i className="mr-5">
-                  <Store size={20} />
-                </i>
-                <span className="text-md font-semibold">Stores</span>
-                <i className="ml-5 right-0">
-                  <ChevronDown size={20} />
-                </i>
-              </button>
-              {dropdownStates.stores && (
-                <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-10">
-                  <Link
-                    to={"/admin/all-stores"}
-                    className={`flex items-center px-4 h-[57px] rounded-lg transition ${
-                      isActive("/admin/all-stores")
-                        ? "bg-[#FFF1E9] text-black"
-                        : "text-[#7F7F7F] hover:bg-gray-100"
-                    }`}
-                  >
-                    All Stores
-                  </Link>
-                  <Link
-                    to={"/admin/my-stores"}
-                    className={`flex items-center px-4 h-[57px] rounded-lg transition ${
-                      isActive("/admin/my-stores")
-                        ? "bg-[#FFF1E9] text-black"
-                        : "text-[#7F7F7F] hover:bg-gray-100"
-                    }`}
-                  >
-                    My Stores
-                  </Link>
-                </div>
-              )}
-            </div>
+              <div className="relative">
+                <button
+                  onClick={() => handleChildren("stores")}
+                  className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
+                >
+                  <i className="mr-5">
+                    <Store size={20} />
+                  </i>
+                  <span className="text-md font-semibold">Stores</span>
+                  <i className="ml-5 right-0">
+                    <ChevronDown size={20} />
+                  </i>
+                </button>
+                {dropdownStates.stores && (
+                  <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-10">
+                    <Link
+                      to={"/admin/all-stores"}
+                      className={`flex items-center px-4 h-[57px] rounded-lg transition ${
+                        isActive("/admin/all-stores")
+                          ? "bg-[#FFF1E9] text-black"
+                          : "text-[#7F7F7F] hover:bg-gray-100"
+                      }`}
+                    >
+                      All Stores
+                    </Link>
+                    <Link
+                      to={"/admin/my-stores"}
+                      className={`flex items-center px-4 h-[57px] rounded-lg transition ${
+                        isActive("/admin/my-stores")
+                          ? "bg-[#FFF1E9] text-black"
+                          : "text-[#7F7F7F] hover:bg-gray-100"
+                      }`}
+                    >
+                      My Stores
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
             {hasPerm("view-orders") && (
-            <div className="relative">
-              <button
-                onClick={() => handleChildren("orders")}
-                className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
-              >
-                <i className="mr-5">
-                  <ShoppingBag size={20} />
-                </i>
-                <span className="text-md font-semibold">Orders</span>
-                <i className="ml-5 right-0">
-                  <ChevronDown size={20} />
-                </i>
-              </button>
-              {dropdownStates.orders && (
-                <div className="absolute left-0 w-full bg-white rounded-md shadow-lg py-3 z-10">
-                  <Link
-                    to={"/admin/orders"}
-                    className={`flex items-center px-4 h-[57px] rounded-lg transition ${
-                      isActive("/admin/orders")
-                        ? "bg-[#FFF1E9] text-black"
-                        : "text-[#7F7F7F] hover:bg-gray-100"
-                    }`}
-                  >
-                    All Orders
-                  </Link>
-                  <Link
-                    to={"/admin/customer-orders"}
-                    className={`flex items-center px-4 h-[57px] rounded-lg transition ${
-                      isActive("/admin/customer-orders")
-                        ? "bg-[#FFF1E9] text-black"
-                        : "text-[#7F7F7F] hover:bg-gray-100"
-                    }`}
-                  >
-                    Customer's Orders
-                  </Link>
-                </div>
-              )}
-            </div>
+              <div className="relative">
+                <button
+                  onClick={() => handleChildren("orders")}
+                  className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
+                >
+                  <i className="mr-5">
+                    <ShoppingBag size={20} />
+                  </i>
+                  <span className="text-md font-semibold">Orders</span>
+                  <i className="ml-5 right-0">
+                    <ChevronDown size={20} />
+                  </i>
+                </button>
+                {dropdownStates.orders && (
+                  <div className="absolute left-0 w-full bg-white rounded-md shadow-lg py-3 z-10">
+                    <Link
+                      to={"/admin/orders"}
+                      className={`flex items-center px-4 h-[57px] rounded-lg transition ${
+                        isActive("/admin/orders")
+                          ? "bg-[#FFF1E9] text-black"
+                          : "text-[#7F7F7F] hover:bg-gray-100"
+                      }`}
+                    >
+                      All Orders
+                    </Link>
+                    <Link
+                      to={"/admin/customer-orders"}
+                      className={`flex items-center px-4 h-[57px] rounded-lg transition ${
+                        isActive("/admin/customer-orders")
+                          ? "bg-[#FFF1E9] text-black"
+                          : "text-[#7F7F7F] hover:bg-gray-100"
+                      }`}
+                    >
+                      Customer's Orders
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
             <Link
               to={"/admin/offers"}
@@ -367,117 +381,117 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               <span className={`text-md font-semibold`}>Offers</span>
             </Link>
             {hasPerm("view-transactions") && (
-            <Link
-              to={"/admin/transactions"}
-              className={`flex items-center px-4 h-[57px] rounded-lg transition ${
-                isActive("/admin/transactions")
-                  ? "bg-[#FFF1E9] text-black"
-                  : "text-[#7F7F7F] hover:bg-gray-100"
-              }`}
-            >
-              <i className="mr-5">
-                <DollarSign size={20} />
-              </i>
-              <span className={`text-md font-semibold`}>Transactions</span>
-            </Link>
-            )}
-            {hasPerm("view-withdrawals") && (
-            <Link
-              to={"/admin/withdrawal-request"}
-              className={`flex items-center px-4 h-[57px] rounded-lg transition ${
-                isActive("/admin/withdrawal-request")
-                  ? "bg-[#FFF1E9] text-black"
-                  : "text-[#7F7F7F] hover:bg-gray-100"
-              }`}
-            >
-              <i className="mr-5">
-                <IoCashOutline size={20} />
-              </i>
-              <span className={`text-md font-semibold`}>
-                Withdrawal Request
-              </span>
-            </Link>
-            )}
-            {hasPerm("view-pages") && (
-            <div className="relative">
-              <button
-                onClick={() => handleChildren("pages")}
-                className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
+              <Link
+                to={"/admin/transactions"}
+                className={`flex items-center px-4 h-[57px] rounded-lg transition ${
+                  isActive("/admin/transactions")
+                    ? "bg-[#FFF1E9] text-black"
+                    : "text-[#7F7F7F] hover:bg-gray-100"
+                }`}
               >
                 <i className="mr-5">
-                  <FileText size={20} />
+                  <DollarSign size={20} />
                 </i>
-                <span className="text-md font-semibold">Pages</span>
-                <i className="ml-5 right-0">
-                  <ChevronDown size={20} />
+                <span className={`text-md font-semibold`}>Transactions</span>
+              </Link>
+            )}
+            {hasPerm("view-withdrawals") && (
+              <Link
+                to={"/admin/withdrawal-request"}
+                className={`flex items-center px-4 h-[57px] rounded-lg transition ${
+                  isActive("/admin/withdrawal-request")
+                    ? "bg-[#FFF1E9] text-black"
+                    : "text-[#7F7F7F] hover:bg-gray-100"
+                }`}
+              >
+                <i className="mr-5">
+                  <IoCashOutline size={20} />
                 </i>
-              </button>
-              {dropdownStates.pages && (
-                <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-10">
-                  <Link
-                    to={"pages/faq-category"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Faq category
-                  </Link>
-                  <Link
-                    to={"pages/faqs"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Faqs
-                  </Link>
-                  <Link
-                    to={"pages/testimonials"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Testimonial
-                  </Link>
-                </div>
-              )}
-            </div>
+                <span className={`text-md font-semibold`}>
+                  Withdrawal Request
+                </span>
+              </Link>
+            )}
+            {hasPerm("view-pages") && (
+              <div className="relative">
+                <button
+                  onClick={() => handleChildren("pages")}
+                  className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
+                >
+                  <i className="mr-5">
+                    <FileText size={20} />
+                  </i>
+                  <span className="text-md font-semibold">Pages</span>
+                  <i className="ml-5 right-0">
+                    <ChevronDown size={20} />
+                  </i>
+                </button>
+                {dropdownStates.pages && (
+                  <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-10">
+                    <Link
+                      to={"pages/faq-category"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Faq category
+                    </Link>
+                    <Link
+                      to={"pages/faqs"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Faqs
+                    </Link>
+                    <Link
+                      to={"pages/testimonials"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Testimonial
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
             {hasPerm("view-jobs") && (
-            <div className="relative">
-              <button
-                onClick={() => handleChildren("jobs")}
-                className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
-              >
-                <FaLaptop className="mr-5" size={20} />
-                <span className="text-md font-semibold">Jobs</span>
-                <i className="ml-5 right-0">
-                  <ChevronDown size={20} />
-                </i>
-              </button>
-              {dropdownStates.jobs && (
-                <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-10">
-                  <Link
-                    to={"jobs"}
-                    onClick={() => handleChildren("")}
-                    className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Jobs
-                  </Link>
-                </div>
-              )}
-            </div>
+              <div className="relative">
+                <button
+                  onClick={() => handleChildren("jobs")}
+                  className="flex items-center px-4 h-[57px] rounded-lg transition text-[#7F7F7F] hover:bg-gray-100 w-full"
+                >
+                  <FaLaptop className="mr-5" size={20} />
+                  <span className="text-md font-semibold">Jobs</span>
+                  <i className="ml-5 right-0">
+                    <ChevronDown size={20} />
+                  </i>
+                </button>
+                {dropdownStates.jobs && (
+                  <div className="absolute left-0 mt-2 w-full bg-white rounded-md shadow-lg py-3 z-10">
+                    <Link
+                      to={"jobs"}
+                      onClick={() => handleChildren("")}
+                      className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Jobs
+                    </Link>
+                  </div>
+                )}
+              </div>
             )}
             {hasPerm("view-adverts") && (
-            <Link
-              to={"/admin/adverts"}
-              className={`flex items-center px-4 h-[57px] rounded-lg transition ${
-                isActive("/admin/adverts")
-                  ? "bg-[#FFF1E9] text-black"
-                  : "text-[#7F7F7F] hover:bg-gray-100"
-              }`}
-            >
-              <i className="mr-5">
-                <Search size={20} />
-              </i>
-              <span className={`text-md font-semibold`}>Adverts</span>
-            </Link>
+              <Link
+                to={"/admin/adverts"}
+                className={`flex items-center px-4 h-[57px] rounded-lg transition ${
+                  isActive("/admin/adverts")
+                    ? "bg-[#FFF1E9] text-black"
+                    : "text-[#7F7F7F] hover:bg-gray-100"
+                }`}
+              >
+                <i className="mr-5">
+                  <Search size={20} />
+                </i>
+                <span className={`text-md font-semibold`}>Adverts</span>
+              </Link>
             )}
 
             <div className="relative">
