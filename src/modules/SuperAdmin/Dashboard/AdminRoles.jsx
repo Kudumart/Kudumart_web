@@ -497,12 +497,12 @@ const AdminRoles = () => {
                 <h3 className="text-lg font-semibold text-gray-900">
                   All Permissions
                 </h3>
-                <button
+                {/* <button
                   onClick={openCreatePermissionModal}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                 >
                   + Add Permission
-                </button>
+                </button>*/}
               </div>
             </div>
             <div className="overflow-x-auto">
