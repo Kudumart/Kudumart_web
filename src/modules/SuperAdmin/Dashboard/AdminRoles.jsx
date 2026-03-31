@@ -267,25 +267,6 @@ const AdminRoles = () => {
             </div>
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={openCreatePermissionModal}
-                className="inline-flex items-center px-5 py-2.5 bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-                Create Permission
-              </button>
-              <button
                 onClick={() => {
                   resetAssign({ roleId: "" });
                   setSelectedPermissionIds([]);
