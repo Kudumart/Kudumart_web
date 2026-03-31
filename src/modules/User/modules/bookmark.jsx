@@ -113,27 +113,25 @@ export default function BookMarkedProducts() {
                   ))}
                 </div>
               ) : (
-                displayError && (
-                  <div className="w-full">
-                    <div className="empty-store">
-                      <div className="text-center">
-                        <img
-                          src="https://res.cloudinary.com/ddj0k8gdw/image/upload/v1736780988/Shopping_bag-bro_1_vp1yri.png"
-                          alt="Empty Store Illustration"
-                          className="w-80 h-80 mx-auto"
-                        />
-                      </div>
-                      <h1 className="text-center text-lg font-bold mb-4">
-                        No Product Found
-                      </h1>
-                      <div className="text-center text-black-100 mb-6 leading-loose text-sm">
-                        Oops! It looks like we don’t have products available in
-                        your region at the moment. <br></br>Please check back
-                        later or try browsing other categories.
-                      </div>
+                <div className="w-full">
+                  <div className="empty-store">
+                    <div className="text-center">
+                      <img
+                        src="https://res.cloudinary.com/ddj0k8gdw/image/upload/v1736780988/Shopping_bag-bro_1_vp1yri.png"
+                        alt="Empty Store Illustration"
+                        className="w-80 h-80 mx-auto"
+                      />
+                    </div>
+                    <h1 className="text-center text-lg font-bold mb-4">
+                      No Product Found
+                    </h1>
+                    <div className="text-center text-black-100 mb-6 leading-loose text-sm">
+                      Oops! It looks like we don’t have products available in
+                      your region at the moment. <br></br>Please check back
+                      later or try browsing other categories.
                     </div>
                   </div>
-                )
+                </div>
               )}
             </div>
           </div>

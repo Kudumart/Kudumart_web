@@ -18,6 +18,19 @@ export function useCart() {
   });
 }
 
+export function useSavedProducts() {
+  return useQuery({
+    queryKey: ["savedProducts"],
+    queryFn: async () => {
+      if (token) {
+        const response = await apiClient.get(`/user/saved/products`);
+        return response.data.data;
+      }
+      return [];
+    },
+  });
+}
+
 export function useAddToCart() {
   const queryClient = useQueryClient();
 

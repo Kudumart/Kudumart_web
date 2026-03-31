@@ -13,7 +13,7 @@ import { useDispatch } from "react-redux";
 import { setKuduUser } from "../../reducers/userSlice";
 import { useNotification } from "../../api/notification";
 import { useConversation } from "../../api/message";
-import { useCart } from "../../api/cart";
+import { useCart, useSavedProducts } from "../../api/cart";
 import CountrySelect from "./CountrySelect";
 export default function Header({ openMenu }) {
   const { user } = useAppState();
@@ -25,6 +25,7 @@ export default function Header({ openMenu }) {
   const { data: messages } = useConversation();
   const { data: cart } = useCart();
   const cart_lent = cart?.length || 0;
+  const { data: savedProducts } = useSavedProducts();
 
   const getUnreadNotifications = (notifications) => {
     if (!notifications) return 0;
@@ -73,7 +74,7 @@ export default function Header({ openMenu }) {
       value: "Bookmark",
       slug: "profile/bookmark",
       svg: <Heart size={20} color="#5f5959" />,
-      info: 0,
+      info: savedProducts?.length || 0,
     },
   ];
 
