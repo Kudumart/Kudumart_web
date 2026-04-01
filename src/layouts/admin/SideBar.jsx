@@ -116,6 +116,9 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
             </Link>
             {(hasPerm("view-customers") ||
               hasPerm("view-vendors") ||
+              hasPerm("view-subadmin") ||
+              hasPerm("view-role") ||
+              hasPerm("view-permission") ||
               isSuperAdmin) && (
               <div className="relative">
                 <button
@@ -154,42 +157,44 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
                         All Vendors
                       </Link>
                     )}
-                    {isSuperAdmin && (
-                      <>
-                        <Link
-                          to={"/admin/sub-admins/roles"}
-                          onClick={() =>
-                            handleMenuClick(() => handleChildren(""))
-                          }
-                          className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          Roles
-                        </Link>
-                        <Link
-                          to={"/admin/sub-admins"}
-                          onClick={() =>
-                            handleMenuClick(() => handleChildren(""))
-                          }
-                          className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          Sub Admins
-                        </Link>
-                        <Link
-                          to={"/admin/permissions"}
-                          onClick={() =>
-                            handleMenuClick(() => handleChildren(""))
-                          }
-                          className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          Permissions
-                        </Link>
-                      </>
+                    {hasPerm("view-role") && (
+                      <Link
+                        to={"/admin/sub-admins/roles"}
+                        onClick={() =>
+                          handleMenuClick(() => handleChildren(""))
+                        }
+                        className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Roles
+                      </Link>
+                    )}
+                    {hasPerm("view-subadmin") && (
+                      <Link
+                        to={"/admin/sub-admins"}
+                        onClick={() =>
+                          handleMenuClick(() => handleChildren(""))
+                        }
+                        className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Sub Admins
+                      </Link>
+                    )}
+                    {hasPerm("view-permission") && (
+                      <Link
+                        to={"/admin/permissions"}
+                        onClick={() =>
+                          handleMenuClick(() => handleChildren(""))
+                        }
+                        className="block px-4 py-4 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Permissions
+                      </Link>
                     )}
                   </div>
                 )}
               </div>
             )}
-            {hasPerm("view-products") && (
+            {hasPerm("manage-products") && (
               <div className="relative">
                 <button
                   onClick={() => handleChildren("products")}
