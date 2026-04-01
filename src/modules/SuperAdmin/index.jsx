@@ -59,7 +59,7 @@ function AdminLogin() {
         const roleId = userData?.roleId || userData?.role?.id;
         if (roleId) {
           try {
-            const res = await apiClient.get(`api/admin/permissions/me`);
+            const res = await apiClient.get(`/admin/permissions/me`);
             const data = res.data;
             const permList =
               data?.data?.permissions ||
