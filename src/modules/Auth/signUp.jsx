@@ -372,7 +372,6 @@ function SignUp() {
       </div>
     </div>
   );
-  c;
 }
 
 export default SignUp;
