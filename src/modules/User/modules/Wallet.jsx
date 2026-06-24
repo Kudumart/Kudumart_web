@@ -142,76 +142,80 @@ export default function Wallet() {
         </div>
       ) : (
         <div className="mt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
-              <p className="text-blue-600 font-medium text-sm mb-2">Available (NGN)</p>
-              <p className="text-2xl font-bold">₦{Number(walletStats?.availableNGN || 0).toLocaleString()}</p>
-            </div>
-            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
-              <p className="text-green-600 font-medium text-sm mb-2">Available (USD)</p>
-              <p className="text-2xl font-bold">${Number(walletStats?.availableUSD || 0).toLocaleString()}</p>
-            </div>
-            <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100">
-              <p className="text-orange-600 font-medium text-sm mb-2">Pending (NGN)</p>
-              <p className="text-2xl font-bold">₦{Number(walletStats?.pendingNGN || 0).toLocaleString()}</p>
-            </div>
-            <div className="bg-purple-50 p-6 rounded-2xl border border-purple-100">
-              <p className="text-purple-600 font-medium text-sm mb-2">Pending (USD)</p>
-              <p className="text-2xl font-bold">${Number(walletStats?.pendingUSD || 0).toLocaleString()}</p>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-4">
-            <div className="w-full flex md:flex-row flex-col gap-3 justify-between">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="flex flex-col gap-2">
-                  <p className="text-kudu-roman-silver font-semibold text-sm md:text-base">
-                    Wallet Balance
-                  </p>
-                  <p className="text-lg md:text-2xl font-bold">
-                    {currency[0].symbol}
-                    {currency[0].name === "Naira"
-                      ? Number(profileData?.data?.wallet || 0).toLocaleString(
-                          "en-US",
-                        )
-                      : Number(
-                          profileData?.data?.dollarWallet || 0,
-                        ).toLocaleString("en-US")}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <p className="text-kudu-roman-silver font-semibold text-sm md:text-base">
-                    Pending Balance
-                  </p>
-                  <p className="text-lg md:text-2xl font-bold text-orange-400">
-                    {currency[0].symbol}
-                    {currency[0].name === "Naira"
-                      ? Number(
-                          profileData?.data?.pendingWallet || 0,
-                        ).toLocaleString("en-US")
-                      : Number(
-                          profileData?.data?.pendingDollarWallet || 0,
-                        ).toLocaleString("en-US")}
-                  </p>
-                </div>
+          {walletStats ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                <p className="text-blue-600 font-medium text-sm mb-2">Available (NGN)</p>
+                <p className="text-2xl font-bold">₦{Number(walletStats?.availableNGN || 0).toLocaleString()}</p>
               </div>
-            ) : (
-              <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                <img
-                  src="https://res.cloudinary.com/ddj0k8gdw/image/upload/v1736780988/Shopping_bag-bro_1_vp1yri.png"
-                  alt="No bank account"
-                  className="w-48 h-48 mx-auto opacity-50 mb-4"
-                />
-                <p className="text-gray-500 mb-6">No bank account added yet</p>
-                <Button
-                  className="bg-kudu-blue normal-case"
-                  onClick={() => navigate("add-account")}
-                >
-                  Add Bank Account
-                </Button>
+              <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+                <p className="text-green-600 font-medium text-sm mb-2">Available (USD)</p>
+                <p className="text-2xl font-bold">${Number(walletStats?.availableUSD || 0).toLocaleString()}</p>
               </div>
-            )}
-          </div>
+              <div className="bg-orange-50 p-6 rounded-2xl border border-orange-100">
+                <p className="text-orange-600 font-medium text-sm mb-2">Pending (NGN)</p>
+                <p className="text-2xl font-bold">₦{Number(walletStats?.pendingNGN || 0).toLocaleString()}</p>
+              </div>
+              <div className="bg-purple-50 p-6 rounded-2xl border border-purple-100">
+                <p className="text-purple-600 font-medium text-sm mb-2">Pending (USD)</p>
+                <p className="text-2xl font-bold">${Number(walletStats?.pendingUSD || 0).toLocaleString()}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4">
+              {bankData?.data?.length > 0 ? (
+                <div className="w-full flex md:flex-row flex-col gap-3 justify-between">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex flex-col gap-2">
+                      <p className="text-kudu-roman-silver font-semibold text-sm md:text-base">
+                        Wallet Balance
+                      </p>
+                      <p className="text-lg md:text-2xl font-bold">
+                        {currency[0].symbol}
+                        {currency[0].name === "Naira"
+                          ? Number(profileData?.data?.wallet || 0).toLocaleString(
+                              "en-US",
+                            )
+                          : Number(
+                              profileData?.data?.dollarWallet || 0,
+                            ).toLocaleString("en-US")}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <p className="text-kudu-roman-silver font-semibold text-sm md:text-base">
+                        Pending Balance
+                      </p>
+                      <p className="text-lg md:text-2xl font-bold text-orange-400">
+                        {currency[0].symbol}
+                        {currency[0].name === "Naira"
+                          ? Number(
+                              profileData?.data?.pendingWallet || 0,
+                            ).toLocaleString("en-US")
+                          : Number(
+                              profileData?.data?.pendingDollarWallet || 0,
+                            ).toLocaleString("en-US")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                  <img
+                    src="https://res.cloudinary.com/ddj0k8gdw/image/upload/v1736780988/Shopping_bag-bro_1_vp1yri.png"
+                    alt="No bank account"
+                    className="w-48 h-48 mx-auto opacity-50 mb-4"
+                  />
+                  <p className="text-gray-500 mb-6">No bank account added yet</p>
+                  <Button
+                    className="bg-kudu-blue normal-case"
+                    onClick={() => navigate("add-account")}
+                  >
+                    Add Bank Account
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
