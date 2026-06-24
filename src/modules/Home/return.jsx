@@ -1,4 +1,4 @@
-import "../Home/components/style.css";
+import "./components/style.css";
 
 
 const Cookies = () => {
@@ -90,7 +90,7 @@ const Cookies = () => {
                         {/* Intro Section */}
                         <div className="mt-14">
                             <p className="text-black text-base leading-8">
-                            At Kudu Mart, we strive to ensure customer satisfaction by offering a fair and transparent Return and Refund Policy. If you are not satisfied with the item you bought on Kudu Mart, please read the terms below carefully to understand your rights and responsibilities regarding how to return the item and request a refund.
+                                At Kudu Mart, we strive to ensure customer satisfaction by offering a fair and transparent Return and Refund Policy. If you are not satisfied with the item you bought on Kudu Mart, please read the terms below carefully to understand your rights and responsibilities regarding how to return the item and request a refund.
                             </p>
                         </div>
 

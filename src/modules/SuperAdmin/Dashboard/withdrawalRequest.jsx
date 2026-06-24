@@ -1,7 +1,6 @@
 import React from "react";
 import useApiMutation from "../../../api/hooks/useApiMutation";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Loader from "../../../components/Loader";
 import { dateFormat } from "../../../helpers/dateHelper";
 import Table from "../../../components/ReviewTable";
@@ -16,23 +15,30 @@ const WithdrawalRequest = () => {
   const { mutate } = useApiMutation();
 
   const [withdrawals, setWithdrawals] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setIsLoading] = useState(true);
   const { openModal, closeModal } = useModal();
+
   const status_mutate = useMutation({
     mutationFn: async (data) => {
-      let resp = await apiClient.post("/admin/withdrawal/update/status", {
+      await apiClient.post("/admin/withdrawal/update/status", {
         ...data,
       });
     },
     onSuccess: () => {
       getRequests();
+      getStats();
       closeModal();
       toast.success("Status updated successfully");
     },
+    onError: (err) => {
+      toast.error(err?.response?.data?.message || "Failed to update status");
+    }
   });
+
   const getRequests = () => {
     mutate({
-      url: `/admin/withdrawals`,
+      url: `/admin/payout/reports`,
       method: "GET",
       headers: true,
       hideToast: true,
@@ -40,13 +46,23 @@ const WithdrawalRequest = () => {
         setWithdrawals(response.data.data);
         setIsLoading(false);
       },
-      onError: () => {},
+      onError: () => {
+        setIsLoading(false);
+      },
+    });
+  };
+
+  const getStats = () => {
+    apiClient.get("/admin/payout/stats").then(res => {
+      setStats(res.data.data);
     });
   };
 
   useEffect(() => {
     getRequests();
+    getStats();
   }, []);
+
   const handleDeclineModal = (bank) => {
     openModal({
       size: "md",
@@ -58,35 +74,32 @@ const WithdrawalRequest = () => {
               let formData = new FormData(e.target);
               let note = formData.get("note");
               if (!note) {
-                toast.error("Please enter a reason for decline");
+                toast.error("Please enter a reason for rejection");
                 return;
               }
               let data = {
                 id: bank.id,
-                status: "declined",
+                status: "rejected",
                 note,
               };
               status_mutate.mutate(data);
             }}
           >
-            <h2 className="text-xl font-bold my-2">Reason for Decline</h2>
+            <h2 className="text-xl font-bold my-2 text-red-600">Reject Withdrawal</h2>
+            <p className="text-sm text-gray-500 mb-4">Please provide a reason for rejecting this payout request.</p>
             <textarea
-              className="w-full p-2 rounded-lg focus:outline-none placeholder-gray-400 text-sm border border-gray-300"
-              placeholder="Enter reason for decline"
+              className="w-full p-3 rounded-xl focus:outline-none placeholder-gray-400 text-sm border border-gray-200"
+              placeholder="Enter reason for rejection"
               rows="4"
               id="note"
               name="note"
-              onChange={(e) => {
-                // You can store the reason in a state variable here
-                // For example: setDeclineReason(e.target.value);
-              }}
             ></textarea>
-            <div className="flex w-full">
+            <div className="flex w-full mt-6">
               <button
                 disabled={status_mutate.isPending}
-                className="ml-auto bg-kudu-orange text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-300"
+                className="ml-auto bg-red-600 text-white px-8 py-2 rounded-xl hover:bg-red-700 transition duration-300 font-bold"
               >
-                Decline Request
+                Reject Request
               </button>
             </div>
           </form>
@@ -94,197 +107,188 @@ const WithdrawalRequest = () => {
       ),
     });
   };
+
   const handleSubMitModal = (bank) => {
     openModal({
       size: "md",
       content: (
         <>
           <div>
-            <h2 className="text-xl font-bold my-2">Upload Receipt</h2>
-            {/* {JSON.stringify(bank)}*/}
-            <div>
+            <h2 className="text-xl font-bold my-2 text-green-600">Approve Payout</h2>
+            <p className="text-sm text-gray-500 mb-6">Confirm payment by uploading the transfer receipt.</p>
+            <div className="border-2 border-dashed border-gray-100 rounded-2xl p-4">
               <DropZone
-                text={"Upload Receipt"}
+                text={"Upload Payment Receipt"}
                 onUpload={(e) => {
-                  console.log(e[0]);
                   let data = {
                     id: bank.id,
                     paymentReceipt: e[0],
-                    status: "accepted",
+                    status: "approved",
                   };
                   status_mutate.mutateAsync(data);
                 }}
               />
             </div>
-            <div></div>
           </div>
         </>
       ),
     });
   };
+
   const handleViewModal = (bank) => {
     openModal({
       size: "md",
       content: (
-        <>
-          <div className="grid grid-cols-2 gap-1 px-4">
-            <div className="">
-              <label className="block text-sm font-medium mt-4">
-                Bank Name
-              </label>
-              <div className="w-full p-2 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-1">
-                {bank.bankInfo.bankName}
+        <div className="p-4">
+          <h2 className="text-xl font-bold mb-6 border-b pb-2">Bank Account Details</h2>
+          <div className="grid grid-cols-2 gap-6">
+            {Object.entries(bank.bankInfo || {}).map(([key, value]) => (
+              <div key={key}>
+                <label className="block text-xs font-bold uppercase text-gray-400 mb-1">
+                  {key.replace(/([A-Z])/g, ' $1')}
+                </label>
+                <div className="text-sm font-semibold text-gray-800 break-words">
+                  {value || "---"}
+                </div>
               </div>
-            </div>
-            <div className="">
-              <label className="block text-sm font-medium mt-4">
-                Account Number
-              </label>
-              <div className="w-full p-2 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-1">
-                {bank.bankInfo.accountNumber}
-              </div>
-            </div>
-            <div className="">
-              <label className="block text-sm font-medium mt-4">
-                Account Name
-              </label>
-              <div className="w-full p-2 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-1">
-                {bank.bankInfo.accountName}
-              </div>
-            </div>
-            <div className="">
-              <label className="block text-sm font-medium mt-4">
-                Swift Code
-              </label>
-              <div className="w-full p-2 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-1">
-                {bank.bankInfo.swiftCode || "---"}
-              </div>
-            </div>
-
-            <div className="">
-              <label className="block text-sm font-medium mt-4">
-                Routing Number
-              </label>
-              <div className="w-full p-2 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-1">
-                {bank.bankInfo.routingNumber || "---"}
-              </div>
-            </div>
-
-            <div className="">
-              <label className="block text-sm font-medium mt-4">
-                Bank Address
-              </label>
-              <div className="w-full p-2 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-1">
-                {bank.bankInfo.bankAddress}
-              </div>
-            </div>
+            ))}
           </div>
-          <div className="flex justify-end w-full mt-5 gap-4">
-            <button
+          <div className="flex justify-end mt-8 pt-4 border-t">
+            <Button
               onClick={closeModal}
-              className="bg-gray-300 text-black px-4 py-2 font-medium rounded-lg"
+              className="bg-gray-100 text-gray-600 normal-case px-6 py-2 rounded-xl"
             >
-              Cancel
-            </button>
+              Close
+            </Button>
           </div>
-        </>
+        </div>
       ),
     });
   };
 
   const parseBankInfo = (bankInfo) => {
-    const params = bankInfo.split("?").reduce((acc, param) => {
+    if (!bankInfo || typeof bankInfo !== 'string') return {};
+    return bankInfo.split("?").reduce((acc, param) => {
       const [key, value] = param.split("=");
       if (key && value) acc[key] = decodeURIComponent(value);
       return acc;
     }, {});
-    return params;
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen p-6 bg-gray-50/50">
       {loading ? (
-        <div className="w-full h-screen flex items-center justify-center">
+        <div className="w-full h-[60vh] flex items-center justify-center">
           <Loader />
         </div>
       ) : (
-        <>
-          <div className="rounded-md pb-2 w-full gap-5">
-            <h2 className="text-lg font-semibold text-black-700 mb-4">
-              Withdrawal Request
-            </h2>
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-10">
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-8">Admin Payout Dashboard</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                <div className="h-10 w-10 rounded-2xl bg-orange-50 flex items-center justify-center mb-4">
+                  <span className="text-orange-600 font-bold">₦</span>
+                </div>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Pending (NGN)</p>
+                <p className="text-3xl font-black mt-2 text-gray-900">
+                  ₦{Number(stats?.find(s => s.status === 'pending' && s.currency === 'NGN')?.totalAmount || 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                <div className="h-10 w-10 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
+                  <span className="text-blue-600 font-bold">$</span>
+                </div>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Pending (USD)</p>
+                <p className="text-3xl font-black mt-2 text-gray-900">
+                  ${Number(stats?.find(s => s.status === 'pending' && s.currency === 'USD')?.totalAmount || 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                <div className="h-10 w-10 rounded-2xl bg-green-50 flex items-center justify-center mb-4">
+                  <span className="text-green-600 font-bold">✓</span>
+                </div>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Total Paid (NGN)</p>
+                <p className="text-3xl font-black mt-2 text-gray-900">
+                  ₦{Number(stats?.find(s => s.status === 'approved' && s.currency === 'NGN')?.totalAmount || 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                <div className="h-10 w-10 rounded-2xl bg-green-50 flex items-center justify-center mb-4">
+                  <span className="text-green-600 font-bold">$✓</span>
+                </div>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Total Paid (USD)</p>
+                <p className="text-3xl font-black mt-2 text-gray-900">
+                  ${Number(stats?.find(s => s.status === 'approved' && s.currency === 'USD')?.totalAmount || 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="bg-white rounded-md p-6 w-full gap-5">
-            <h2 className="text-lg font-semibold text-black-700">
-              Withdrawal Request
-            </h2>
+
+          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+            <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+              <h3 className="font-black text-gray-900 text-xl tracking-tight">Recent Payout Requests</h3>
+            </div>
             <div className="overflow-x-auto">
               <Table
                 columns={[
-                  { key: "name", label: "Name" },
-                  { key: "amount", label: "Amount" },
-                  { key: "currency", label: "Currency" },
+                  {
+                    key: "vendor",
+                    label: "Vendor",
+                    render: (v) => <div className="font-bold text-gray-900">{v?.firstName} {v?.lastName}</div>
+                  },
+                  {
+                    key: "amount",
+                    label: "Amount",
+                    render: (v, row) => <div className="font-extrabold text-gray-900">{row.currency === 'NGN' ? '₦' : '$'}{Number(v).toLocaleString()}</div>
+                  },
                   {
                     key: "createdAt",
-                    label: "Created On",
-                    render: (value) => <>{dateFormat(value, "dd MMM yyyy")}</>,
+                    label: "Requested On",
+                    render: (value) => <span className="text-gray-500 font-medium">{dateFormat(value, "dd MMM yyyy")}</span>,
                   },
                   {
                     key: "status",
                     label: "Status",
                     render: (value) => (
                       <span
-                        className={`py-1 px-3 rounded-full text-sm capitalize ${
-                          value === "accepted"
-                            ? "bg-green-100 text-green-600"
-                            : value == "declined"
-                              ? "bg-red-100 text-red-600"
-                              : "bg-gray-100 text-gray-600"
-                        }`}
+                        className={`py-1.5 px-4 rounded-full text-[10px] font-black uppercase tracking-widest ${value === "approved"
+                            ? "bg-green-100 text-green-700"
+                            : value === "rejected"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-orange-100 text-orange-700"
+                          }`}
                       >
-                        {value == "accepted" ? "paid" : value}
+                        {value === "approved" ? "Completed" : value}
                       </span>
                     ),
                   },
                 ]}
                 allData={withdrawals.map((item) => ({
                   ...item,
-                  name: `${item.vendor.firstName} ${item.vendor.lastName}`,
-                  bankInfo: parseBankInfo(item.bankInformation.bankInfo),
+                  bankInfo: parseBankInfo(item.bankInformation?.bankInfo),
                 }))}
-                data={withdrawals.map((item) => ({
-                  ...item,
-                  name: `${item.vendor.firstName} ${item.vendor.lastName}`,
-                  bankInfo: parseBankInfo(item.bankInformation.bankInfo),
-                }))}
+                data={withdrawals}
                 exportData
                 actions={[
                   {
-                    label: (row) => {
-                      return "View Bank Details";
-                    },
-                    onClick: (row) => handleViewModal(row),
+                    label: (row) => "View Bank",
+                    onClick: (row) => handleViewModal({ ...row, bankInfo: parseBankInfo(row.bankInformation?.bankInfo) }),
                   },
                   {
-                    label: (row) => {
-                      return row.status != "accepted" ? "Update Status" : null;
-                    },
+                    label: (row) => row.status === "pending" ? "Approve" : null,
                     onClick: (row) => handleSubMitModal(row),
                   },
                   {
-                    label: (row) => {
-                      return row.status != "declined" &&
-                        row.status != "accepted"
-                        ? "Decline"
-                        : null;
-                    },
+                    label: (row) => row.status === "pending" ? "Reject" : null,
                     onClick: (row) => handleDeclineModal(row),
                   },
                 ]}
               />
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

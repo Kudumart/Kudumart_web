@@ -2,14 +2,15 @@ export const DropShipNairaPayment = ({
   total_price,
   paymentKey,
   hasDropShip,
+  deliveryFee: passedDeliveryFee,
 }: {
   total_price: number;
   paymentKey: string;
   hasDropShip: boolean;
+  deliveryFee?: number;
 }) => {
   const { user } = useAppState();
   const { data: cart, isLoading, refetch } = useCart();
-  const test_key = "pk_test_77297b93cbc01f078d572fed5e2d58f4f7b518d7";
   const {
     data: deliveryFeeData,
     error: deliveryFeeError,
@@ -23,9 +24,11 @@ export const DropShipNairaPayment = ({
       );
       return response.data;
     },
+    enabled: passedDeliveryFee === undefined, // Only fetch if not passed as prop
   });
 
-  const deliveryFee = deliveryFeeData?.data?.totalDeliveryFee || 0;
+  // Use passed delivery fee if available, otherwise use fetched value
+  const deliveryFee = passedDeliveryFee !== undefined ? passedDeliveryFee : (deliveryFeeData?.data?.totalDeliveryFee || 0);
   const finalTotal = total_price + deliveryFee;
 
   const config = useMemo(
@@ -33,7 +36,7 @@ export const DropShipNairaPayment = ({
       reference: new Date().getTime().toString(),
       email: user?.email || "user@example.com", // Use actual user email
       amount: finalTotal * 100, // Amount in kobo.
-      publicKey: test_key,
+      publicKey: paymentKey,
       currency: "NGN", // Specify the currency.
     }),
     [paymentKey, finalTotal, user?.email],

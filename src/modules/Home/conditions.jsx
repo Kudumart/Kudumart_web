@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../Home/components/style.css";
+import "./components/style.css";
 
 
 const Conditions = () => {
@@ -115,51 +115,51 @@ const Conditions = () => {
                 "We may update these Terms and Conditions at any time. Changes will be posted on this page, and your continued use of our platform and service signifies your acceptance of the updated terms."
         }
     ];
-            
-return (
-    <>
-        <div className="w-full flex flex-col">
-            <section className="breadcrumb" style={{
-                backgroundImage: `url(https://res.cloudinary.com/greenmouse-tech/image/upload/v1738012617/image_3_ij6lwh.jpg)`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-            }}>
-                <div className="flex flex-col py-12">
-                    <div className="w-full flex flex-col xl:px-40 lg:pl-20 lg:pr-36 md:px-20 px-5 py-3 lg:gap-10 md:gap-8 gap-5 h-full">
-                        <h1 className="text-4xl font-bold">Terms and Conditions</h1>
-                    </div>
-                </div>
-            </section>
-            <div className="w-full flex flex-col xl:px-40 lg:pl-20 lg:pr-36 md:px-20 px-5 py-3 lg:gap-10 md:gap-8 gap-5 h-full bg-white">
-                <div className="">
-                    {/* Intro Section */}
-                    <div className="mt-14 mb-8">
-                        <p className="text-black text-lg mb-16">
-                            Welcome to Kudu Mart, by using our platform, you agree to comply with these Terms and Conditions. Please read them carefully as they govern your access to and use of Kudu Mart’s services.
-                        </p>
-                    </div>
 
-                    {/* Principles Section */}
-                    <div className="bg-white rounded-lg py-10">
-                        {principles.map((principle, index) => (
-                            <div
-                                key={index}
-                                className={`border-b pb-6 mb-6 ${index === principles.length - 1 ? "border-b-0 mb-0 pb-0" : ""}`}
-                            >
-                                <h3 className="text-lg font-semibold text-black mb-4">
-                                    {index + 1}. {principle.title}
-                                </h3>
-                                <p className="text-black leading-9" dangerouslySetInnerHTML={{ __html: principle.description }}></p>
-                            </div>
-                        ))}
+    return (
+        <>
+            <div className="w-full flex flex-col">
+                <section className="breadcrumb" style={{
+                    backgroundImage: `url(https://res.cloudinary.com/greenmouse-tech/image/upload/v1738012617/image_3_ij6lwh.jpg)`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                }}>
+                    <div className="flex flex-col py-12">
+                        <div className="w-full flex flex-col xl:px-40 lg:pl-20 lg:pr-36 md:px-20 px-5 py-3 lg:gap-10 md:gap-8 gap-5 h-full">
+                            <h1 className="text-4xl font-bold">Terms and Conditions</h1>
+                        </div>
                     </div>
+                </section>
+                <div className="w-full flex flex-col xl:px-40 lg:pl-20 lg:pr-36 md:px-20 px-5 py-3 lg:gap-10 md:gap-8 gap-5 h-full bg-white">
+                    <div className="">
+                        {/* Intro Section */}
+                        <div className="mt-14 mb-8">
+                            <p className="text-black text-lg mb-16">
+                                Welcome to Kudu Mart, by using our platform, you agree to comply with these Terms and Conditions. Please read them carefully as they govern your access to and use of Kudu Mart’s services.
+                            </p>
+                        </div>
 
+                        {/* Principles Section */}
+                        <div className="bg-white rounded-lg py-10">
+                            {principles.map((principle, index) => (
+                                <div
+                                    key={index}
+                                    className={`border-b pb-6 mb-6 ${index === principles.length - 1 ? "border-b-0 mb-0 pb-0" : ""}`}
+                                >
+                                    <h3 className="text-lg font-semibold text-black mb-4">
+                                        {index + 1}. {principle.title}
+                                    </h3>
+                                    <p className="text-black leading-9" dangerouslySetInnerHTML={{ __html: principle.description }}></p>
+                                </div>
+                            ))}
+                        </div>
+
+                    </div>
                 </div>
             </div>
-        </div>
-    </>
+        </>
 
-);
+    );
 };
 
 export default Conditions;

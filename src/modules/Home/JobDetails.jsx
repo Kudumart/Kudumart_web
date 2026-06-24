@@ -1,5 +1,5 @@
 import { FaMapMarkerAlt, FaClock } from "react-icons/fa";
-import "../Home/components/style.css";
+import "./components/style.css";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApplyJob, useViewJobClient } from "../../api/jobs";
 import Loader from "../../components/Loader";
