@@ -9,6 +9,11 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "overrides": {
+    "tailwind-scrollbar": {
+      "tailwindcss": "$tailwindcss"
+    }
+  },
   "engines": {
     "node": ">=22"
   },
