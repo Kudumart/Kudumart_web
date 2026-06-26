@@ -35,9 +35,9 @@ export default function NewProductSection() {
     <div className="w-full">
       <div className="w-full">
         <div className="bg-[#C1FFA5] flex justify-between p-6 rounded-md mb-10 cursor-pointer">
-          <h2 className="text-lg font-semibold">All Products</h2>
+          <h2 className="text-lg font-semibold">Best Products</h2>
           <Link to={"/see-all"} className="text-black font-semibold">
-            See All
+            best All
           </Link>
         </div>
         {/*<div
