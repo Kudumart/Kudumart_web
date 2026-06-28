@@ -124,7 +124,7 @@ export default function ViewProduct() {
           }
         }
       },
-      onError: () => {},
+      onError: () => { },
     });
   };
 
@@ -264,6 +264,35 @@ export default function ViewProduct() {
 
   const [copied, setCopied] = useState(false);
 
+  const isNonCartCategory = () => {
+    const subCat = (product as any)?.sub_category;
+    const category = subCat?.category;
+    
+    const categoryId = category?.id || subCat?.categoryId || "";
+    const categoryName = category?.name?.toLowerCase() || "";
+    
+    const targetIds = [
+      "de7035db-6833-4a11-a7d9-7fd5ae8c4370", // Real Estate
+      "cee73eb0-5a9f-4a34-8225-794cbfbf959f", // Vehicles
+      "3b77c173-30c8-4e2b-b78d-10713ba52b6f", // Automotives and Tools
+    ];
+    
+    if (targetIds.includes(categoryId)) {
+      return true;
+    }
+    
+    if (
+      categoryName.includes("real estate") ||
+      categoryName.includes("vehicle") ||
+      categoryName.includes("automotive") ||
+      categoryName.includes("car")
+    ) {
+      return true;
+    }
+    
+    return false;
+  };
+
   const shareUrl = `${window.location.origin}/product/${id}`;
   const shareTitle = (product as Product)?.name || "Check out this product";
 
@@ -322,9 +351,8 @@ export default function ViewProduct() {
       {
         productId: id,
         receiverId: product.vendor.id ? product.vendor.id : product.vendorId,
-        content: `Hello ${
-          product.vendor.firstName ? product.vendor.firstName : ""
-        }`,
+        content: `Hello ${product.vendor.firstName ? product.vendor.firstName : ""
+          }`,
       },
       {
         onSuccess: () => {
@@ -449,11 +477,10 @@ export default function ViewProduct() {
                         {new Array(length).fill("").map((_, i) => (
                           <span
                             key={i}
-                            className={`block h-1 cursor-pointer rounded-2xl transition-all content-[''] ${
-                              activeIndex === i
+                            className={`block h-1 cursor-pointer rounded-2xl transition-all content-[''] ${activeIndex === i
                                 ? "w-8 bg-white"
                                 : "w-4 bg-white/50"
-                            }`}
+                              }`}
                             onClick={() => setActiveIndex(i)}
                           />
                         ))}
@@ -753,7 +780,7 @@ export default function ViewProduct() {
                     </li>
                   </ul>
                 </div>
-                {product.vendor?.isVerified || product.admin ? (
+                {(product.vendor?.isVerified || product.admin) && !isNonCartCategory() ? (
                   <div className="w-full flex flex-col gap-3 py-5 md:px-8 px-4 rounded-md bg-white shadow shadow-md">
                     <>
                       <div
@@ -804,13 +831,19 @@ export default function ViewProduct() {
                   <></>
                 )}
 
-                {(product.vendor?.isVerified || product.admin) && user && (
+                {((product.vendor?.isVerified || product.admin) || isNonCartCategory()) && (
                   <div className="w-full flex flex-col gap-3 py-5 md:px-8 px-4 rounded-md bg-white shadow shadow-md">
                     <button
                       data-theme="kudu"
                       className="w-full py-2 px-4 flex justify-center gap-2 rounded-md border border-kudu-orange text-kudu-orange hover:bg-kudu-orange hover:text-white transition-colors font-medium text-sm"
                       type="button"
-                      onClick={() => setShowOfferModal(true)}
+                      onClick={() => {
+                        if (user) {
+                          setShowOfferModal(true);
+                        } else {
+                          navigate("/login");
+                        }
+                      }}
                     >
                       <Tag size={18} />
                       <span>
@@ -878,8 +911,8 @@ export default function ViewProduct() {
                 </div>
 
                 {product.vendor &&
-                !product.vendor.isVerified &&
-                !product.admin ? (
+                  !product.vendor.isVerified &&
+                  !product.admin ? (
                   <div className="w-full flex">
                     <Button
                       type="submit"
