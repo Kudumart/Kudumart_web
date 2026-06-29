@@ -268,15 +268,24 @@ export default function ViewProduct() {
     const subCat = (product as any)?.sub_category;
     const category = subCat?.category;
 
-    const categoryId = category?.id || subCat?.categoryId || "";
+    const categoryId = category?.id || subCat?.categoryId || (product as any)?.categoryId || "";
     const categoryName = category?.name?.toLowerCase() || "";
+    const productName = (product as any)?.name?.toLowerCase() || "";
+    
     const targetIds = [
       "de7035db-6833-4a11-a7d9-7fd5ae8c4370", // Real Estate
       "cee73eb0-5a9f-4a34-8225-794cbfbf959f", // Vehicles
       "3b77c173-30c8-4e2b-b78d-10713ba52b6f", // Automotives and Tools
     ];
 
+    console.log("=== Debug isNonCartCategory ===");
+    console.log("Product Name:", productName);
+    console.log("Category ID:", categoryId);
+    console.log("Category Name:", categoryName);
+    console.log("Target IDs includes Category ID:", targetIds.includes(categoryId));
+
     if (targetIds.includes(categoryId)) {
+      console.log("Match: Found Category ID in target list");
       return true;
     }
 
@@ -284,12 +293,17 @@ export default function ViewProduct() {
       categoryName.includes("real estate") ||
       categoryName.includes("vehicle") ||
       categoryName.includes("automotive") ||
-      categoryName.includes("car")
+      categoryName.includes("car") ||
+      productName.includes("car") ||
+      productName.includes("vehicle") ||
+      productName.includes("real estate") ||
+      productName.includes("automotive")
     ) {
+      console.log("Match: Found relevant keyword in category name or product name");
       return true;
     }
 
-
+    console.log("No Match: This is a standard cart product");
     return false;
   };
 
