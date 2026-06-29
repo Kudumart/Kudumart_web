@@ -267,20 +267,19 @@ export default function ViewProduct() {
   const isNonCartCategory = () => {
     const subCat = (product as any)?.sub_category;
     const category = subCat?.category;
-    
+
     const categoryId = category?.id || subCat?.categoryId || "";
     const categoryName = category?.name?.toLowerCase() || "";
-    
     const targetIds = [
       "de7035db-6833-4a11-a7d9-7fd5ae8c4370", // Real Estate
       "cee73eb0-5a9f-4a34-8225-794cbfbf959f", // Vehicles
       "3b77c173-30c8-4e2b-b78d-10713ba52b6f", // Automotives and Tools
     ];
-    
+
     if (targetIds.includes(categoryId)) {
       return true;
     }
-    
+
     if (
       categoryName.includes("real estate") ||
       categoryName.includes("vehicle") ||
@@ -289,7 +288,8 @@ export default function ViewProduct() {
     ) {
       return true;
     }
-    
+
+
     return false;
   };
 
@@ -478,8 +478,8 @@ export default function ViewProduct() {
                           <span
                             key={i}
                             className={`block h-1 cursor-pointer rounded-2xl transition-all content-[''] ${activeIndex === i
-                                ? "w-8 bg-white"
-                                : "w-4 bg-white/50"
+                              ? "w-8 bg-white"
+                              : "w-4 bg-white/50"
                               }`}
                             onClick={() => setActiveIndex(i)}
                           />
