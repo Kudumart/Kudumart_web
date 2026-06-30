@@ -99,19 +99,17 @@ export default function AIProductCreator({ onClose }) {
         {[1, 2, 3, 4].map((s) => (
           <div key={s} className="flex items-center">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                step >= s
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step >= s
                   ? "bg-orange-500 text-white"
                   : "bg-gray-200 text-gray-400"
-              }`}
+                }`}
             >
               {step > s ? <FaCheckCircle className="w-4 h-4" /> : s}
             </div>
             {s < 4 && (
               <div
-                className={`w-8 h-1 mx-1 rounded transition-all ${
-                  step > s ? "bg-orange-500" : "bg-gray-200"
-                }`}
+                className={`w-8 h-1 mx-1 rounded transition-all ${step > s ? "bg-orange-500" : "bg-gray-200"
+                  }`}
               />
             )}
           </div>
@@ -128,11 +126,11 @@ export default function AIProductCreator({ onClose }) {
           <p className="text-gray-500 mb-8 max-w-sm mx-auto leading-relaxed">
             Upload a product image and our AI will automatically extract details and fill in the listing form for you.
           </p>
-          
+
           <div className="text-left mb-4">
             <p className="text-sm font-semibold text-gray-700 uppercase tracking-wider">Select Listing Type</p>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => handleTypeSelect("auction")}
@@ -151,7 +149,7 @@ export default function AIProductCreator({ onClose }) {
               <div className="w-14 h-14 bg-gray-100 group-hover:bg-kudu-orange group-hover:text-white rounded-full flex items-center justify-center text-gray-500 mb-4 transition-colors">
                 <FaBoxOpen className="w-6 h-6" />
               </div>
-              <p className="font-bold text-gray-800 group-hover:text-kudu-orange text-lg">Fixed Price</p>
+              <p className="font-bold text-gray-800 group-hover:text-kudu-orange text-lg">Non-Auction</p>
               <p className="text-sm text-gray-500 mt-1">Standard product listing</p>
             </button>
           </div>
@@ -179,11 +177,10 @@ export default function AIProductCreator({ onClose }) {
           {/* Upload Area */}
           <div
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${
-              imagePreview
+            className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${imagePreview
                 ? "border-kudu-orange bg-orange-50/30"
                 : "border-gray-300 hover:border-kudu-orange hover:bg-orange-50/50"
-            }`}
+              }`}
           >
             {imagePreview ? (
               <div className="relative">
@@ -225,11 +222,10 @@ export default function AIProductCreator({ onClose }) {
           <button
             onClick={analyzeImage}
             disabled={!imageFile}
-            className={`mt-6 w-full py-4 px-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all ${
-              imageFile 
-                ? "bg-kudu-orange hover:bg-orange-600 shadow-md shadow-orange-500/20" 
+            className={`mt-6 w-full py-4 px-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all ${imageFile
+                ? "bg-kudu-orange hover:bg-orange-600 shadow-md shadow-orange-500/20"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
           >
             <FaMagic className="w-5 h-5" />
             Analyze Product Image
@@ -250,7 +246,7 @@ export default function AIProductCreator({ onClose }) {
           <p className="text-gray-500 max-w-sm mx-auto mb-8">
             Please wait while our advanced AI extracts product details from your image.
           </p>
-          
+
           <div className="bg-gray-50 rounded-2xl p-6 text-left max-w-xs mx-auto space-y-4">
             {["Identifying product features...", "Generating SEO-friendly title...", "Writing detailed description...", "Estimating market value..."].map((text, i) => (
               <div key={i} className="flex items-center gap-3 text-sm text-gray-600 font-medium animate-pulse" style={{ animationDelay: `${i * 0.5}s` }}>
@@ -269,7 +265,7 @@ export default function AIProductCreator({ onClose }) {
             <FaCheckCircle className="w-6 h-6" />
             <h3 className="font-bold">AI Analysis Complete!</h3>
           </div>
-          
+
           <p className="text-gray-600 mb-6 text-center leading-relaxed">
             We've extracted the following details. You can review and edit them in the next step.
           </p>
