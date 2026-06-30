@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import DropZone from "../../../components/DropZone";
-import { EditorState, convertToRaw } from "draft-js";
+import { EditorState, convertToRaw, ContentState } from "draft-js";
 import DraftEditor from "../../../components/Editor";
 import draftToHtml from "draftjs-to-html";
-import { FaTimes } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { FaTimes, FaMagic } from "react-icons/fa";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 const AddNewProduct = () => {
   const [descriptionEditor, setDescriptionEditor] = useState(() =>
@@ -18,6 +19,10 @@ const AddNewProduct = () => {
 
   const [currency, setCurrency] = useState(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isAI = searchParams.get("ai") === "1";
+  const [aiDataLoaded, setAiDataLoaded] = useState(false);
+
   const [stores, setStores] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
@@ -47,6 +52,47 @@ const AddNewProduct = () => {
       discount_price: 0,
     },
   });
+
+  // Auto-fill from AI data if ?ai=1
+  useEffect(() => {
+    if (isAI && !aiDataLoaded) {
+      const raw = sessionStorage.getItem("ai_product_data");
+      if (raw) {
+        try {
+          const data = JSON.parse(raw);
+          if (data.name) setValue("name", data.name);
+          if (data.price) setValue("price", data.price);
+          if (data.discount_price) setValue("discount_price", data.discount_price);
+          if (data.quantity) setValue("quantity", data.quantity);
+          if (data.warranty) setValue("warranty", data.warranty);
+          if (data.return_policy) setValue("return_policy", data.return_policy);
+          if (data.sku) setValue("sku", data.sku);
+          if (data.condition) setValue("condition", data.condition);
+
+          // Fill description editor
+          if (data.description) {
+            const contentState = ContentState.createFromText(data.description);
+            const editorState = EditorState.createWithContent(contentState);
+            setDescriptionEditor(editorState);
+            setValue("description", data.description);
+          }
+          // Fill specification editor
+          if (data.specification) {
+            const contentState = ContentState.createFromText(data.specification);
+            const editorState = EditorState.createWithContent(contentState);
+            setSpecificationsEditor(editorState);
+            setValue("specifications", data.specification);
+          }
+
+          setAiDataLoaded(true);
+          sessionStorage.removeItem("ai_product_data");
+          toast.success("AI has pre-filled your product details! Review and adjust as needed.");
+        } catch (e) {
+          console.error("Failed to load AI data", e);
+        }
+      }
+    }
+  }, [isAI, aiDataLoaded]);
 
   const onSubmit = (data) => {
     setDisabled(true);
@@ -171,6 +217,14 @@ const AddNewProduct = () => {
         <h2 className="text-lg font-semibold text-black-700">
           Post New Product
         </h2>
+        {isAI && (
+          <div className="flex items-center gap-2 mt-2 px-4 py-2 bg-orange-50 border border-orange-200 rounded-lg w-fit">
+            <FaMagic className="w-4 h-4 text-orange-500" />
+            <span className="text-sm text-orange-700 font-medium">
+              AI has pre-filled the details below — please review before submitting.
+            </span>
+          </div>
+        )}
       </div>
       <div className="w-full flex grow mt-3">
         <div className="shadow-xl py-2 px-5 md:w-3/4 w-full bg-white flex rounded-xl flex-col gap-10">

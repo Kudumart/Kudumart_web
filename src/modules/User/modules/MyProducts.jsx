@@ -6,6 +6,7 @@ import {
   useDeleteProductMutation,
 } from "../../../reducers/storeSlice";
 import ProductTypeModal from "./ProductTypeModal";
+import AIProductCreator from "./AIProductCreator";
 import { toast } from "react-toastify";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import Loader from "../../../components/Loader";
@@ -16,6 +17,7 @@ import { useNewModal } from "../../../components/modals/modals";
 const MyProducts = () => {
   const productOptionModal = useNewModal();
   const deleteModal = useNewModal();
+  const aiModal = useNewModal();
 
   const [productId, setProductId] = useState(null);
   const [mergedProducts, setProducts] = useState([]);
@@ -144,9 +146,15 @@ const MyProducts = () => {
           onEdit={handleEdit}
           onDelete={openDelModal}
           onCreateProduct={handleOpenModal}
+          onCreateAIProduct={() => aiModal.showModal()}
           hasStores={!!stores}
         />
       )}
+
+      {/* AI Product Creator Modal */}
+      <Modal ref={aiModal.ref} title="Create Product with AI">
+        <AIProductCreator onClose={() => aiModal.closeModal()} />
+      </Modal>
 
       {/* Product Type Selection Modal */}
       <Modal ref={productOptionModal.ref} title="Select Product Type">
