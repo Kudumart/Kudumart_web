@@ -45,13 +45,17 @@ export default function AdsComp() {
       </>
     );
   }
-  // return <>{JSON.stringify(ads)}</>;
+
+  if (!ads || ads.length === 0) {
+    return null;
+  }
+
   return (
-    <div>
-      <div className="bg-orange-100 flex justify-between p-6 rounded-md mb-2 cursor-pointer">
-        <h2 className="text-lg font-bold text-gray-800">Promotions ads</h2>
+    <div className="mt-8 mb-10 w-full flex-1">
+      <div className="bg-[#C1FFA5] flex justify-between p-6 rounded-md mb-6 cursor-pointer shadow-sm">
+        <h2 className="text-xl font-bold text-gray-900 tracking-wide">Promotions ads</h2>
       </div>
-      <div className="flex w-full flex-col md:flex-row gap-4 mt-6 mb-4">
+      <div className="flex w-full flex-col md:flex-row gap-4">
         {ads.map((ad, index) => (
           <div
             key={index}
