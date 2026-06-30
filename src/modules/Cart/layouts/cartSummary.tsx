@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import useAppState from "../../../hooks/appState";
 import { useGeoLocatorCurrency } from "../../../hooks/geoLocatorProduct";
@@ -189,6 +189,7 @@ export interface CartSummaryType {
 
 const CartSummary = ({ cart, refetch }: CartSummaryType) => {
   const currency = useGeoLocatorCurrency();
+  const [deliveryOption, setDeliveryOption] = useState<"customer" | "store">("customer");
 
   const { user } = useAppState();
   const query = useQuery<ProductChargesResponse>({
@@ -305,7 +306,7 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
 
   const onSuccess = (reference: any) => {
     const location =
-      typeof user.location !== "string"
+      user.location && typeof user.location !== "string"
         ? [user.location.city, user.location.state, user.location.country]
             .filter(Boolean)
             .join(" ")
@@ -313,7 +314,9 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
     const payload = {
       refId: reference.reference,
       shippingAddress:
-        typeof user.location === "string"
+        deliveryOption === "store"
+          ? "Pickup at Kudumart Store"
+          : typeof user.location === "string"
           ? `${JSON.parse(user.location).city} ${
               JSON.parse(user.location).state
             }, ${JSON.parse(user.location).country}`
@@ -418,8 +421,54 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
 
         <div className="divider my-0"></div>
 
-        {user.location && (
-          <div className="py-2">
+        <div className="py-2">
+          <p className="text-sm font-semibold mb-2">Delivery Option</p>
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="radio" 
+                name="deliveryOption" 
+                checked={deliveryOption === "customer"} 
+                onChange={() => setDeliveryOption("customer")}
+                className="radio radio-sm radio-primary"
+              />
+              <span className="text-sm">Home Delivery (Customer Address)</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="radio" 
+                name="deliveryOption" 
+                checked={deliveryOption === "store"} 
+                onChange={() => setDeliveryOption("store")}
+                className="radio radio-sm radio-primary"
+              />
+              <span className="text-sm">Pickup at Kudumart Store</span>
+            </label>
+          </div>
+        </div>
+
+        {deliveryOption === "store" && (
+          <div className="py-3 px-4 bg-orange-50 border border-orange-100 rounded-lg mt-2 mb-2">
+            <div className="flex items-start gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-kudu-orange mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="text-sm font-bold text-gray-800">Kudumart Store Location</p>
+                <p className="text-sm text-gray-600 mt-1 leading-relaxed">
+                  Abeokuta, Ogun State, Nigeria.<br/>
+                  <span className="text-xs text-gray-500">(Main Office)</span>
+                </p>
+                <p className="text-xs text-gray-500 mt-2 font-medium bg-white px-2 py-1 rounded inline-block border border-orange-100">
+                  Please bring your order confirmation email for pickup.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {deliveryOption === "customer" && user.location && (
+          <div className="py-2 border-t border-base-200 mt-2 pt-2">
             <div className="flex justify-between items-center mb-1">
               <p className="text-sm font-semibold">Delivery Address</p>
               <button
@@ -437,7 +486,7 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
         )}
 
         <div className="card-actions justify-center mt-4">
-          {user.location ? (
+          {deliveryOption === "store" || user.location ? (
             ipInfo.currency_name === "Naira" ? (
               <div data-theme="kudu" className="w-full">
                 <DropShipNairaPayment

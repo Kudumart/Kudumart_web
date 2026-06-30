@@ -156,6 +156,12 @@ const AccountProfile = () => {
               {user?.firstName} {user?.lastName}
             </p>
             <p className="text-gray-500 font-medium">{user?.email}</p>
+            <p className="text-gray-500 font-medium">
+              {user?.phoneNumber ? `Phone: ${user.phoneNumber}` : "No phone number added"}
+            </p>
+            <div className="mt-2 inline-block px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold w-fit">
+              {user?.accountType || "Customer"} Account
+            </div>
           </div>
         </div>
 
