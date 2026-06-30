@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import DropZone from "../../../components/DropZone";
-import { EditorState, convertToRaw } from "draft-js";
+import { EditorState, convertToRaw, ContentState } from "draft-js";
 import DraftEditor from "../../../components/Editor";
 import { renderDraftContent } from "../../../helpers/renderDraftContent";
 import { FaTimes } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 const AddNewAuctionProduct = () => {
   const [descriptionEditor, setDescriptionEditor] = useState(() =>
@@ -18,6 +19,9 @@ const AddNewAuctionProduct = () => {
 
   const [currency, setCurrency] = useState(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isAI = searchParams.get("ai") === "1";
+  const [aiDataLoaded, setAiDataLoaded] = useState(false);
   const [stores, setStores] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
@@ -46,6 +50,49 @@ const AddNewAuctionProduct = () => {
       specifications: "",
     },
   });
+
+  // Auto-fill from AI data if ?ai=1
+  useEffect(() => {
+    if (isAI && !aiDataLoaded) {
+      const raw = sessionStorage.getItem("ai_product_data");
+      if (raw) {
+        try {
+          const data = JSON.parse(raw);
+          if (data.name) setValue("name", data.name);
+          if (data.price) setValue("price", data.price);
+          if (data.condition) setValue("condition", data.condition);
+          if (data.bidIncrement) setValue("bidIncrement", data.bidIncrement);
+          if (data.maxBidsPerUser) setValue("maxBidsPerUser", data.maxBidsPerUser);
+          if (data.participantsInterestFee) setValue("participantsInterestFee", data.participantsInterestFee);
+
+          // Fill description editor
+          if (data.description) {
+            const contentState = ContentState.createFromText(data.description);
+            const editorState = EditorState.createWithContent(contentState);
+            setDescriptionEditor(editorState);
+            setValue("description", data.description);
+          }
+          // Fill specification editor
+          if (data.specification) {
+            const contentState = ContentState.createFromText(data.specification);
+            const editorState = EditorState.createWithContent(contentState);
+            setSpecificationsEditor(editorState);
+            setValue("specifications", data.specification);
+          }
+          
+          if (data.imagePreview) {
+             setFiles([data.imagePreview]);
+          }
+
+          setAiDataLoaded(true);
+          sessionStorage.removeItem("ai_product_data");
+          toast.success("AI has pre-filled your product details! Review and adjust as needed.");
+        } catch (e) {
+          console.error("Failed to load AI data", e);
+        }
+      }
+    }
+  }, [isAI, aiDataLoaded, setValue]);
 
   const onSubmit = (data) => {
     setDisabled(true);

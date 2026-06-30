@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import useApiMutation from "../../../api/hooks/useApiMutation";
@@ -82,6 +83,10 @@ const AddNewProduct = () => {
             const editorState = EditorState.createWithContent(contentState);
             setSpecificationsEditor(editorState);
             setValue("specifications", data.specification);
+          }
+
+          if (data.imagePreview) {
+             setFiles([data.imagePreview]);
           }
 
           setAiDataLoaded(true);
