@@ -48,14 +48,16 @@ export default function AdsComp() {
   // return <>{JSON.stringify(ads)}</>;
   return (
     <div>
+      <div className="bg-orange-100 flex justify-between p-6 rounded-md mb-2 cursor-pointer">
+        <h2 className="text-lg font-bold text-gray-800">Promotions ads</h2>
+      </div>
       <div className="flex w-full flex-col md:flex-row gap-4 mt-6 mb-4">
         {ads.map((ad, index) => (
           <div
             key={index}
             onClick={() => handleSelectedAd(ad)}
-            className={`group cursor-pointer md:w-full flex md:flex-row flex-col relative w-full ${
-              ads.length > 1 ? "pt-64" : "pt-96"
-            } px-4 lg:rounded-lg md:rounded-lg overflow-hidden`}
+            className={`group cursor-pointer md:w-full flex md:flex-row flex-col relative w-full ${ads.length > 1 ? "pt-64" : "pt-96"
+              } px-4 lg:rounded-lg md:rounded-lg overflow-hidden`}
           >
             <div className="absolute inset-0 flex w-full h-full rounded-lg">
               <img src={ad?.media_url} alt="" className="flex-1 object-cover" />
@@ -66,7 +68,7 @@ export default function AdsComp() {
               />*/}
 
               {/* Black hover overlay with text */}
-              <div className="absolute inset-0 bg-black/50  group-hover:bg-opacity-60 transition duration-500 ease-in-out flex items-center justify-center">
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition duration-500 ease-in-out flex items-center justify-center">
                 <span className="text-white text-lg font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                   Click to view
                 </span>
