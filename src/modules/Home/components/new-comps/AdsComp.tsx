@@ -64,15 +64,14 @@ export default function AdsComp() {
               } px-4 lg:rounded-lg md:rounded-lg overflow-hidden`}
           >
             <div className="absolute inset-0 flex w-full h-full rounded-lg">
-              <img src={ad?.media_url} alt="" className="flex-1 object-cover" />
-              {/*<Imgix
+              <Imgix
                 src={ad?.media_url}
                 sizes="100vw"
                 className="w-full h-full object-cover object-center rounded-lg transform scale-110 group-hover:scale-100 transition-all duration-700 ease-in-out"
-              />*/}
+              />
 
               {/* Black hover overlay with text */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition duration-500 ease-in-out flex items-center justify-center">
+              <div className="absolute inset-0 bg-transparent group-hover:bg-black/60 transition duration-500 ease-in-out flex items-center justify-center">
                 <span className="text-white text-lg font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                   Click to view
                 </span>
