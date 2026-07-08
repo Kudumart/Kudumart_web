@@ -727,7 +727,7 @@ export default function ViewProduct() {
                               },
                             })
                           }
-                          className="text-lg font-bold text-left hover:text-kudu-orange hover:underline transition-colors w-fit"
+                          className="text-lg font-bold text-left hover:text-kudu-orange hover:underline transition-colors w-fit cursor-pointer"
                         >
                           {product.vendor.firstName} {product.vendor.lastName}
                         </button>

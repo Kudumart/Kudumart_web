@@ -147,7 +147,15 @@ export default function NewProductListing({ data }: { data: ProductCard[] }) {
                 <h2 className="card-title text-base font-semibold mb-1 line-clamp-2">
                   {product.name}
                 </h2>
-                <p className="text-sm text-base-content/70 mb-2">
+                <p
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/store/${product.vendorId}/products`, {
+                      state: { vendor: product.vendor, store: product.store },
+                    });
+                  }}
+                  className="text-sm text-base-content/70 mb-2 cursor-pointer hover:text-primary hover:underline w-fit"
+                >
                   {product.store.name} - {product.store.location.city}
                 </p>
                 <div className="flex items-center gap-2 mb-3">
