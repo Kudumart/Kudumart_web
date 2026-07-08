@@ -717,9 +717,20 @@ export default function ViewProduct() {
                         />
                       </div>
                       <div className="flex flex-col justify-center gap-1">
-                        <span className="text-lg font-bold">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(`/store/${product.vendor.id}/products`, {
+                              state: {
+                                vendor: product.vendor,
+                                store: product.store,
+                              },
+                            })
+                          }
+                          className="text-lg font-bold text-left hover:text-kudu-orange hover:underline transition-colors w-fit"
+                        >
                           {product.vendor.firstName} {product.vendor.lastName}
-                        </span>
+                        </button>
                         <div className="flex gap-2 w-full">
                           {product.vendor.isVerified ? (
                             <span className="py-2 px-4 gap-1 rounded-full flex bg-[rgba(52,168,83,1)] text-white">

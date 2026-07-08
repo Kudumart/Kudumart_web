@@ -1,6 +1,7 @@
 import LandingLayout from "../layouts/landing";
 import ViewProduct from "../modules/Products/viewProduct";
 import CategoriesProduct from "../modules/Products/categoriesProduct";
+import VendorStorefront from "../modules/Products/vendorStorefront";
 import ErrorBoundary from "../components/ErrorBoundary";
 
 export const productRoutes = [
@@ -16,7 +17,11 @@ export const productRoutes = [
             {
                 path: 'products/categories/:id/:name',
                 element: <CategoriesProduct />
-            }        
+            },
+            {
+                path: 'store/:vendorId/products',
+                element: <VendorStorefront />
+            }
         ],
     },
 ];
