@@ -17,11 +17,32 @@ const SubscriptionTable = ({ data, refetch }) => {
     const { openModal, closeModal } = useModal();
     const { user } = useAppState();
     const [selectedSubscription, setSelectedSub] = useState({});
+    const [dynamicPaystackKey, setDynamicPaystackKey] = useState("");
 
     const { mutate } = useApiMutation();
 
-    const paymentKey = paystackKey;
+    useEffect(() => {
+        mutate({
+            url: "/payment/gateway",
+            method: "GET",
+            headers: true,
+            hideToast: true,
+            onSuccess: (response) => {
+                const gateways = response?.data?.data || response?.data;
+                if (Array.isArray(gateways)) {
+                    const paystackGw = gateways.find(
+                        (gw) => gw.name?.toLowerCase().includes("paystack") && (gw.isActive !== false)
+                    );
+                    if (paystackGw && paystackGw.publicKey) {
+                        setDynamicPaystackKey(paystackGw.publicKey);
+                    }
+                }
+            },
+            onError: () => {}
+        });
+    }, []);
 
+    const paymentKey = dynamicPaystackKey || paystackKey;
 
     // Callback when the payment modal is closed.
     const onClose = () => {
