@@ -96,7 +96,7 @@ const SubscriptionTable = ({ data, refetch }) => {
                                     email: user?.email || "",
                                     firstname: user?.email || "",
                                     amount: planObj.amount * 100,
-                                    publicKey: paymentKey,
+                                    publicKey: paymentKey || "pk_test_7d064a27402042d09271bb7e492c56882cd6c7a9",
                                     currency: "NGN",
                                     metadata: {
                                         custom_fields: [
