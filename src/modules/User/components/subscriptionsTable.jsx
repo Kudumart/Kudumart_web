@@ -72,10 +72,21 @@ const SubscriptionTable = ({ data, refetch }) => {
                             <PaymentButton
                                 config={{
                                     reference: new Date().getTime().toString(),
-                                    email: user?.email || "user@example.com",
+                                    email: user?.email || "",
+                                    firstname: user?.firstName || "",
+                                    lastname: user?.lastName || "",
                                     amount: planObj.amount * 100,
                                     publicKey: paymentKey,
                                     currency: "NGN",
+                                    metadata: {
+                                        custom_fields: [
+                                            {
+                                                display_name: "Customer Email",
+                                                variable_name: "customer_email",
+                                                value: user?.email || ""
+                                            }
+                                        ]
+                                    }
                                 }}
                                 onSuccess={handlePaymentSuccess} // Use local handler
                                 onClose={onClose}
