@@ -83,7 +83,7 @@ const VendorStorefront = () => {
                   )}
                 </div>
                 {store?.location && (
-                  <span className="text-sm text-white">
+                  <span className="text-sm text-gray-600">
                     {store.location.address}, {store.location.city},{" "}
                     {store.location.state}, {store.location.country}
                   </span>

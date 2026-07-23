@@ -72,7 +72,7 @@ const SubscriptionTable = ({ data, refetch }) => {
                             <PaymentButton
                                 config={{
                                     reference: new Date().getTime().toString(),
-                                    email: "greenmousedev@gmail.com",
+                                    email: user?.email || "user@example.com",
                                     amount: planObj.amount * 100,
                                     publicKey: paymentKey,
                                     currency: "NGN",
