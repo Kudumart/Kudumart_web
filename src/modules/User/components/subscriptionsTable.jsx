@@ -89,7 +89,7 @@ const SubscriptionTable = ({ data, refetch }) => {
                         </p>
                     </div>
                     <div className="flex justify-center mt-5 gap-4">
-                        {ipInfo.currency_name === 'Naira' ?
+                        {(!planObj?.currency || planObj?.currency?.name === 'Naira' || ipInfo?.currency_name === 'Naira' || ipInfo?.currency_name !== 'Usd') ?
                             <PaymentButton
                                 config={{
                                     reference: new Date().getTime().toString(),

@@ -14,9 +14,8 @@ const Subscription = () => {
 
   useEffect(() => {
     if (subscriptions) {
-      const filteredSubs = ipInfo.currency_name === 'Naira' ? subscriptions.data.filter((item) => item.currency?.name === 'Naira' || !item.currency) :
-        subscriptions.data.filter((item) => item.currency?.name === 'Usd' || !item.currency)
-      setSubscriptionPlans(filteredSubs);
+      const filteredSubs = subscriptions.data.filter((item) => item.currency?.name === 'Naira' || !item.currency || item.currency?.name !== 'Usd');
+      setSubscriptionPlans(filteredSubs.length > 0 ? filteredSubs : subscriptions.data);
       setLoading(false);
     }
   }, [subscriptions]);
