@@ -94,8 +94,6 @@ const SubscriptionTable = ({ data, refetch }) => {
                                 config={{
                                     reference: new Date().getTime().toString(),
                                     email: user?.email || "",
-                                    firstname: user?.firstName || "",
-                                    lastname: user?.lastName || "",
                                     amount: planObj.amount * 100,
                                     publicKey: paymentKey,
                                     currency: "NGN",
