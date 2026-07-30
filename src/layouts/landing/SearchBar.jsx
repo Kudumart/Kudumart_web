@@ -154,7 +154,7 @@ const SearchBar = () => {
         <ul
           id="search-autocomplete-list"
           role="listbox"
-          className="absolute top-full left-0 mt-2 w-full bg-white text-black rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50 max-h-96 overflow-y-auto"
+          className="absolute top-full left-0 mt-2 w-full bg-white text-black rounded-lg shadow-xl border border-gray-100 overflow-hidden z-[9999] max-h-96 overflow-y-auto"
         >
           {suggestions.map((product, index) => {
             const price = parseFloat(product.price);
