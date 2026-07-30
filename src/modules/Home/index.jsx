@@ -97,7 +97,7 @@ export default function NewHome() {
 
       const categoriesRequest = new Promise((resolve, reject) => {
         mutate({
-          url: `/categories`,
+          url: `/categories?activeOnly=true`,
           method: "GET",
           headers: true,
           hideToast: true,

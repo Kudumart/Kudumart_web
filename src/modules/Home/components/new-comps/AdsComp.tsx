@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../../../../api/apiFactory";
 import { useCountrySelect } from "../../../../store/clientStore";
-import { useModal } from "../../../../hooks/modal";
+import { goToAdvert } from "../../../../helpers/advertLink";
 import Imgix from "react-imgix";
 import Loader from "../../../../components/Loader";
 
 export default function AdsComp() {
   const { country } = useCountrySelect();
+  const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
     queryKey: ["products-home", country.value],
@@ -19,25 +21,8 @@ export default function AdsComp() {
       return resp.data;
     },
   });
-  const { openModal } = useModal();
   const ads = data?.data || [];
-  const handleSelectedAd = (ad) => {
-    openModal({
-      size: "lg",
-      content: (
-        <div
-          className="relative bg-white rounded-lg p-4 max-w-5xl w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <img
-            src={ad?.media_url}
-            sizes="100vw"
-            className="w-full h-auto max-h-screen object-contain rounded-sm"
-          />
-        </div>
-      ),
-    });
-  };
+  const handleSelectedAd = (ad) => goToAdvert(ad, navigate);
   if (isLoading) {
     return (
       <>

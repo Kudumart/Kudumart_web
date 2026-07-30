@@ -30,6 +30,7 @@ import {
   Check,
   X,
   Tag,
+  Zap,
 } from "lucide-react";
 import SafeHTML from "../../helpers/safeHTML";
 import { IoCart, IoChatbox } from "react-icons/io5";
@@ -226,6 +227,8 @@ export default function ViewProduct() {
     if (refId) {
       setPendingCheckout(true);
       setShowOfferModal(true);
+    } else if (searchParams.get("offer") === "1" && user) {
+      setShowOfferModal(true);
     }
   }, []);
 
@@ -248,6 +251,17 @@ export default function ViewProduct() {
     }
   };
 
+  const handleBuyNow = () => {
+    if (user) {
+      const payload = { productId: id, quantity };
+      addItemToCart(payload, {
+        onSuccess: () => navigate("/cart"),
+      });
+    } else {
+      navigate("/login");
+    }
+  };
+
   const handleIncrease = () => {
     setQuantity((prevState) => prevState + 1);
     setDisabled(false);
@@ -264,48 +278,12 @@ export default function ViewProduct() {
 
   const [copied, setCopied] = useState(false);
 
-  const isNonCartCategory = () => {
-    const subCat = (product as any)?.sub_category;
-    const category = subCat?.category;
-
-    const categoryId = category?.id || subCat?.categoryId || (product as any)?.categoryId || "";
-    const categoryName = category?.name?.toLowerCase() || "";
-    const productName = (product as any)?.name?.toLowerCase() || "";
-    
-    const targetIds = [
-      "de7035db-6833-4a11-a7d9-7fd5ae8c4370", // Real Estate
-      "cee73eb0-5a9f-4a34-8225-794cbfbf959f", // Vehicles
-      "3b77c173-30c8-4e2b-b78d-10713ba52b6f", // Automotives and Tools
-    ];
-
-    console.log("=== Debug isNonCartCategory ===");
-    console.log("Product Name:", productName);
-    console.log("Category ID:", categoryId);
-    console.log("Category Name:", categoryName);
-    console.log("Target IDs includes Category ID:", targetIds.includes(categoryId));
-
-    if (targetIds.includes(categoryId)) {
-      console.log("Match: Found Category ID in target list");
-      return true;
-    }
-
-    if (
-      categoryName.includes("real estate") ||
-      categoryName.includes("vehicle") ||
-      categoryName.includes("automotive") ||
-      categoryName.includes("car") ||
-      productName.includes("car") ||
-      productName.includes("vehicle") ||
-      productName.includes("real estate") ||
-      productName.includes("automotive")
-    ) {
-      console.log("Match: Found relevant keyword in category name or product name");
-      return true;
-    }
-
-    console.log("No Match: This is a standard cart product");
-    return false;
-  };
+  // The backend is the single source of truth for whether this product can be
+  // added to a cart or should be offer/inquiry-only (see getProductPurchaseType
+  // in the API). Reading it here instead of re-deriving it from category
+  // name/id keeps the detail page, listing cards, and the cart endpoint from
+  // ever disagreeing with each other.
+  const isNonCartCategory = () => (product as any)?.purchaseType === "offer";
 
   const shareUrl = `${window.location.origin}/product/${id}`;
   const shareTitle = (product as Product)?.name || "Check out this product";
@@ -849,6 +827,18 @@ export default function ViewProduct() {
                           <ShoppingCart />
                         </span>
                         <span className="flex ">Add to Cart</span>
+                      </button>
+                      <button
+                        data-theme="kudu"
+                        className="w-full py-2 px-4 flex justify-center gap-2 rounded-md bg-kudu-orange text-white hover:opacity-90 transition-opacity font-medium text-sm"
+                        type="button"
+                        onClick={() => handleBuyNow()}
+                        disabled={disabled}
+                      >
+                        <span className="flex ">
+                          <Zap size={18} />
+                        </span>
+                        <span className="flex ">Buy Now</span>
                       </button>
                     </>
                   </div>

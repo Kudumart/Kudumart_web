@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Loader from "../../../components/Loader";
 import useApiMutation from "../../../api/hooks/useApiMutation";
-import ProductListing from "../../../components/ProductsList";
+import ProductCardActions from "../../../components/ProductCardActions";
 import { Link } from "react-router-dom";
 
 export default function BookMarkedProducts() {
@@ -109,6 +109,9 @@ export default function BookMarkedProducts() {
                           </span>
                         </div>
                       </Link>
+                      <div className="px-3 pb-3">
+                        <ProductCardActions product={item} />
+                      </div>
                     </div>
                   ))}
                 </div>

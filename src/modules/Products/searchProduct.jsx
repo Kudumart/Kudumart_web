@@ -1,62 +1,37 @@
-import { useEffect, useState } from "react";
-import useApiMutation from "../../api/hooks/useApiMutation";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ProductListing from "../../components/ProductsList";
 import { useSearchParams } from "react-router-dom";
 import Loader from "../../components/Loader";
 import ShoppingExperience from "../Home/components/ShoppingExperience";
-import { useCountrySelect } from "../../store/clientStore";
+import apiClient from "../../api/apiFactory";
 import SearchServices from "./new_components/SearchServices";
 
 const tab_list = ["product", "service"];
 const SearchProduct = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("product");
-  const { country } = useCountrySelect();
   const [searchParams] = useSearchParams();
 
   // Get single parameter
   const searchQuery = searchParams.get("q") || "";
 
-  const { mutate } = useApiMutation();
-
-  useEffect(() => {
-    fetchData();
-  }, [country.value]);
-  // Fetch products from API
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const productRequest = new Promise((resolve, reject) => {
-        mutate({
-          url: `/products?name=${searchQuery}&country=${country.value}`,
-          method: "GET",
-          hideToast: true,
-          onSuccess: (response) => resolve(response.data?.data || []),
-          onError: reject,
-        });
+  const { data: groups = [], isLoading: loading } = useQuery({
+    queryKey: ["search-grouped", searchQuery],
+    queryFn: async () => {
+      const resp = await apiClient.get("/products/search-grouped", {
+        params: { q: searchQuery },
       });
+      return resp.data?.data || [];
+    },
+    enabled: activeTab === "product" && !!searchQuery,
+  });
 
-      const [productsData] = await Promise.all([productRequest]);
-
-      if (!productsData || productsData.length === 0) {
-        console.warn("No products found.");
-        setProducts([]);
-        return;
-      }
-
-      setProducts(productsData);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
+  const scrollToSection = (subCategoryId) => {
+    const el = document.getElementById(`search-section-${subCategoryId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
-
-  // Fetch data on component mount
-  useEffect(() => {
-    fetchData();
-  }, [searchQuery]);
 
   return (
     <>
@@ -105,9 +80,42 @@ const SearchProduct = () => {
               <Loader />
             </div>
           ) : activeTab === "product" ? (
-            products.length > 0 ? (
-              <div className="w-full flex mt-0">
-                <ProductListing productsArr={products} />
+            groups.length > 0 ? (
+              <div className="w-full flex flex-col md:flex-row gap-6 mt-0">
+                {/* Left sidebar: matching categories, clicking scrolls to its section */}
+                <div className="md:w-64 w-full shrink-0">
+                  <div className="md:sticky md:top-24 flex flex-col gap-1 bg-white border border-gray-100 rounded-lg p-4 shadow-sm">
+                    <h2 className="text-sm font-bold uppercase text-gray-500 mb-2">
+                      Matching Categories
+                    </h2>
+                    {groups.map(({ subCategory }) => (
+                      <button
+                        key={subCategory.id}
+                        type="button"
+                        onClick={() => scrollToSection(subCategory.id)}
+                        className="text-left text-sm py-2 px-2 rounded-md hover:bg-kudu-light-blue hover:text-kudu-orange transition-colors"
+                      >
+                        {subCategory.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Right side: every matching category's products, sectioned */}
+                <div className="flex-1 flex flex-col gap-10">
+                  {groups.map(({ subCategory, products: sectionProducts }) => (
+                    <div
+                      key={subCategory.id}
+                      id={`search-section-${subCategory.id}`}
+                      className="scroll-mt-24"
+                    >
+                      <h3 className="text-lg font-bold mb-3">
+                        {subCategory.name}
+                      </h3>
+                      <ProductListing productsArr={sectionProducts} />
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="empty-store mt-20">

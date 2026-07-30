@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { formatNumberWithCommas } from "../helpers/helperFactory";
+import ProductCardActions from "./ProductCardActions";
 
 const ProductListing = ({
   productsArr = [],
@@ -126,12 +127,13 @@ const ProductListing = ({
                     </p>
                   )}
 
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-2 mb-2">
                     <p className="text-sm text-kudu-roman-silver">
                       Qty Available: {item.quantity}
                     </p>
                   </div>
                 </div>
+                <ProductCardActions product={item} />
               </div>
             </div>
           );

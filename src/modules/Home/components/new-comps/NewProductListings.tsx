@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import ProductCardActions from "../../../../components/ProductCardActions";
 
 interface ProductCard {
   additional_images: string[];
@@ -170,7 +171,7 @@ export default function NewProductListing({ data }: { data: ProductCard[] }) {
                     </span>
                   )}
                 </div>
-                <div className="card-actions justify-start gap-2 text-xs">
+                <div className="card-actions justify-start gap-2 text-xs mb-3">
                   <span className="px-2 py-1 border border-base-300 rounded">
                     {product.condition}
                   </span>
@@ -178,6 +179,7 @@ export default function NewProductListing({ data }: { data: ProductCard[] }) {
                     Qty: {product.quantity}
                   </span>
                 </div>
+                <ProductCardActions product={product} />
               </div>
             </div>
           );

@@ -43,7 +43,7 @@ export function useAddToCart() {
       toast.success(response.data.message);
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error?.response?.data?.message || error.message);
     },
   });
 }
@@ -60,7 +60,7 @@ export function useRemoveFromCart() {
       toast.success(response.data.message);
     },
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error?.response?.data?.message || error.message);
     },
   });
 }

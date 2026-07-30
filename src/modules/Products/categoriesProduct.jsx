@@ -80,7 +80,7 @@ const CategoriesProduct = () => {
         // Fetch categories
         const categoriesData = await new Promise((resolve, reject) => {
           mutate({
-            url: `/category/sub-categories?categoryId=${id}`,
+            url: `/category/sub-categories?categoryId=${id}&activeOnly=true`,
             method: "GET",
             headers: true,
             hideToast: true,

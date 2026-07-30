@@ -1,32 +1,16 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ProductListing from "../../../components/ProductsList";
 import Imgix from "react-imgix";
 import { useGeoLocatorProduct } from "../../../hooks/geoLocatorProduct";
-import { useModal } from "../../../hooks/modal";
+import { goToAdvert } from "../../../helpers/advertLink";
 
 const TrendingProducts = ({ productsArr, ads }) => {
 
     const filteredProducts = useGeoLocatorProduct(productsArr);
 
+    const navigate = useNavigate();
 
-    const { openModal } = useModal();
-
-
-    const handleSelectedAd = (ad) => {
-        openModal({
-            size: "lg",
-            content: (<div
-                className="relative bg-white rounded-lg p-4 max-w-5xl w-full"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <Imgix
-                    src={ad.media_url}
-                    sizes="100vw"
-                    className="w-full h-auto max-h-screen object-contain rounded-sm"
-                />
-            </div>)
-        })
-    }
+    const handleSelectedAd = (ad) => goToAdvert(ad, navigate);
 
 
 
