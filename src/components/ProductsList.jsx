@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { formatNumberWithCommas } from "../helpers/helperFactory";
+import { handleImageError } from "../helpers/imageFallback";
 import ProductCardActions from "./ProductCardActions";
 
 const ProductListing = ({
@@ -70,6 +71,7 @@ const ProductListing = ({
                 <img
                   src={item.image_url}
                   alt={item.name}
+                  onError={handleImageError}
                   className="w-full h-full object-cover rounded-md"
                 />
 

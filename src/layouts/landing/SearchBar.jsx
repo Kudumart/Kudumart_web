@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "../../api/apiFactory";
 import { formatNumberWithCommas } from "../../helpers/helperFactory";
+import { handleImageError } from "../../helpers/imageFallback";
 
 const AUTOCOMPLETE_MIN_CHARS = 2;
 const AUTOCOMPLETE_DEBOUNCE_MS = 250;
@@ -88,17 +89,30 @@ const SearchBar = () => {
     navigate(`/catalog?q=${encodeURIComponent(data.search)}`);
   };
 
+  const goToAllResults = () => {
+    setIsOpen(false);
+    navigate(`/catalog?q=${encodeURIComponent(trimmedQuery)}`);
+  };
+
+  // The "View all results" row is an extra, keyboard-navigable item appended
+  // after the suggestions, so arrow keys can reach it too.
+  const totalNavItems = suggestions.length + 1;
+  const viewAllIndex = suggestions.length;
+
   const handleKeyDown = (e) => {
     if (!showDropdown) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((prev) => (prev + 1) % suggestions.length);
+      setActiveIndex((prev) => (prev + 1) % totalNavItems);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((prev) => (prev <= 0 ? suggestions.length - 1 : prev - 1));
+      setActiveIndex((prev) => (prev <= 0 ? totalNavItems - 1 : prev - 1));
     } else if (e.key === "Enter") {
-      if (activeIndex >= 0 && suggestions[activeIndex]) {
+      if (activeIndex === viewAllIndex) {
+        e.preventDefault();
+        goToAllResults();
+      } else if (activeIndex >= 0 && suggestions[activeIndex]) {
         e.preventDefault();
         goToProduct(suggestions[activeIndex]);
       }
@@ -181,9 +195,10 @@ const SearchBar = () => {
                 <img
                   src={product.image_url || "https://picsum.photos/60"}
                   alt={product.name}
+                  onError={handleImageError}
                   className="w-10 h-10 rounded-md object-cover shrink-0"
                 />
-                <div className="flex flex-col min-w-0">
+                <div className="flex flex-col min-w-0 flex-1">
                   <span className="text-sm truncate">
                     {highlightMatch(product.name, trimmedQuery)}
                   </span>
@@ -192,9 +207,29 @@ const SearchBar = () => {
                     {formatNumberWithCommas(hasDiscount ? discountPrice : price)}
                   </span>
                 </div>
+                {product?.sub_category?.name && (
+                  <span className="text-xs text-gray-400 shrink-0 px-2 py-1 bg-gray-50 rounded-full">
+                    {product.sub_category.name}
+                  </span>
+                )}
               </li>
             );
           })}
+
+          <li
+            role="option"
+            aria-selected={activeIndex === viewAllIndex}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              goToAllResults();
+            }}
+            onMouseEnter={() => setActiveIndex(viewAllIndex)}
+            className={`px-4 py-3 text-sm font-semibold text-center text-kudu-orange border-t border-gray-100 cursor-pointer transition-colors ${
+              activeIndex === viewAllIndex ? "bg-kudu-light-blue" : "hover:bg-gray-50"
+            }`}
+          >
+            View all results for &quot;{trimmedQuery}&quot;
+          </li>
         </ul>
       )}
     </div>

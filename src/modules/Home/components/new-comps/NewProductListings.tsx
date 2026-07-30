@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import ProductCardActions from "../../../../components/ProductCardActions";
+import { handleImageError } from "../../../../helpers/imageFallback";
 
 interface ProductCard {
   additional_images: string[];
@@ -131,6 +132,7 @@ export default function NewProductListing({ data }: { data: ProductCard[] }) {
                 <img
                   src={product.image_url || "https://picsum.photos/400/225"}
                   alt={product.name}
+                  onError={handleImageError}
                   className="w-full h-full object-cover"
                 />
                 {hasValidDiscount && (

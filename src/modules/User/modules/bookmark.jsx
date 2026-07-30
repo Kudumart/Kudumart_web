@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Loader from "../../../components/Loader";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import ProductCardActions from "../../../components/ProductCardActions";
+import { handleImageError } from "../../../helpers/imageFallback";
 import { Link } from "react-router-dom";
 
 export default function BookMarkedProducts() {
@@ -71,6 +72,7 @@ export default function BookMarkedProducts() {
                           <img
                             src={item.image_url}
                             alt={item.name}
+                            onError={handleImageError}
                             className="w-full md:h-[200px] h-[200px] object-cover rounded-md"
                           />
                         </div>
