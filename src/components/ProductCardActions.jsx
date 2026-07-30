@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ShoppingCart, Zap, Tag, PhoneIcon, Eye } from "lucide-react";
+import { ShoppingCart, Tag, PhoneIcon, Eye } from "lucide-react";
 import useAppState from "../hooks/appState";
 import { useAddToCart } from "../api/cart";
 
@@ -16,7 +16,8 @@ const stop = (e) => {
 //  - Dropship product     -> "View Details" (SKU must be chosen on the product page)
 //  - Unverified vendor    -> "Contact Seller" (goes to the product page's contact flow)
 //  - Offer-only category  -> "Request an Offer"
-//  - Otherwise            -> "Add to Cart" + "Buy Now"
+//  - Otherwise            -> "Add to Cart" only — Buy Now is intentionally
+//    limited to the product detail page (viewProduct.tsx), not listing cards.
 export default function ProductCardActions({ product, className = "" }) {
   const navigate = useNavigate();
   const { user } = useAppState();
@@ -94,29 +95,16 @@ export default function ProductCardActions({ product, className = "" }) {
   }
 
   return (
-    <div className={`flex gap-2 ${className}`}>
+    <div className={`flex ${className}`}>
       <button
         type="button"
         onClick={requireLogin(() =>
           addItemToCart({ productId: product.id, quantity: 1 }),
         )}
-        className="flex-1 py-2 px-3 flex items-center justify-center gap-2 rounded-md border border-kudu-orange text-kudu-orange hover:bg-kudu-orange hover:text-white transition-colors text-sm font-medium"
+        className="w-full py-2 px-3 flex items-center justify-center gap-2 rounded-md bg-kudu-orange text-white hover:opacity-90 transition-opacity text-sm font-medium"
       >
         <ShoppingCart size={16} />
         Add to Cart
-      </button>
-      <button
-        type="button"
-        onClick={requireLogin(() =>
-          addItemToCart(
-            { productId: product.id, quantity: 1 },
-            { onSuccess: () => navigate("/cart") },
-          ),
-        )}
-        className="flex-1 py-2 px-3 flex items-center justify-center gap-2 rounded-md bg-kudu-orange text-white hover:opacity-90 transition-opacity text-sm font-medium"
-      >
-        <Zap size={16} />
-        Buy Now
       </button>
     </div>
   );

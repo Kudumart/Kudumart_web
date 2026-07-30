@@ -125,9 +125,12 @@ const SearchBar = () => {
   return (
     <div
       ref={containerRef}
-      className="relative flex items-center w-full max-w-full md:max-w-sm lg:max-w-md rounded-full overflow-hidden bg-[#FFF2EA]"
+      className="relative flex items-center w-full max-w-full md:max-w-sm lg:max-w-md"
     >
-      <form className="flex w-full" onSubmit={handleSubmit(onSubmit)}>
+      <form
+        className="flex w-full rounded-full overflow-hidden bg-[#FFF2EA]"
+        onSubmit={handleSubmit(onSubmit)}
+      >
         <input
           type="text"
           {...register("search", {
