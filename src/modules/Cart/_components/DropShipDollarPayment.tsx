@@ -28,10 +28,12 @@ export default function DropShipDollarPayment({
   amount,
   disabled,
   children,
+  cartItemIds,
 }: PropsWithChildren<{
   stripeData: any;
   amount: number;
   disabled: boolean;
+  cartItemIds?: string[];
 }>) {
   const { user } = useAppState();
   const stripePromise = loadStripe(testKey);
@@ -50,6 +52,7 @@ export default function DropShipDollarPayment({
         refId: stripeData.id,
         shippingAddress: user["location"]["street"],
         shippingAddressZipCode: user["location"]["zipCode"],
+        ...(cartItemIds ? { cartItemIds } : {}),
       });
       return resp.data;
     },
@@ -84,6 +87,7 @@ export default function DropShipDollarPayment({
                   console.log("Payment successful!");
                 }}
                 data={stripeData}
+                cartItemIds={cartItemIds}
               />
             </Elements>
           )}
@@ -110,11 +114,13 @@ const CheckoutForm = ({
   amount,
   successCall,
   data,
+  cartItemIds,
 }: {
   closeModal: () => void;
   amount: number;
   successCall: () => void;
   data: StripeResponse;
+  cartItemIds?: string[];
 }) => {
   const { user } = useAppState();
   const stripe = useStripe();
@@ -135,6 +141,7 @@ const CheckoutForm = ({
         refId: id,
         shippingAddress: parsed_addres,
         shippingAddressZipCode: zip,
+        ...(cartItemIds ? { cartItemIds } : {}),
       });
       return resp.data;
     },

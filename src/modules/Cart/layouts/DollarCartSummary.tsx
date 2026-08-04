@@ -25,15 +25,17 @@ export interface StripeResponse {
 export default function DollarCartSummary({
   cart,
   refetch,
+  cartItemIds,
 }: {
   cart: CartSummaryType["cart"];
   refetch?: () => void;
+  cartItemIds?: string[];
 }) {
   const { user } = useAppState();
   const { openModal, closeModal } = useModal();
 
   const query = useQuery<StripeResponse>({
-    queryKey: ["cart_summary_dollar", cart],
+    queryKey: ["cart_summary_dollar", cart, cartItemIds],
     queryFn: async () => {
       const shippingAddress =
         typeof user.location !== "string"
@@ -43,6 +45,7 @@ export default function DollarCartSummary({
           : null;
       let resp = await apiClient.post("/user/checkout/dollar/prepare", {
         shippingAddress: shippingAddress,
+        ...(cartItemIds ? { cartItemIds } : {}),
       });
       return resp.data;
     },
@@ -161,6 +164,7 @@ export default function DollarCartSummary({
                     stripeData={stripeData}
                     amount={stripeData?.totalAmount || 0}
                     disabled={cart.length === 0 || !stripeData?.clientSecret}
+                    cartItemIds={cartItemIds}
                   >
                     <span className="text-sm font-medium normal-case">
                       Checkout $
@@ -174,6 +178,7 @@ export default function DollarCartSummary({
                     data={stripeData as StripeResponse}
                     amount={stripeData?.totalAmount || 0}
                     disabled={cart.length === 0 || !stripeData?.clientSecret}
+                    cartItemIds={cartItemIds}
                   >
                     <span className="text-sm font-medium normal-case">
                       Checkout $

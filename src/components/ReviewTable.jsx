@@ -287,7 +287,9 @@ function Table({
                             </IconButton>
                           </MenuHandler>
                           <MenuList className="z-50 border-0 shadow-lg">
-                            {actions.map((action) => (
+                            {actions
+                              .filter((action) => !action.hidden || !action.hidden(row))
+                              .map((action) => (
                               <MenuItem
                                 key={action.label}
                                 onClick={() => action.onClick(row)}

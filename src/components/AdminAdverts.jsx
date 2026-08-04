@@ -128,6 +128,10 @@ const AdminAdverts = ({ data, paginate, totalData, loading, refetch }) => {
         }
     }
 
+    const handleEdit = (data) => {
+        navigate(`edit/${data.id}`)
+    }
+
 
     return (
         <div className="min-h-screen">
@@ -200,6 +204,13 @@ const AdminAdverts = ({ data, paginate, totalData, loading, refetch }) => {
                                     return row.vendor ? row.status === 'pending' || row.status === 'rejected' ? 'Publish AD' : 'Unpublish AD' : 'Edit';
                                 },
                                 onClick: (row) => handleAction(row),
+                            },
+                            {
+                                label: (row) => {
+                                    return 'Edit';
+                                },
+                                onClick: (row) => handleEdit(row),
+                                hidden: (row) => !row.vendor,
                             },
                             {
                                 label: (row) => {

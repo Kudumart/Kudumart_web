@@ -23,11 +23,13 @@ const CheckoutForm = ({
   amount,
   successCall,
   data,
+  cartItemIds,
 }: {
   closeModal: () => void;
   amount: number;
   successCall: () => void;
   data: StripeResponse;
+  cartItemIds?: string[];
 }) => {
   const { user } = useAppState();
   const stripe = useStripe();
@@ -62,6 +64,7 @@ const CheckoutForm = ({
         .post("/user/checkout/dollar", {
           refId: data.paymentIntent?.id,
           shippingAddress: `${user.location.city} ${user.location.state}, ${user.location.country}`,
+          ...(cartItemIds ? { cartItemIds } : {}),
         })
         .then((res) => {
           toast.success("Payment successful");
@@ -137,6 +140,7 @@ const TestDollarPaymentButton = ({
   bgColor,
   // onSuccess,
   data,
+  cartItemIds,
 }: {
   amount: number;
   children: React.ReactNode;
@@ -144,6 +148,7 @@ const TestDollarPaymentButton = ({
   bgColor?: string;
   // onSuccess?: (data: any) => void;
   data: StripeResponse;
+  cartItemIds?: string[];
 }) => {
   const stripePromise = loadStripe(stripeKey);
   // const { openModal, closeModal } = useModal();
@@ -205,6 +210,7 @@ const TestDollarPaymentButton = ({
                   console.log("Payment successful!");
                 }}
                 data={data}
+                cartItemIds={cartItemIds}
               />
             </Elements>
           )}

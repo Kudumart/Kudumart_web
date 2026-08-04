@@ -138,11 +138,20 @@ const PostNewAdvert = () => {
                 <input
                   type="text"
                   id="link"
-                  {...register("link", { required: "Advert Link is required" })}
+                  {...register("link", {
+                    required: "Advert Link is required",
+                    pattern: {
+                      value: /^https?:\/\/.+/i,
+                      message: "Enter a valid URL starting with http:// or https://",
+                    },
+                  })}
                   placeholder="Enter link for advert"
                   className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
                   style={{ outline: "none" }}
                 />
+                {errors.link && (
+                  <p className="text-red-500 text-sm mt-1">{errors.link.message}</p>
+                )}
               </div>
 
               <div className="mb-4">

@@ -184,10 +184,11 @@ interface CartItem {
 
 export interface CartSummaryType {
   cart: CartItem[];
+  cartItemIds?: string[];
   [key: string]: any;
 }
 
-const CartSummary = ({ cart, refetch }: CartSummaryType) => {
+const CartSummary = ({ cart, refetch, cartItemIds }: CartSummaryType) => {
   const currency = useGeoLocatorCurrency();
   const [deliveryOption, setDeliveryOption] = useState<"customer" | "store">("customer");
 
@@ -321,6 +322,7 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
               JSON.parse(user.location).state
             }, ${JSON.parse(user.location).country}`
           : `${location}`,
+      ...(cartItemIds ? { cartItemIds } : {}),
     };
     mutate({
       url: "/user/checkout",
@@ -493,6 +495,7 @@ const CartSummary = ({ cart, refetch }: CartSummaryType) => {
                   hasDropShip={hasDropShip}
                   total_price={total_price}
                   paymentKey={paymentKey}
+                  cartItemIds={cartItemIds}
                 ></DropShipNairaPayment>
               </div>
             ) : (

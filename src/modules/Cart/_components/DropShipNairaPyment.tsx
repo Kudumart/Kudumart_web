@@ -3,11 +3,13 @@ export const DropShipNairaPayment = ({
   paymentKey,
   hasDropShip,
   deliveryFee: passedDeliveryFee,
+  cartItemIds,
 }: {
   total_price: number;
   paymentKey: string;
   hasDropShip: boolean;
   deliveryFee?: number;
+  cartItemIds?: string[];
 }) => {
   const { user } = useAppState();
   const { data: cart, isLoading, refetch } = useCart();
@@ -52,6 +54,7 @@ export const DropShipNairaPayment = ({
         refId: id,
         shippingAddress: user?.location?.street,
         shippingAddressZipCode: user?.location?.zipCode,
+        ...(cartItemIds ? { cartItemIds } : {}),
       });
       return resp.data;
     },

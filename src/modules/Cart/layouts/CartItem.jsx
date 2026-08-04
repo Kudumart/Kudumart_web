@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import { formatNumberWithCommas } from "../../../helpers/helperFactory";
 
-const CartItem = ({ item, removeFromCart, refetch }) => {
+const CartItem = ({ item, removeFromCart, refetch, onBuyNow }) => {
   const [disabled, setDisabled] = useState(false);
 
   let quantity = item.quantity;
@@ -191,6 +191,14 @@ const CartItem = ({ item, removeFromCart, refetch }) => {
                 >
                   +
                 </button>
+                {onBuyNow && (
+                  <button
+                    onClick={() => onBuyNow(item)}
+                    className="ml-2 border border-kudu-orange text-kudu-orange px-3 py-1 rounded-sm text-sm font-semibold hover:bg-kudu-orange hover:text-white transition-colors"
+                  >
+                    Buy It Now
+                  </button>
+                )}
               </div>
             )}
           </div>

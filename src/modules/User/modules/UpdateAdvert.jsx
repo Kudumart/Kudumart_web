@@ -26,29 +26,33 @@ const UpdateAdvert = () => {
   } = useForm();
 
   const onSubmit = (data) => {
-    setDisabled(true);
-    if (files.length > 0) {
-      delete data.category;
-      const payload = {
-        ...data,
-        advertId: id,
-        showOnHomepage: data.showOnHomepage === "true",
-        media_url: files[0],
-      };
-      mutate({
-        url: "/vendor/adverts",
-        method: "PUT",
-        data: payload,
-        headers: true,
-        onSuccess: (response) => {
-          navigate(-1);
-          setDisabled(false);
-        },
-        onError: () => {
-          setDisabled(false);
-        },
-      });
+    const mediaUrl = files[0] || advert.media_url;
+    if (!mediaUrl) {
+      setDisabled(false);
+      return;
     }
+
+    setDisabled(true);
+    delete data.category;
+    const payload = {
+      ...data,
+      advertId: id,
+      showOnHomepage: data.showOnHomepage === "true",
+      media_url: mediaUrl,
+    };
+    mutate({
+      url: "/vendor/adverts",
+      method: "PUT",
+      data: payload,
+      headers: true,
+      onSuccess: (response) => {
+        navigate(-1);
+        setDisabled(false);
+      },
+      onError: () => {
+        setDisabled(false);
+      },
+    });
   };
 
   const getCategories = () => {
@@ -95,9 +99,10 @@ const UpdateAdvert = () => {
 
     setValue("title", advert.title);
     setValue("description", advert.description);
+    setValue("link", advert.link);
     setValue("showOnHomepage", advert.showOnHomepage.toString());
     setValue("categoryId", advert.categoryId);
-    setFiles([advert.media_url]);
+    setFiles(advert.media_url ? [advert.media_url] : []);
     setLoading(false);
   }, [advert, setValue]);
 
@@ -188,6 +193,32 @@ const UpdateAdvert = () => {
                   style={{ outline: "none" }}
                   required
                 />
+              </div>
+
+              <div className="mb-4">
+                <label
+                  className="block text-md font-semibold mb-3"
+                  htmlFor="link"
+                >
+                  Advert Link
+                </label>
+                <input
+                  type="text"
+                  id="link"
+                  {...register("link", {
+                    required: "Advert Link is required",
+                    pattern: {
+                      value: /^https?:\/\/.+/i,
+                      message: "Enter a valid URL starting with http:// or https://",
+                    },
+                  })}
+                  placeholder="Enter link for advert"
+                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
+                  style={{ outline: "none" }}
+                />
+                {errors.link && (
+                  <p className="text-red-500 text-sm mt-1">{errors.link.message}</p>
+                )}
               </div>
 
               <div className="mb-4">
