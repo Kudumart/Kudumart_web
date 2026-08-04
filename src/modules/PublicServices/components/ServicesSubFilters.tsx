@@ -17,15 +17,12 @@ export default function ServicesSubFilters() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const query = useQuery<API_RESPONSE>({
-    queryKey: ["public-sub-categories", categoryId],
+    queryKey: ["public-service-sub-categories", categoryId],
     queryFn: async () => {
-      let resp = await apiClient.get("/category/sub-categories", {
-        params: {
-          categoryId: categoryId,
-        },
-      });
+      let resp = await apiClient.get(`/service/subcategories/${categoryId}`);
       return resp.data;
     },
+    enabled: !!categoryId,
   });
 
   const selectedSubCategoryId = searchParams.get("subCategoryId");
