@@ -2,11 +2,22 @@
 
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { useQuery } from "@tanstack/react-query";
+import apiClient from "../../../../api/apiFactory";
 
 // Register components in ChartJS
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function SalesAnalytics() {
+    const query = useQuery({
+        queryKey: ["vendorDashboardStats"],
+        queryFn: async () => {
+            const response = await apiClient.get("/vendor/dashboard/stats");
+            return response.data;
+        },
+    });
+
+    const monthlySales = query.data?.data?.monthlySales ?? [];
 
     const options = {
         responsive: true,
@@ -47,12 +58,12 @@ export default function SalesAnalytics() {
     };
 
     const data = {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        labels: monthlySales.map((m) => m.month),
         datasets: [
             {
                 label: 'Monthly Sales',
-                data: [20000, 45000, 35000, 60000, 70000, 15000, 30000, 10000, 5000, 40000, 20000, 30000],
-                backgroundColor: 'rgba(255, 111, 34, 1)', // Purple color for the bars
+                data: monthlySales.map((m) => m.total),
+                backgroundColor: 'rgba(255, 111, 34, 1)',
                 borderRadius: 5,
                 barThickness: 6
             },
@@ -71,7 +82,7 @@ export default function SalesAnalytics() {
                             <path d="M10.5474 0.566528V2.82414" stroke="#AEB9E1" strokeWidth="1.09216" strokeLinecap="round" strokeLinejoin="round" />
                             <path d="M3.7749 0.566528V2.82414" stroke="#AEB9E1" strokeWidth="1.09216" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        <p className='text-xs text-white'>Jan 2024 - Dec 2024</p>
+                        <p className='text-xs text-white'>Last 12 Months</p>
                         <svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <g opacity="0.8">
                                 <path d="M4.87769 6.34473L8.97329 10.4403L13.0689 6.34473" stroke="#AEB9E1" strokeWidth="1.3652" strokeLinecap="round" strokeLinejoin="round" />

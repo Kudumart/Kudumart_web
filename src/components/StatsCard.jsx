@@ -31,25 +31,7 @@ const StatCard = ({ number, label, iconColor, IconComponent, colorGradient, cron
                 } flex gap-2`}
             >
                 {cronTop ? number : label}
-                {cronAnalytics && (
-                    <span className="text-xs font-medium bg-green-100 text-green-600 rounded-md px-2 py-0.5 flex items-center">
-                        {growth}
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={2}
-                            stroke="currentColor"
-                            className="w-3 h-3 ml-1"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 10l7-7m0 0l7 7m-7-7v18"
-                            />
-                        </svg>
-                    </span>
-                )}
+                {cronAnalytics}
             </span>
         </div>
 
