@@ -8,6 +8,7 @@ import { useNewModal } from "../../../components/modals/modals";
 import Modal from "../../../components/modals/DialogModal";
 import { useQuery } from "@tanstack/react-query";
 import UpdateShipAdd from "../../../components/UpdateShippingAddress";
+import Button from "../../../components/Button";
 
 const AccountProfile = () => {
   const { user } = useAppState();
@@ -117,12 +118,12 @@ const AccountProfile = () => {
             </div>
           </div>
           <div className="flex justify-end w-full mt-5 gap-4">
-            <button
+            <Button
+              variant="secondary"
               onClick={closeModal}
-              className="bg-gray-300 text-black px-4 py-2 font-medium rounded-lg"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </>
       ),

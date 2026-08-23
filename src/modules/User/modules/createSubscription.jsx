@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { MdClose } from "react-icons/md";
 import PulseLoader from "react-spinners/PulseLoader";
+import Button from "../../../components/Button";
 
 const CreateSubscription = ({ closeAddNewSubModal }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -208,18 +209,17 @@ const CreateSubscription = ({ closeAddNewSubModal }) => {
                     )}
                   </div>
 
-                  {/* Submit Button */}
-                  <button
+                  <Button
                     type="submit"
-                    className="btn btn-primary btn-block"
-                    data-theme="kudu"
+                    variant="primary"
+                    fullWidth
                   >
                     {isLoading ? (
                       <PulseLoader color="#ffffff" size={10} />
                     ) : (
                       "Create New Subscription Plan"
                     )}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>

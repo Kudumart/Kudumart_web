@@ -11,6 +11,7 @@ import { FaTimes } from "react-icons/fa";
 import { renderDraftContent } from "../../../helpers/renderDraftContent";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import Button from "../../../components/Button";
 
 const UpdateAuctionProducts = () => {
   const [descriptionEditor, setDescriptionEditor] = useState(() =>
@@ -595,15 +596,25 @@ const UpdateAuctionProducts = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="btn btn-primary btn-block"
-                data-theme="kudu"
-                disabled={btnDisabled}
-              >
-                Update Product
-              </button>
+              {/* Form Actions */}
+              <div className="flex justify-end gap-4 mt-8">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-1/3"
+                  onClick={() => navigate(-1)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="bg-kudu-orange w-2/3"
+                  disabled={btnDisabled}
+                >
+                  Update Product
+                </Button>
+              </div>
             </div>
           </form>
         </div>

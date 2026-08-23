@@ -7,7 +7,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { stripeKey } from "../config/paymentKeys";
-import { Button } from "@material-tailwind/react";
+import Button from "./Button";
 import { useModal } from "../hooks/modal";
 import useAppState from "../hooks/appState";
 import useApiMutation from "../api/hooks/useApiMutation";
@@ -179,7 +179,8 @@ const CheckoutForm = ({ closeModal, amount, successCall }) => {
 
       <div className="mt-8 flex justify-center">
         <Button
-          className="bg-kudu-orange w-full py-3.5 text-base font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          variant="primary"
+          fullWidth
           type="submit"
           disabled={!stripe || loading}
         >
@@ -239,7 +240,8 @@ const DollarPaymentButton = ({
   return (
     <Button
       onClick={handleModal}
-      className={`${noWidth ? "" : "w-3/4"} py-3 px-4 flex justify-center gap-2 ${bgColor || "bg-kudu-orange"} shadow-md text-white rounded-lg font-medium transition-colors`}
+      variant="primary"
+      fullWidth={!noWidth}
     >
       {children}
     </Button>

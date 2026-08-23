@@ -20,7 +20,21 @@ if ("serviceWorker" in navigator) {
 requestNotificationPermission();
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
-    <Toaster position="top-right" />
+    <Toaster
+      position="top-right"
+      toastOptions={{
+        style: {
+          background: "white",
+          border: "1px solid #E5E7EB",
+          borderRadius: "12px",
+          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+          padding: "16px",
+          color: "#1F2937",
+          fontSize: "14px",
+          fontWeight: "500",
+        },
+      }}
+    />
     <QueryClientProvider client={queryClient}>
       <SocketProvider>
         <IPInfo>
@@ -33,15 +47,17 @@ createRoot(document.getElementById("root")).render(
     </QueryClientProvider>
     <ToastContainer
       position="top-right"
-      autoClose={5000}
-      hideProgressBar
-      newestOnTop={false}
-      closeOnClick={false}
+      autoClose={4000}
+      hideProgressBar={true}
+      newestOnTop={true}
+      closeOnClick={true}
       rtl={false}
       pauseOnFocusLoss
-      draggable={false}
-      pauseOnHover={false}
-      theme="colored"
+      draggable
+      pauseOnHover
+      theme="light"
+      toastClassName="custom-toast-container"
+      bodyClassName="custom-toast-body"
     />
   </Provider>,
 );

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import { formatNumberWithCommas } from "../../../helpers/helperFactory";
+import Button from "../../../components/Button";
 
 const CartItem = ({ item, removeFromCart, refetch, onBuyNow }) => {
   const [disabled, setDisabled] = useState(false);
@@ -157,47 +158,54 @@ const CartItem = ({ item, removeFromCart, refetch, onBuyNow }) => {
                 fill="#FF6F22"
               />
             </svg>
-            <button
+            <Button
+              variant="ghost"
               onClick={() => removeFromCart(item)}
-              className="text-kudu-orange mt-2 font-medium hover:underline text-sm"
+              className="text-kudu-orange mt-2 font-medium hover:underline text-sm p-0"
             >
               REMOVE
-            </button>
+            </Button>
           </div>
 
           <div className="flex">
             {/* Quantity Controls */}
             {/* Show Sold Out or Quantity Controls */}
             {item.product.quantity === 0 ? (
-              <button className="bg-gray-500 text-white px-4 py-2 rounded-md text-sm font-semibold cursor-not-allowed">
+              <Button disabled variant="secondary" className="text-white px-4 py-2 rounded-md text-sm font-semibold">
                 Sold Out
-              </button>
+              </Button>
             ) : (
               <div className="flex items-center gap-2">
-                <button
+                <Button
+                  variant="primary"
+                  size="sm"
                   disabled={disabled}
                   onClick={() => handleDecrease(item)}
-                  className="bg-kudu-orange text-white px-3 py-1 rounded-sm hover:bg-orange-600"
+                  className="px-3 py-1 rounded-sm"
                 >
                   -
-                </button>
+                </Button>
                 <span className="px-4 py-1 text-sm font-semibold rounded-sm">
                   {item.quantity}
                 </span>
-                <button
+                <Button
+                  variant="primary"
+                  size="sm"
                   disabled={disabled}
                   onClick={() => handleIncrease(item)}
-                  className="bg-kudu-orange text-white px-3 py-1 rounded-sm hover:bg-orange-600"
+                  className="px-3 py-1 rounded-sm"
                 >
                   +
-                </button>
+                </Button>
                 {onBuyNow && (
-                  <button
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => onBuyNow(item)}
-                    className="ml-2 border border-kudu-orange text-kudu-orange px-3 py-1 rounded-sm text-sm font-semibold hover:bg-kudu-orange hover:text-white transition-colors"
+                    className="ml-2 text-kudu-orange px-3 py-1 rounded-sm text-sm font-semibold"
                   >
                     Buy It Now
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

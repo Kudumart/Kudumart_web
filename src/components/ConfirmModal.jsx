@@ -1,5 +1,6 @@
 import React from 'react';
 import { useModal } from '../hooks/modal';
+import Button from './Button';
 
 const ConfirmModal = ({ title, message, onConfirm, confirmText = "Yes", confirmColor = "red" }) => {
   const { closeModal } = useModal();
@@ -33,18 +34,18 @@ const ConfirmModal = ({ title, message, onConfirm, confirmText = "Yes", confirmC
         <p className="text-gray-600 text-sm leading-relaxed">{message}</p>
       </div>
       <div className="flex justify-center mt-6 gap-4">
-        <button
+        <Button
           onClick={handleConfirm}
-          className={`${getConfirmButtonClass()} px-6 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2`}
+          variant={confirmColor === 'red' ? 'danger' : confirmColor === 'green' ? 'success' : 'primary'}
         >
           {confirmText}
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={handleCancel}
-          className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 font-medium rounded-lg transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+          variant="secondary"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   );

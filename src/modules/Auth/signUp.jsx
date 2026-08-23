@@ -11,6 +11,7 @@ import { setKuduUser } from "../../reducers/userSlice";
 import { jwtDecode } from "jwt-decode";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
+import Button from "../../components/Button";
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -318,14 +319,15 @@ function SignUp() {
 
             {/* Submit Button */}
             <div>
-              <button
+              <Button
                 type="submit"
+                variant="primary"
                 disabled={isLoading}
-                data-theme="kudu"
-                className="btn btn-primary btn-block"
+                isLoading={isLoading}
+                fullWidth
               >
                 Sign Up →
-              </button>
+              </Button>
             </div>
           </form>
 

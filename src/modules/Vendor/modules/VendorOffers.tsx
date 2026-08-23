@@ -6,6 +6,7 @@ import apiClient from "../../../api/apiFactory";
 import { formatNumberWithCommas } from "../../../helpers/helperFactory";
 import { toast } from "react-toastify";
 import { X, Check, Tag, Eye } from "lucide-react";
+import Button from "../../../components/Button";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-700",
@@ -485,13 +486,13 @@ export default function VendorOffers() {
               </span>
             </div>
 
-            <button
-              type="button"
-              className="w-full py-2 px-4 rounded-md border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-colors"
+            <Button
+              variant="outline"
+              fullWidth
               onClick={() => setDetailModal({ open: false, offer: null })}
             >
               Close
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -568,21 +569,21 @@ export default function VendorOffers() {
                 )}
               </div>
               <div className="flex gap-3">
-                <button
-                  type="button"
-                  className="flex-1 py-2 px-4 rounded-md border border-gray-300 text-sm font-medium hover:bg-gray-50 transition-colors"
+                <Button
+                  variant="outline"
+                  className="flex-1"
                   onClick={() => setCounterModal({ open: false, offer: null })}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  data-theme="kudu"
-                  className="flex-1 btn btn-primary"
-                  disabled={respondMutation.isPending}
+                  variant="primary"
+                  className="flex-1 bg-kudu-orange"
+                  isLoading={respondMutation.isPending}
                 >
-                  {respondMutation.isPending ? "Sending..." : "Send Counter"}
-                </button>
+                  Send Counter
+                </Button>
               </div>
             </form>
           </div>

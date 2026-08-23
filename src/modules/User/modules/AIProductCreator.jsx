@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { FaTimes, FaMagic, FaUpload, FaSpinner, FaCheckCircle, FaBoxOpen, FaGavel } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import useApiMutation from "../../../api/hooks/useApiMutation";
+import Button from "../../../components/Button";
 
 export default function AIProductCreator({ onClose }) {
   const navigate = useNavigate();
@@ -159,12 +160,14 @@ export default function AIProductCreator({ onClose }) {
       {/* STEP 2: Upload Image */}
       {step === 2 && (
         <div className="py-2">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => { setStep(1); setImageFile(null); setImagePreview(null); }}
-            className="text-sm font-medium text-gray-400 hover:text-kudu-orange flex items-center gap-1 mb-6 transition-colors"
+            className="mb-6 -ml-3"
           >
             ← Back to Type Selection
-          </button>
+          </Button>
           <h3 className="text-xl font-bold text-gray-800 mb-2">Upload Product Image</h3>
           <p className="text-gray-500 mb-6 leading-relaxed">
             Upload a clear image of your{" "}
@@ -219,17 +222,17 @@ export default function AIProductCreator({ onClose }) {
             </div>
           )}
 
-          <button
+          <Button
+            fullWidth
+            size="lg"
+            variant="primary"
+            className="mt-6 bg-kudu-orange hover:bg-orange-600 shadow-md shadow-orange-500/20 rounded-xl"
             onClick={analyzeImage}
             disabled={!imageFile}
-            className={`mt-6 w-full py-4 px-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all ${imageFile
-                ? "bg-kudu-orange hover:bg-orange-600 shadow-md shadow-orange-500/20"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
+            icon={FaMagic}
           >
-            <FaMagic className="w-5 h-5" />
             Analyze Product Image
-          </button>
+          </Button>
         </div>
       )}
 
@@ -302,19 +305,23 @@ export default function AIProductCreator({ onClose }) {
           </div>
 
           <div className="flex gap-4 mt-8">
-            <button
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex-1 rounded-xl border-2"
               onClick={() => { setStep(2); setAiData(null); }}
-              className="flex-1 py-3.5 px-4 rounded-xl border-2 border-gray-200 text-gray-600 font-bold hover:bg-gray-50 hover:border-gray-300 transition-all"
             >
               Try Another Image
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              className="flex-1 rounded-xl bg-kudu-orange hover:bg-orange-600 shadow-md shadow-orange-500/20"
               onClick={handleProceed}
-              className="flex-1 py-3.5 px-4 rounded-xl font-bold text-white bg-kudu-orange hover:bg-orange-600 shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2"
             >
               Proceed to Form
-              <span>→</span>
-            </button>
+              <span className="ml-2">→</span>
+            </Button>
           </div>
         </div>
       )}

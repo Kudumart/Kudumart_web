@@ -1,6 +1,7 @@
 import React from 'react';
 import { dateFormat } from "../helpers/dateHelper";
 import ReviewTable from "./ReviewTable";
+import Button from "./Button";
 
 const VendorMyOrdersTable = ({ data = [], loading = false, onViewOrder }) => {
     const columns = [
@@ -49,8 +50,19 @@ const VendorMyOrdersTable = ({ data = [], loading = false, onViewOrder }) => {
                         />
                     </div>
                     <h1 className="text-center text-lg font-bold mb-4">
-                        No order items found!
+                        No Orders Found!
                     </h1>
+                    <div className="text-center text-gray-600 mb-6">
+                        <p>You haven't placed any orders yet. Discover our latest products and start shopping!</p>
+                    </div>
+                    <div className="text-center flex justify-center">
+                        <Button 
+                            className="bg-kudu-orange text-white px-6 py-2" 
+                            onClick={() => window.location.href = '/'}
+                        >
+                            Start Shopping
+                        </Button>
+                    </div>
                 </div>
             )}
         </div>

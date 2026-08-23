@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import useApiMutation from "../../../api/hooks/useApiMutation";
-import { Button } from "@material-tailwind/react";
+import Button from "../../../components/Button";
 import AllStore from "../components/AllStores";
 import Loader from "../../../components/Loader";
 import { useNavigate } from "react-router-dom";
@@ -81,7 +81,8 @@ const Stores = () => {
               </div>
               <p className="text-gray-600 mb-4">{error}</p>
               <Button
-                className="bg-kudu-orange text-white"
+                variant="primary"
+                className="bg-kudu-orange"
                 onClick={() => fetchData(1)}
               >
                 Try Again
@@ -120,13 +121,12 @@ const Stores = () => {
                   </p>
                 </div>
                 <div className="text-center">
-                  <button
-                    data-theme="kudu"
-                    className="btn btn-primary"
+                  <Button
+                    variant="primary"
                     onClick={() => navigate("create")}
                   >
                     Add New Store
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}

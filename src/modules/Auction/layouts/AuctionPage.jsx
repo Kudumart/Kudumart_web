@@ -5,6 +5,7 @@ import { useModal } from "../../../hooks/modal";
 import Modal from "../../../components/Modal";
 import { useGeoLocatorProduct } from "../../../hooks/geoLocatorProduct";
 import { formatNumberWithCommas } from "../../../helpers/helperFactory";
+import Button from "../../../components/Button";
 
 const AuctionPage = ({ auctions, hideHeader }) => {
   const [activeTab, setActiveTab] = useState("popular");
@@ -63,9 +64,9 @@ const AuctionPage = ({ auctions, hideHeader }) => {
       {!hideHeader &&
         <div className="bg-[#FFDEC1] flex justify-between items-center p-4 md:p-6 rounded-md md:mb-0">
           <h2 className="text-lg md:text-xl font-semibold">Auctions</h2>
-          <button className="text-black font-semibold text-sm md:text-base">
+          <Button variant="ghost" className="text-black font-semibold text-sm md:text-base">
             See All
-          </button>
+          </Button>
         </div>
       }
 
@@ -125,12 +126,16 @@ const AuctionPage = ({ auctions, hideHeader }) => {
                   </p>
 
                   {/* View Details Button */}
-                  <button
-                    onClick={() => handleNavigate(auction.id)}
-                    className="bg-[#FF6F22] text-white w-full py-3 mt-5 rounded-lg text-xs md:text-sm"
-                  >
-                    View Details
-                  </button>
+                  <div className="mt-5 w-full">
+                    <Button
+                      variant="primary"
+                      fullWidth
+                      onClick={() => handleNavigate(auction.id)}
+                      className="py-3 text-xs md:text-sm"
+                    >
+                      View Details
+                    </Button>
+                  </div>
 
                   {/* Monitor Button */}
                   <div onClick={() => handleMonitor(auction.id)} className="flex text-left text-[#FF6F22] text-sm mt-5 cursor-pointer">
@@ -162,3 +167,4 @@ const AuctionPage = ({ auctions, hideHeader }) => {
 };
 
 export default AuctionPage;
+

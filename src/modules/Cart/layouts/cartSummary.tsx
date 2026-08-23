@@ -15,6 +15,7 @@ import { calculate_dropship_price } from "../_components/helper";
 import { useNewModal } from "../../../components/modals/modals";
 import Modal from "../../../components/modals/DialogModal";
 import UpdateShipAdd from "../../../components/UpdateShippingAddress";
+import Button from "../../../components/Button";
 
 interface ProductCharge {
   id: number;
@@ -352,12 +353,13 @@ const CartSummary = ({ cart, refetch, cartItemIds }: CartSummaryType) => {
       <div className="w-full flex flex-col items-center justify-center p-4 rounded-lg bg-white py-6">
         <div>
           <div className="">Error Loading Checkout Info</div>
-          <button
+          <Button
             onClick={() => query.refetch()}
-            className="btn btn-block btn-primary"
+            variant="primary"
+            fullWidth
           >
             Retry
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -473,12 +475,13 @@ const CartSummary = ({ cart, refetch, cartItemIds }: CartSummaryType) => {
           <div className="py-2 border-t border-base-200 mt-2 pt-2">
             <div className="flex justify-between items-center mb-1">
               <p className="text-sm font-semibold">Delivery Address</p>
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => modalRef.showModal()}
-                className="btn btn-link btn-xs text-kudu-orange no-underline hover:underline p-0 min-h-0 h-auto"
+                className="text-kudu-orange no-underline hover:underline p-0 h-auto min-h-0 text-xs font-normal"
               >
                 Change default address
-              </button>
+              </Button>
             </div>
             <p className="text-sm text-base-content/60">
               {user.location.city} {user.location.state},{" "}
@@ -511,12 +514,13 @@ const CartSummary = ({ cart, refetch, cartItemIds }: CartSummaryType) => {
               </DollarPaymentButton>
             )
           ) : (
-            <button
-              className="btn bg-kudu-orange hover:bg-kudu-orange/90 border-none text-white w-full"
+            <Button
+              variant="primary"
+              fullWidth
               onClick={() => modalRef.showModal()}
             >
               Set Delivery Location
-            </button>
+            </Button>
           )}
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useRef, forwardRef } from "react";
 // Add toast import (assume a toast library, e.g. react-hot-toast)
 import { toast } from "react-toastify";
 import { useState } from "react";
+import Button from "../Button";
 
 interface Charge {
   id: number;
@@ -165,23 +166,22 @@ const ChargeDialog = forwardRef<HTMLDialogElement, ChargeDialogProps>(
             </label>
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
-            <button
-              type="button"
-              className="px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300"
+            <Button
               onClick={() => {
                 if (!mutation.isPending) onClose();
               }}
               disabled={mutation.isPending}
+              variant="secondary"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-4 py-2 rounded-md bg-kudu-orange text-white hover:bg-orange-500 active:scale-95"
               disabled={mutation.isPending}
+              variant="primary"
             >
               {mutation.isPending ? "Submitting..." : "Submit"}
-            </button>
+            </Button>
           </div>
         </form>
       </dialog>
@@ -235,12 +235,12 @@ export default function Charges() {
         <h2 className="text-xl font-semibold text-gray-800">
           Set Product Charge
         </h2>
-        <button
+        <Button
           onClick={handleDialogOpen}
-          className="py-2 text-white rounded-md bg-kudu-orange hover:bg-kudu-orange px-4 active:scale-95 w-full sm:w-auto"
+          variant="primary"
         >
           Create Charge
-        </button>
+        </Button>
       </div>
       <div>
         {query?.isFetching ? (
@@ -387,36 +387,40 @@ const ChargeItem = (props: { charge: Charge }) => {
           <div className="text-sm text-gray-500">{charge.description}</div>
         </div>
         <div className="flex gap-2">
-          <button
-            className="px-3 py-1 rounded-sm bg-blue-500 text-white hover:bg-blue-600 active:scale-95 text-sm"
+          <Button
             onClick={handleEditOpen}
             disabled={isDeleting || isStatusPending}
+            variant="outline"
+            size="sm"
           >
             Edit
-          </button>
-          <button
-            className="px-3 py-1 rounded-sm bg-red-500 text-white hover:bg-red-600 active:scale-95 text-sm"
+          </Button>
+          <Button
             onClick={() => setShowConfirm(true)}
             disabled={isDeleting || isStatusPending}
+            variant="danger"
+            size="sm"
           >
             Delete
-          </button>
+          </Button>
           {charge.is_active ? (
-            <button
-              className="px-3 py-1 rounded-sm bg-kudu-orange500 text-white hover:bg-yellow-600 active:scale-95 text-sm"
+            <Button
               onClick={handleDeactivate}
               disabled={isStatusPending || isDeleting}
+              variant="secondary"
+              size="sm"
             >
               {isStatusPending ? "Deactivating..." : "Deactivate"}
-            </button>
+            </Button>
           ) : (
-            <button
-              className="px-3 py-1 rounded-sm bg-green-500 text-white hover:bg-green-600 active:scale-95 text-sm"
+            <Button
               onClick={handleActivate}
               disabled={isStatusPending || isDeleting}
+              variant="success"
+              size="sm"
             >
               {isStatusPending ? "Activating..." : "Activate"}
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -464,20 +468,20 @@ const ChargeItem = (props: { charge: Charge }) => {
               cannot be undone.
             </div>
             <div className="flex gap-2 justify-end mt-2">
-              <button
-                className="px-4 py-2 rounded-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
+              <Button
                 onClick={() => setShowConfirm(false)}
                 disabled={isDeleting}
+                variant="secondary"
               >
                 Cancel
-              </button>
-              <button
-                className="px-4 py-2 rounded-sm bg-red-500 text-white hover:bg-red-600 active:scale-95"
+              </Button>
+              <Button
                 onClick={() => deleteMutation.mutate()}
                 disabled={isDeleting}
+                variant="danger"
               >
                 {isDeleting ? "Deleting..." : "Delete"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -620,21 +624,20 @@ const ChargeItem = (props: { charge: Charge }) => {
             </label>
           </div>
           <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
-            <button
-              type="button"
-              className="px-4 py-2 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300"
+            <Button
               onClick={handleEditClose}
               disabled={editMutation.isPending}
+              variant="secondary"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-4 py-2 rounded-md bg-kudu-orange text-white hover:bg-orange-500 active:scale-95"
               disabled={editMutation.isPending}
+              variant="primary"
             >
               {editMutation.isPending ? "Saving..." : "Save"}
-            </button>
+            </Button>
           </div>
         </form>
       </dialog>

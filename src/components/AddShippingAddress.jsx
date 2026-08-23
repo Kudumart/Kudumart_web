@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Button from "./Button";
 import { State, City } from "country-state-city";
 import useAppState from "../hooks/appState";
 import { useDispatch } from "react-redux";
@@ -181,12 +182,12 @@ const AddShippingAddress = ({ isOpen, closeModal, countries }) => {
 
       {/* Submit Button */}
       <div className="col-span-2 mb-4 flex justify-start">
-        <button
+        <Button
           type="submit"
-          className="bg-kudu-orange text-white text-sm font-medium py-4 px-4 rounded-md hover:bg-orange-600"
+          variant="primary"
         >
           Create Shipping Address
-        </button>
+        </Button>
       </div>
     </form>
   ) : null;

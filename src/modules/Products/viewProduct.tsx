@@ -1,6 +1,5 @@
 //@ts-nocheck
 
-import { Button } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
 import Imgix from "react-imgix";
 import Loader from "../../components/Loader";
@@ -17,6 +16,7 @@ import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { useModal } from "../../hooks/modal";
 import { Carousel } from "@material-tailwind/react";
+import Button from "../../components/Button";
 import { sendMessage } from "../../api/message";
 import ProductReview from "./productReviews";
 import { useAddToCart } from "../../api/cart";
@@ -50,6 +50,7 @@ export default function ViewProduct() {
   const [offerLoading, setOfferLoading] = useState(false);
   const [shippingAddress, setShippingAddress] = useState("");
   const [pendingCheckout, setPendingCheckout] = useState(false);
+  const [vendorProducts, setVendorProducts] = useState<any[]>([]);
 
   const { mutate: addItemToCart, isLoading } = useAddToCart();
 
@@ -61,6 +62,21 @@ export default function ViewProduct() {
   const [searchParams] = useSearchParams();
 
   const navigate = useNavigate();
+
+  const fetchVendorProducts = (vendorId: string) => {
+    mutate({
+      url: `/products?vendorId=${vendorId}&limit=12`,
+      method: "GET",
+      headers: true,
+      hideToast: true,
+      onSuccess: (res) => {
+        const list = res.data?.data || [];
+        setVendorProducts(list.filter((p: any) => p.id !== id));
+      },
+      onError: () => {},
+    });
+  };
+
   const getProductDetails = async () => {
     try {
       const productRequest = new Promise((resolve, reject) => {
@@ -69,7 +85,16 @@ export default function ViewProduct() {
           method: "GET",
           headers: true,
           hideToast: true,
-          onSuccess: (response) => resolve(response.data.data),
+          onSuccess: (response) => {
+            const productData = response.data.data;
+            // Attach recommendedProducts from the top-level response to the product object
+            productData.recommendedProducts = response.data.recommendedProducts || [];
+            const vId = productData.vendor?.id || productData.vendorId;
+            if (vId) {
+              fetchVendorProducts(vId);
+            }
+            resolve(productData);
+          },
           onError: reject,
         });
       });
@@ -231,6 +256,57 @@ export default function ViewProduct() {
       setShowOfferModal(true);
     }
   }, []);
+
+  // Inject OG meta tags for social sharing after product loads.
+  // NOTE: This is a best-effort client-side injection for platforms that
+  // execute JavaScript (e.g. WhatsApp on Android, Telegram, Slack).
+  // Platforms like Facebook/Twitter crawlers do NOT execute JS on SPAs,
+  // so true OG metadata for those platforms requires server-side rendering
+  // or a pre-rendering/SSR solution (e.g. Next.js, a proxy pre-renderer).
+  useEffect(() => {
+    const p = product as Product;
+    if (!p?.name) return;
+    const productTitle = p.name || "Product on Kudumart";
+    const productImage = (p as any).additional_images?.[0] || (p as any).image_url || "";
+    const productDesc = p.description?.replace(/<[^>]+>/g, "").slice(0, 160) || `Check out ${productTitle} on Kudumart`;
+    const productUrl = `${window.location.origin}/product/${id}`;
+
+    document.title = `${productTitle} | Kudumart`;
+
+    const setMeta = (property: string, content: string) => {
+      let el = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("property", property);
+        document.head.appendChild(el);
+      }
+      el.content = content;
+    };
+    const setMetaName = (name: string, content: string) => {
+      let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("name", name);
+        document.head.appendChild(el);
+      }
+      el.content = content;
+    };
+
+    setMeta("og:title", productTitle);
+    setMeta("og:description", productDesc);
+    setMeta("og:image", productImage);
+    setMeta("og:url", productUrl);
+    setMeta("og:type", "product");
+    setMetaName("twitter:card", "summary_large_image");
+    setMetaName("twitter:title", productTitle);
+    setMetaName("twitter:description", productDesc);
+    setMetaName("twitter:image", productImage);
+    setMetaName("description", productDesc);
+
+    return () => {
+      document.title = "Kudu";
+    };
+  }, [product, id]);
 
   const addToBookMark = () => {
     mutate({
@@ -519,73 +595,70 @@ export default function ViewProduct() {
                   ))}
                 </div>
                 <div className="flex w-full flex-col gap-8 py-6 px-6 shadow shadow-md bg-white rounded-md">
-                  <div className="flex flex-col gap-4">
-                    <span className="lg:text-2xl md:text-xl text-lg font-bold w-full overflow-hidden">
-                      {product.name}
-                    </span>
-                  </div>
-
-                  <div className="w-full h-px border" />
-
                   <div className="w-full flex flex-col gap-5">
                     <div className="w-full flex flex-col gap-6">
-                      <div className="w-full md:flex-row flex flex-col gap-2">
-                        <div className="md:w-[40%] w-full flex flex-col gap-1">
-                          <span className="text-sm font-bold text-kudu-roman-silver uppercase">
-                            Condition
-                          </span>
-                          <span className="text-sm">
-                            {formatString(product.condition)}
-                          </span>
+                      {product.condition && (
+                        <div className="w-full md:flex-row flex flex-col gap-2">
+                          <div className="md:w-[40%] w-full flex flex-col gap-1">
+                            <span className="text-sm font-bold text-kudu-roman-silver uppercase">
+                              Condition
+                            </span>
+                            <span className="text-sm">
+                              {formatString(product.condition)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      {/** Brand */}
-                      <div className="w-full md:flex-row flex flex-col gap-2">
-                        <div className="w-full flex flex-col gap-1">
-                          <span className="text-sm font-bold text-kudu-roman-silver uppercase">
-                            Description
-                          </span>
-                          <span className="text-sm">
-                            <SafeHTML htmlContent={product.description} />
-                          </span>
+                      {product.description && (
+                        <div className="w-full md:flex-row flex flex-col gap-2">
+                          <div className="w-full flex flex-col gap-1">
+                            <span className="text-sm font-bold text-kudu-roman-silver uppercase">
+                              Description
+                            </span>
+                            <span className="text-sm">
+                              <SafeHTML htmlContent={product.description} />
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      <div className="w-full md:flex-row flex flex-col gap-2">
-                        <div className="w-full flex flex-col gap-1">
-                          <span className="text-sm font-bold text-kudu-roman-silver uppercase">
-                            Specification
-                          </span>
-                          <span className="text-sm">
-                            <SafeHTML htmlContent={product.specification} />
-                          </span>
+                      {product.specification && (
+                        <div className="w-full md:flex-row flex flex-col gap-2">
+                          <div className="w-full flex flex-col gap-1">
+                            <span className="text-sm font-bold text-kudu-roman-silver uppercase">
+                              Specification
+                            </span>
+                            <span className="text-sm">
+                              <SafeHTML htmlContent={product.specification} />
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      {/** Case Size */}
-                      <div className="w-full md:flex-row flex flex-col gap-2">
-                        <div className="md:w-[40%] w-full flex flex-col gap-1">
-                          <span className="text-sm font-bold text-kudu-roman-silver uppercase">
-                            Return Policy
-                          </span>
-                          <span className="text-sm">
-                            {product.return_policy
-                              ? product.return_policy
-                              : "No return policy"}
-                          </span>
+                      {product.return_policy && (
+                        <div className="w-full md:flex-row flex flex-col gap-2">
+                          <div className="md:w-[40%] w-full flex flex-col gap-1">
+                            <span className="text-sm font-bold text-kudu-roman-silver uppercase">
+                              Return Policy
+                            </span>
+                            <span className="text-sm">
+                              {product.return_policy}
+                            </span>
+                          </div>
                         </div>
-                        <div className="md:w-[60%] w-full flex flex-col gap-1">
-                          <span className="text-sm font-bold text-kudu-roman-silver uppercase">
-                            Warranty
-                          </span>
-                          <span className="text-sm">
-                            {product.warranty
-                              ? product.warranty
-                              : "No warranty"}
-                          </span>
+                      )}
+
+                      {product.warranty && (
+                        <div className="w-full md:flex-row flex flex-col gap-2">
+                          <div className="w-full flex flex-col gap-1">
+                            <span className="text-sm font-bold text-kudu-roman-silver uppercase">
+                              Warranty
+                            </span>
+                            <span className="text-sm">{product.warranty}</span>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
 
                     <div className="w-full h-px border" />
@@ -640,6 +713,12 @@ export default function ViewProduct() {
 
               <div className="lg:w-[35%] md:w-[45%] w-full flex flex-col gap-4">
                 <div className="w-full flex flex-col gap-3 py-5 md:px-8 px-4 rounded-md bg-white shadow shadow-md">
+                  <div className="flex flex-col gap-2">
+                    <h1 className="lg:text-2xl md:text-xl text-lg font-bold w-full overflow-hidden">
+                      {product.name}
+                    </h1>
+                  </div>
+                  <div className="w-full h-px border" />
                   {(() => {
                     const price = parseFloat(product?.price);
                     const discountPrice = parseFloat(product?.discount_price);
@@ -767,7 +846,7 @@ export default function ViewProduct() {
                   <></>
                 )}
                 <div className="w-full flex flex-col gap-3 py-5 md:px-8 px-8 rounded-md bg-white shadow shadow-md">
-                  <p className="text-lg font-bold">Safetyss Tips</p>
+                  <p className="text-lg font-bold">Safety Tips</p>
                   <ul
                     className="text-sm font-medium md:px-4 flex flex-col gap-2"
                     style={{ listStyle: "disc" }}
@@ -816,30 +895,27 @@ export default function ViewProduct() {
                           </button>
                         </div>
                       </div>
-                      <button
-                        data-theme="kudu"
-                        className="btn btn-primary"
-                        type="submit"
-                        onClick={() => handleAddToCart()}
-                        disabled={disabled}
-                      >
-                        <span className="flex ">
-                          <ShoppingCart />
-                        </span>
-                        <span className="flex ">Add to Cart</span>
-                      </button>
-                      <button
-                        data-theme="kudu"
-                        className="w-full py-2 px-4 flex justify-center gap-2 rounded-md bg-kudu-orange text-white hover:opacity-90 transition-opacity font-medium text-sm"
-                        type="button"
-                        onClick={() => handleBuyNow()}
-                        disabled={disabled}
-                      >
-                        <span className="flex ">
-                          <Zap size={18} />
-                        </span>
-                        <span className="flex ">Buy Now</span>
-                      </button>
+                      <div className="flex flex-col gap-3 w-full">
+                        <Button
+                          variant="secondary"
+                          fullWidth
+                          onClick={() => handleAddToCart()}
+                          disabled={disabled}
+                          icon={<ShoppingCart size={18} />}
+                        >
+                          Add to Cart
+                        </Button>
+                        <Button
+                          variant="primary"
+                          fullWidth
+                          className="bg-kudu-orange text-white"
+                          onClick={() => handleBuyNow()}
+                          disabled={disabled}
+                          icon={<Zap size={18} />}
+                        >
+                          Buy Now
+                        </Button>
+                      </div>
                     </>
                   </div>
                 ) : (
@@ -848,10 +924,10 @@ export default function ViewProduct() {
 
                 {((product.vendor?.isVerified || product.admin) || isNonCartCategory()) && (
                   <div className="w-full flex flex-col gap-3 py-5 md:px-8 px-4 rounded-md bg-white shadow shadow-md">
-                    <button
-                      data-theme="kudu"
-                      className="w-full py-2 px-4 flex justify-center gap-2 rounded-md border border-kudu-orange text-kudu-orange hover:bg-kudu-orange hover:text-white transition-colors font-medium text-sm"
-                      type="button"
+                    <Button
+                      variant="outline"
+                      fullWidth
+                      className="border-kudu-orange text-kudu-orange hover:bg-kudu-orange hover:text-white"
                       onClick={() => {
                         if (user) {
                           setShowOfferModal(true);
@@ -859,14 +935,12 @@ export default function ViewProduct() {
                           navigate("/login");
                         }
                       }}
+                      icon={<Tag size={18} />}
                     >
-                      <Tag size={18} />
-                      <span>
-                        {currentOffer
-                          ? `Offer: ${currentOffer.status.charAt(0).toUpperCase() + currentOffer.status.slice(1)}`
-                          : "Make an Offer"}
-                      </span>
-                    </button>
+                      {currentOffer
+                        ? `Offer: ${currentOffer.status.charAt(0).toUpperCase() + currentOffer.status.slice(1)}`
+                        : "Make an Offer"}
+                    </Button>
                   </div>
                 )}
 
@@ -930,26 +1004,13 @@ export default function ViewProduct() {
                   !product.admin ? (
                   <div className="w-full flex">
                     <Button
-                      type="submit"
+                      variant="primary"
+                      fullWidth
                       onClick={() => showContact()}
-                      className=" w-full py-4 px-4 flex justify-center gap-2 bg-kudu-orange text-white rounded-lg transition-colors"
+                      className="bg-kudu-orange text-white"
+                      icon={<PhoneIcon size={18} />}
                     >
-                      <span className="flex mt-[2px]">
-                        <PhoneIcon />
-                        {/*<svg
-                          width="19"
-                          height="19"
-                          viewBox="0 0 19 19"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M11.5253 1.30599C11.5508 1.21081 11.5947 1.12158 11.6547 1.04339C11.7147 0.965204 11.7894 0.899598 11.8748 0.850321C11.9601 0.801044 12.0543 0.769061 12.152 0.7562C12.2496 0.743339 12.3489 0.749852 12.4441 0.775367C13.8344 1.13813 15.103 1.86497 16.119 2.88103C17.1351 3.89708 17.8619 5.16562 18.2247 6.55599C18.2502 6.65116 18.2567 6.75042 18.2439 6.84811C18.231 6.94579 18.199 7.03999 18.1497 7.12531C18.1005 7.21063 18.0349 7.28541 17.9567 7.34536C17.8785 7.40532 17.7893 7.44928 17.6941 7.47474C17.6307 7.49138 17.5655 7.49989 17.5 7.50005C17.3347 7.50005 17.1741 7.44545 17.043 7.34475C16.912 7.24405 16.8179 7.10288 16.7753 6.94318C16.4795 5.80817 15.8863 4.77259 15.0569 3.9432C14.2275 3.11381 13.1919 2.52061 12.0569 2.22474C11.9616 2.19938 11.8723 2.15549 11.794 2.09558C11.7157 2.03566 11.65 1.9609 11.6006 1.87557C11.5513 1.79024 11.5192 1.69601 11.5063 1.59828C11.4933 1.50054 11.4998 1.40122 11.5253 1.30599ZM11.3069 5.22474C12.5997 5.56974 13.4303 6.40037 13.7753 7.69318C13.8179 7.85288 13.912 7.99405 14.043 8.09475C14.1741 8.19545 14.3347 8.25005 14.5 8.25005C14.5655 8.24989 14.6307 8.24138 14.6941 8.22474C14.7893 8.19928 14.8785 8.15532 14.9567 8.09536C15.0349 8.03541 15.1005 7.96063 15.1497 7.87531C15.199 7.78999 15.231 7.69579 15.2439 7.59811C15.2567 7.50042 15.2502 7.40116 15.2247 7.30599C14.7447 5.50974 13.4903 4.25537 11.6941 3.77537C11.5019 3.72402 11.2971 3.75113 11.1249 3.85073C10.9527 3.95033 10.8271 4.11426 10.7758 4.30646C10.7244 4.49866 10.7516 4.70338 10.8512 4.87559C10.9508 5.04781 11.1147 5.1734 11.3069 5.22474ZM18.9888 14.1638C18.8216 15.4341 18.1977 16.6002 17.2337 17.4442C16.2696 18.2882 15.0313 18.7523 13.75 18.7501C6.30626 18.7501 0.250008 12.6938 0.250008 5.25005C0.247712 3.96876 0.711903 2.73045 1.55588 1.76639C2.39986 0.802337 3.56592 0.178467 4.83626 0.0113044C5.1575 -0.0279197 5.4828 0.0378001 5.76362 0.198653C6.04444 0.359506 6.2657 0.606865 6.39438 0.903804L8.37438 5.32412V5.33537C8.4729 5.56267 8.51359 5.81083 8.49282 6.05769C8.47204 6.30455 8.39044 6.54242 8.25532 6.75005C8.23845 6.77537 8.22063 6.7988 8.20188 6.82224L6.25001 9.13599C6.9522 10.5629 8.4447 12.0422 9.89032 12.7463L12.1722 10.8047C12.1946 10.7859 12.2181 10.7684 12.2425 10.7522C12.45 10.6139 12.6887 10.5294 12.937 10.5065C13.1853 10.4836 13.4354 10.5229 13.6647 10.621L13.6769 10.6266L18.0934 12.6057C18.3909 12.7339 18.6389 12.955 18.8003 13.2358C18.9616 13.5167 19.0278 13.8422 18.9888 14.1638ZM17.5 13.9763C17.5 13.9763 17.4934 13.9763 17.4897 13.9763L13.0834 12.0029L10.8006 13.9444C10.7785 13.9632 10.7553 13.9807 10.7313 13.9969C10.5154 14.1409 10.2659 14.2265 10.0071 14.2452C9.74828 14.2639 9.48904 14.2152 9.2547 14.1038C7.49876 13.2554 5.74845 11.5182 4.89907 9.78099C4.7866 9.54836 4.73613 9.29061 4.75255 9.03274C4.76898 8.77486 4.85174 8.5256 4.99282 8.30912C5.00872 8.2837 5.02659 8.25956 5.04626 8.23693L7.00001 5.92037L5.03126 1.51412C5.03089 1.51038 5.03089 1.50661 5.03126 1.50287C4.12212 1.62146 3.28739 2.0674 2.68339 2.75716C2.0794 3.44693 1.74755 4.33322 1.75001 5.25005C1.75348 8.43159 3.01888 11.4818 5.26856 13.7315C7.51825 15.9812 10.5685 17.2466 13.75 17.2501C14.6663 17.2532 15.5523 16.9225 16.2425 16.3198C16.9327 15.7171 17.3797 14.8837 17.5 13.9754V13.9763Z"
-                            fill="white"
-                          />
-                        </svg>*/}
-                      </span>
-                      <span className="flex mt-[4px]">Display Contact</span>
+                      Display Contact
                     </Button>
                   </div>
                 ) : (
@@ -964,6 +1025,93 @@ export default function ViewProduct() {
           </div>
         </div>
       </div>
+
+      {/* More from this Store Section */}
+      {vendorProducts && vendorProducts.length > 0 && (
+        <div className="w-full xl:px-80 lg:pl-40 lg:pr-36 md:px-4 px-5 py-4 bg-kudu-light-blue">
+          <div className="w-full bg-white rounded-xl shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold">More from this Store</h2>
+              {product.vendor && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`/store/${product.vendor.id}/products`, { state: { vendor: product.vendor, store: product.store } })}
+                  className="text-sm font-semibold text-kudu-orange hover:underline transition-colors"
+                >
+                  View Store →
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {vendorProducts
+                .filter((p) => p.id !== product.id)
+                .slice(0, 8)
+                .map((vp) => (
+                  <div
+                    key={vp.id}
+                    onClick={() => {
+                      navigate(`/product/${vp.id}`);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow group"
+                  >
+                    <div className="w-full h-36 rounded-md overflow-hidden bg-gray-200 mb-2">
+                      <img
+                        src={vp.image_url || vp.image || vp.additional_images?.[0] || "https://res.cloudinary.com/ddj0k8gdw/image/upload/v1736780988/Shopping_bag-bro_1_vp1yri.png"}
+                        alt={vp.name || "Product"}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        onError={(e) => { e.currentTarget.src = "https://res.cloudinary.com/ddj0k8gdw/image/upload/v1736780988/Shopping_bag-bro_1_vp1yri.png"; }}
+                      />
+                    </div>
+                    <p className="text-sm font-semibold line-clamp-2 mb-1">{vp.name}</p>
+                    <p className="text-sm font-bold text-kudu-orange">
+                      {vp.store?.currency?.symbol || product?.store?.currency?.symbol || "$"} {formatNumberWithCommas(parseFloat(vp.price || "0"))}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Similar Products Section */}
+      {product.recommendedProducts && product.recommendedProducts.length > 0 && (
+        <div className="w-full xl:px-80 lg:pl-40 lg:pr-36 md:px-4 px-5 py-4 bg-kudu-light-blue">
+          <div className="w-full bg-white rounded-xl shadow-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold">Similar Products</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {product.recommendedProducts
+                .filter((p) => p.id !== product.id)
+                .slice(0, 8)
+                .map((rp) => (
+                  <div
+                    key={rp.id}
+                    onClick={() => {
+                      navigate(`/product/${rp.id}`);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="bg-gray-50 rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow group"
+                  >
+                    <div className="w-full h-36 rounded-md overflow-hidden bg-gray-200 mb-2">
+                      <img
+                        src={rp.image_url || rp.additional_images?.[0] || "https://res.cloudinary.com/ddj0k8gdw/image/upload/v1736780988/Shopping_bag-bro_1_vp1yri.png"}
+                        alt={rp.name || "Product"}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                        onError={(e) => { e.currentTarget.src = "https://res.cloudinary.com/ddj0k8gdw/image/upload/v1736780988/Shopping_bag-bro_1_vp1yri.png"; }}
+                      />
+                    </div>
+                    <p className="text-sm font-semibold line-clamp-2 mb-1">{rp.name}</p>
+                    <p className="text-sm font-bold text-kudu-orange">
+                      {rp.store?.currency?.symbol || product?.store?.currency?.symbol || "$"} {formatNumberWithCommas(parseFloat(rp.price || "0"))}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Make an Offer Modal */}
       {showOfferModal && (

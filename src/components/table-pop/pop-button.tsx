@@ -2,6 +2,7 @@ import { Menu } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { usePopper } from "react-popper";
 import Portal from "../Portal";
+import Button from "../Button";
 type Actions<T> = {
   key: string;
   label: string;
@@ -101,13 +102,14 @@ export default function PopUp(props: {
                 action.render ? (
                   action.render(props.item)
                 ) : (
-                  <button
+                  <Button
                     key={action.key}
-                    className="btn px-2 py-1 capitalize btn-ghost text-current/70 text-sm "
                     onClick={() => action.action(props.item)}
+                    variant="ghost"
+                    size="sm"
                   >
                     {action.label}
-                  </button>
+                  </Button>
                 ),
               )}
             </div>

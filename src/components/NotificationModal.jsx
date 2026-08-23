@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from './Button';
 import { useModal } from '../hooks/modal';
 
 const NotificationModal = ({ title, message, type = "success", buttonText = "OK" }) => {
@@ -39,16 +40,16 @@ const NotificationModal = ({ title, message, type = "success", buttonText = "OK"
     }
   };
 
-  const getButtonClass = () => {
+  const getButtonVariant = () => {
     switch (type) {
       case "success":
-        return "bg-green-500 hover:bg-green-600 text-white focus:ring-green-300";
+        return "success";
       case "error":
-        return "bg-red-500 hover:bg-red-600 text-white focus:ring-red-300";
+        return "danger";
       case "warning":
-        return "bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-300";
+        return "primary";
       default:
-        return "bg-green-500 hover:bg-green-600 text-white focus:ring-green-300";
+        return "success";
     }
   };
 
@@ -60,12 +61,12 @@ const NotificationModal = ({ title, message, type = "success", buttonText = "OK"
         <p className="text-gray-600 text-sm leading-relaxed">{message}</p>
       </div>
       <div className="flex justify-center mt-6">
-        <button
+        <Button
           onClick={handleClose}
-          className={`${getButtonClass()} px-6 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2`}
+          variant={getButtonVariant()}
         >
           {buttonText}
-        </button>
+        </Button>
       </div>
     </div>
   );

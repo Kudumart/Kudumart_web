@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Loader from "../../../components/Loader";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import DropZone from "../../../components/DropZone";
+import Button from "../../../components/Button";
 
 const UpdateAdvert = () => {
   const [categories, setCategories] = useState([]);
@@ -284,14 +285,14 @@ const UpdateAdvert = () => {
                   ))}
                 </div>
               </div>
-              <button
+              <Button
                 type="submit"
-                className="btn btn-primary btn-block"
-                data-theme="kudu"
+                variant="primary"
+                fullWidth
                 disabled={disabled}
               >
                 Update Advert
-              </button>
+              </Button>
             </div>
           </form>
         </div>

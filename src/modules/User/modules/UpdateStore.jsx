@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import Loader from "../../../components/Loader";
 import NaijaStates from "naija-state-local-government";
+import Button from "../../../components/Button";
 
 const UpdateStore = () => {
   const {
@@ -520,24 +521,35 @@ const UpdateStore = () => {
                     </div>
                   </div>
                 ))}
-                <button
+                <Button
                   type="button"
                   onClick={addDeliveryOption}
-                  className="bg-kudu-orange mt-2 hover:bg-blue-700 cursor-pointer text-white text-sm py-2 px-4 rounded-sm"
+                  variant="primary"
+                  className="bg-kudu-orange mt-2"
                 >
                   + Add Delivery Option
-                </button>
+                </Button>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={disabled}
-                className="btn btn-primary btn-block"
-                data-theme="kudu"
-              >
-                Update Store
-              </button>
+              {/* Form Actions */}
+              <div className="flex justify-end gap-4 mt-8">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-1/3"
+                  onClick={() => navigate(-1)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={disabled}
+                  variant="primary"
+                  className="bg-kudu-orange w-2/3"
+                >
+                  Update Store
+                </Button>
+              </div>
             </div>
           </form>
         </div>

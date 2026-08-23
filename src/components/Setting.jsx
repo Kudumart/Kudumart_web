@@ -8,6 +8,7 @@ import useAppState from "../hooks/appState";
 import { useNavigate } from "react-router-dom";
 import PaymentGateway from "../modules/SuperAdmin/Dashboard/PaymentGateway";
 import Charges from "./admin/Charges";
+import Button from "./Button";
 
 const Setting = () => {
   const { user } = useAppState();
@@ -216,13 +217,13 @@ const Setting = () => {
                   </div>
 
                   <div className="col-span-2 flex justify-start">
-                    <button
+                    <Button
                       type="submit"
                       disabled={isLoading}
-                      className="bg-orange-500 text-white text-xs font-medium py-4 px-4 rounded-md hover:bg-orange-600"
+                      variant="primary"
                     >
                       Update Info
-                    </button>
+                    </Button>
                   </div>
                 </tab>
               </>
@@ -302,13 +303,13 @@ const Setting = () => {
                   </div>
 
                   <div className="col-span-2 flex justify-start">
-                    <button
+                    <Button
                       type="submit"
                       disabled={isLoading}
-                      className="bg-orange-500 text-white text-xs font-medium py-4 px-4 rounded-md hover:bg-orange-600"
+                      variant="primary"
                     >
                       Update Password
-                    </button>
+                    </Button>
                   </div>
                 </form>
               </>

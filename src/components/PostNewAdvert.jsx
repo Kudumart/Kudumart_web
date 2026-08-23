@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Button from "./Button";
 import { useForm } from "react-hook-form";
 import useApiMutation from "../api/hooks/useApiMutation";
 import { useNavigate } from "react-router-dom";
@@ -224,13 +225,9 @@ const PostNewAdvert = () => {
                   ))}
                 </div>
               </div>
-              <button
-                type="submit"
-                className="btn btn-primary btn-block"
-                data-theme="kudu"
-              >
+              <Button type="submit" variant="primary" fullWidth>
                 Create New Advert
-              </button>
+              </Button>
             </div>
           </form>
         </div>

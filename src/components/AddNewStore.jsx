@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Button from "./Button";
 import { useForm } from "react-hook-form";
 import { City, Country, State } from "country-state-city";
 import useApiMutation from "../api/hooks/useApiMutation";
@@ -509,13 +510,13 @@ const AddNewStore = () => {
               </div>
 
               {/* Submit Button */}
-              <button
+              <Button
                 type="submit"
-                className="btn btn-primary btn-block"
-                data-theme="kudu"
+                variant="primary"
+                fullWidth
               >
                 Create New Store
-              </button>
+              </Button>
             </div>
           </form>
         </div>

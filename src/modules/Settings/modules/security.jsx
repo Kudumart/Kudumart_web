@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setKuduUser } from "../../../reducers/userSlice";
 import { handleIncomingMessage } from "../../../App";
+import Button from "../../../components/Button";
 
 export default function ProfileSecurity() {
   const [isLoading, setIsLoading] = useState(false);
@@ -116,13 +117,15 @@ export default function ProfileSecurity() {
           </div>
 
           <div className="col-span-2 flex justify-start">
-            <button
+            <Button
               type="submit"
+              variant="primary"
               disabled={isLoading}
-              className="bg-orange-500 text-white text-xs font-medium py-4 px-4 rounded-md hover:bg-orange-600"
+              isLoading={isLoading}
+              className="py-4 px-4 text-xs"
             >
               Update Password
-            </button>
+            </Button>
           </div>
         </form>
       </div>

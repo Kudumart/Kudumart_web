@@ -5,7 +5,7 @@ import { useModal } from '../hooks/modal';
 import Table from './ReviewTable';
 import Modal from './Modal';
 import { useForm } from 'react-hook-form';
-import { Button } from '@material-tailwind/react';
+import Button from './Button';
 import useApiMutation from '../api/hooks/useApiMutation';
 
 const AdminAdverts = ({ data, paginate, totalData, loading, refetch }) => {
@@ -94,18 +94,16 @@ const AdminAdverts = ({ data, paginate, totalData, loading, refetch }) => {
                             )}
                         </div>
                         <div className="w-full flex justify-center gap-4 mt-1">
-                            <Button type="submit"
-                                className="bg-kudu-orange p-3 rounded-lg"
-                            >
+                            <Button type="submit" variant="primary">
                                 Unpublish AD
                             </Button>
-                            <button
+                            <Button
                                 onClick={closeModal}
                                 type='button'
-                                className="bg-gray-300 text-black px-4 py-2 font-medium rounded-lg"
+                                variant="secondary"
                             >
                                 Cancel
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </form>

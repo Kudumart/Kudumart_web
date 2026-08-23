@@ -1,6 +1,6 @@
 import useApiMutation from '../api/hooks/useApiMutation';
 import { useDispatch } from 'react-redux';
-import { Button } from '@material-tailwind/react';
+import Button from './Button';
 import { setCurrencyData, setIPInfo, setKuduUser } from '../reducers/userSlice';
 import { useModal } from '../hooks/modal';
 import { usePermissions } from '../store/clientStore';
@@ -42,18 +42,12 @@ const LogOutModal = ({redirect, mode}) => {
                     </p>
                 </div>
                 <div className="flex justify-center mt-5 gap-4">
-                    <Button
-                        onClick={logOutUser}
-                        className="bg-red-500 text-white outline-hidden px-4 py-2 rounded-lg"
-                    >
+                    <Button onClick={logOutUser} variant="danger">
                         Yes, Log Out
                     </Button>
-                    <button
-                        onClick={closeModal}
-                        className="bg-gray-300 text-black px-4 py-2 font-medium rounded-lg"
-                    >
+                    <Button onClick={closeModal} variant="secondary">
                         Cancel
-                    </button>
+                    </Button>
                 </div>
             </div>
         </>

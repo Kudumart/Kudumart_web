@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "./Button";
 import { FaClock, FaMapMarkerAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
@@ -32,9 +33,9 @@ const JobItem = ({ job }) => {
         dangerouslySetInnerHTML={{ __html: `${job?.description.slice(0, 200)}...` }}
       ></div>
 
-      <button className="border w-full mt-4 py-4 rounded-lg text-sm hover:bg-gray-100">
+      <Button variant="outline" fullWidth>
         <Link to={`/jobs-details/${job.id}`}>View Job Details</Link>
-      </button>
+      </Button>
     </div>
     </div>
   );

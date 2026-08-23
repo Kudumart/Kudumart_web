@@ -9,6 +9,7 @@ import draftToHtml from "draftjs-to-html";
 import { FaTimes, FaMagic } from "react-icons/fa";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import Button from "../../../components/Button";
 
 const AddNewProduct = () => {
   const [descriptionEditor, setDescriptionEditor] = useState(() =>
@@ -242,7 +243,7 @@ const AddNewProduct = () => {
               <div className="mb-4">
                 <label
                   className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  htmlFor="storeId"
                 >
                   Store
                 </label>
@@ -268,7 +269,7 @@ const AddNewProduct = () => {
               <div className="mb-4">
                 <label
                   className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  htmlFor="category"
                 >
                   Category
                 </label>
@@ -296,7 +297,7 @@ const AddNewProduct = () => {
               <div className="mb-4">
                 <label
                   className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  htmlFor="categoryId"
                 >
                   Sub Category
                 </label>
@@ -323,7 +324,7 @@ const AddNewProduct = () => {
               <div className="mb-4">
                 <label
                   className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  htmlFor="name"
                 >
                   Product Name
                 </label>
@@ -343,7 +344,7 @@ const AddNewProduct = () => {
               <div className="mb-4">
                 <label
                   className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  htmlFor="condition"
                 >
                   Condition
                 </label>
@@ -370,7 +371,7 @@ const AddNewProduct = () => {
               <div className="mb-4">
                 <label
                   className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  htmlFor="description"
                 >
                   Description
                 </label>
@@ -397,7 +398,7 @@ const AddNewProduct = () => {
               <div className="mt-4 mb-4">
                 <label
                   className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  htmlFor="specifications"
                 >
                   Specifications
                 </label>
@@ -423,15 +424,16 @@ const AddNewProduct = () => {
 
               <div className="mt-4 mb-4">
                 <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  className="block text-md font-semibold mb-1"
+                  htmlFor="quantity"
                 >
                   Quantity Available
                 </label>
+                <p className="text-xs text-gray-500 mb-2">Total number of units available for sale.</p>
                 <div className="flex gap-2">
                   <input
                     type="number"
-                    id="price"
+                    id="quantity"
                     {...register("quantity", {
                       required: "Product Quantity is required",
                       min: {
@@ -449,11 +451,12 @@ const AddNewProduct = () => {
 
               <div className="mt-4 mb-4">
                 <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  className="block text-md font-semibold mb-1"
+                  htmlFor="price"
                 >
                   Price
                 </label>
+                <p className="text-xs text-gray-500 mb-2">Set a competitive price for your product.</p>
                 <div className="flex gap-2">
                   <span className="flex flex-col justify-center">
                     {currency}
@@ -475,7 +478,7 @@ const AddNewProduct = () => {
               <div className="mb-4">
                 <label
                   className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  htmlFor="discount_price"
                 >
                   Discount Price (Optional)
                 </label>
@@ -496,11 +499,12 @@ const AddNewProduct = () => {
 
               <div className="mb-4">
                 <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  className="block text-md font-semibold mb-1"
+                  htmlFor="warranty"
                 >
                   Warranty
                 </label>
+                <p className="text-xs text-gray-500 mb-2">Specify warranty terms (e.g., '6 Months' or 'No Warranty').</p>
                 <input
                   type="text"
                   id="warranty"
@@ -516,11 +520,12 @@ const AddNewProduct = () => {
 
               <div className="mb-4">
                 <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
+                  className="block text-md font-semibold mb-1"
+                  htmlFor="return_policy"
                 >
                   Return policy
                 </label>
+                <p className="text-xs text-gray-500 mb-2">Specify return window (e.g., '7 Days Return' or 'No Returns').</p>
                 <input
                   type="text"
                   id="return_policy"
@@ -594,19 +599,29 @@ const AddNewProduct = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="btn btn-primary btn-block"
-                data-theme="kudu"
-                disabled={
-                  !watch("description") ||
-                  !watch("specifications") ||
-                  btnDisabled
-                }
-              >
-                Create New Product
-              </button>
+              {/* Form Actions */}
+              <div className="flex justify-end gap-4 mt-8">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-1/3"
+                  onClick={() => navigate(-1)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="bg-kudu-orange w-2/3"
+                  disabled={
+                    !watch("description") ||
+                    !watch("specifications") ||
+                    btnDisabled
+                  }
+                >
+                  Create New Product
+                </Button>
+              </div>
             </div>
           </form>
         </div>

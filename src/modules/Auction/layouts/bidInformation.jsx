@@ -1,4 +1,4 @@
-import { Button } from "@material-tailwind/react";
+import Button from "../../../components/Button";
 import React, { useEffect } from "react";
 import { getTimeLeft } from "../../../helpers/dateHelper";
 import { useForm } from "react-hook-form";
@@ -120,7 +120,7 @@ const BidInformation = ({ content, currentBid }) => {
                                         placeholder="Enter Amount" className="border focus:outline-hidden border-gray-300 rounded-lg p-2 w-full" />
                                 </div>
                             </div>
-                            <Button type="submit" disabled={isLoading} className="w-full py-2 px-4 flex justify-center gap-2 bg-kudu-orange normal-case text-white rounded-lg font-medium transition-colors">
+                            <Button type="submit" variant="primary" fullWidth isLoading={isLoading} disabled={isLoading} className="py-2 flex justify-center normal-case">
                                 <span className="font-semibold text-sm normal-case">Bid Now</span>
                             </Button>
                         </form>

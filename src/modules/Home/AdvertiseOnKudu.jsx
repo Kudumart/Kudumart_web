@@ -1,5 +1,6 @@
 import "./components/style.css";
 import { Link } from "react-router-dom";
+import Button from "../../components/Button";
 
 export default function AdvertiseOnKudu() {
     return (
@@ -49,9 +50,9 @@ export default function AdvertiseOnKudu() {
                                     className="w-24 h-24 rounded-lg object-cover mb-4"
                                 /></span>
                                 <p className="font-semibold mt-4">{item.title}</p>
-                                <button className="mt-4 bg-[#FF6F22] text-white py-3 rounded-md w-full hover:bg-orange-600 transition">
+                                <Button variant="primary" fullWidth className="mt-4 py-3">
                                     <Link to="/sign-up"> Join Now</Link>
-                                </button>
+                                </Button>
                             </div>
                         ))}
                     </div>

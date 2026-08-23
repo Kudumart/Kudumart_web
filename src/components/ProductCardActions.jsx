@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import Button from "./Button";
 import { ShoppingCart, Tag, PhoneIcon, Eye } from "lucide-react";
 import useAppState from "../hooks/appState";
 import { useAddToCart } from "../api/cart";
@@ -43,17 +44,18 @@ export default function ProductCardActions({ product, className = "" }) {
   if (isDropship) {
     return (
       <div className={`flex ${className}`}>
-        <button
+        <Button
           type="button"
           onClick={(e) => {
             stop(e);
             navigate(productPath);
           }}
-          className="w-full py-2 px-3 flex items-center justify-center gap-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+          variant="outline"
+          fullWidth
         >
           <Eye size={16} />
           View Details
-        </button>
+        </Button>
       </div>
     );
   }
@@ -61,17 +63,18 @@ export default function ProductCardActions({ product, className = "" }) {
   if (!isVerified) {
     return (
       <div className={`flex ${className}`}>
-        <button
+        <Button
           type="button"
           onClick={(e) => {
             stop(e);
             navigate(productPath);
           }}
-          className="w-full py-2 px-3 flex items-center justify-center gap-2 rounded-md bg-kudu-orange text-white hover:opacity-90 transition-opacity text-sm font-medium"
+          variant="primary"
+          fullWidth
         >
           <PhoneIcon size={16} />
           Contact Seller
-        </button>
+        </Button>
       </div>
     );
   }
@@ -79,33 +82,35 @@ export default function ProductCardActions({ product, className = "" }) {
   if (product.purchaseType === "offer") {
     return (
       <div className={`flex ${className}`}>
-        <button
+        <Button
           type="button"
           onClick={(e) => {
             stop(e);
             navigate(user ? `${productPath}?offer=1` : "/login");
           }}
-          className="w-full py-2 px-3 flex items-center justify-center gap-2 rounded-md border border-kudu-orange text-kudu-orange hover:bg-kudu-orange hover:text-white transition-colors text-sm font-medium"
+          variant="outline"
+          fullWidth
         >
           <Tag size={16} />
           Request an Offer
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
     <div className={`flex ${className}`}>
-      <button
+      <Button
         type="button"
         onClick={requireLogin(() =>
           addItemToCart({ productId: product.id, quantity: 1 }),
         )}
-        className="w-full py-2 px-3 flex items-center justify-center gap-2 rounded-md bg-kudu-orange text-white hover:opacity-90 transition-opacity text-sm font-medium"
+        variant="primary"
+        fullWidth
       >
         <ShoppingCart size={16} />
         Add to Cart
-      </button>
+      </Button>
     </div>
   );
 }

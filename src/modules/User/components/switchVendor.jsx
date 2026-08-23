@@ -1,5 +1,5 @@
 import { useDispatch } from "react-redux";
-import { Button } from "@material-tailwind/react";
+import Button from "../../../components/Button";
 import { useModal } from "../../../hooks/modal";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 
@@ -31,19 +31,18 @@ const SwitchVendorModal = ({ children, redirect }) => {
         </div>
         {children}
         <div className="flex justify-center mt-5 gap-4">
-          <button
-            data-theme="kudu"
+          <Button
+            variant="primary"
             onClick={() => switchVendor()}
-            className="btn btn-primary"
           >
             Yes, Switch to Vendor
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
             onClick={closeModal}
-            className="bg-gray-300 text-black px-4 py-2 font-medium rounded-lg"
           >
             Cancel
-          </button>
+          </Button>
         </div>
       </div>
     </>

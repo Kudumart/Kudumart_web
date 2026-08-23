@@ -4,7 +4,7 @@ import { dateFormat } from '../../../helpers/dateHelper';
 import { useNavigate } from 'react-router-dom';
 import { useModal } from '../../../hooks/modal';
 import DeleteModal from '../../../components/DeleteModal';
-import { Button } from '@material-tailwind/react';
+import Button from '../../../components/Button';
 
 const AllStore = ({ data, allData, paginate, refetch }) => {
     const navigate = useNavigate();
@@ -75,7 +75,7 @@ const AllStore = ({ data, allData, paginate, refetch }) => {
                             onPageChange={fetchNew}
                         />
                         <div className="text-center text-black-100 mt-6 pb-6 leading-loose text-sm px-6">
-                            <Button className='md:w-1/4 w-full bg-kudu-orange p-3' onClick={() => navigate('create')}>
+                            <Button fullWidth className='md:w-1/4 bg-kudu-orange' onClick={() => navigate('create')}>
                                 Add New Store
                             </Button>
                         </div>
@@ -95,7 +95,8 @@ const AllStore = ({ data, allData, paginate, refetch }) => {
                         </div>
                         <div className="text-center">
                             <Button 
-                                className='md:w-1/4 w-full bg-kudu-orange p-3' 
+                                fullWidth 
+                                className='md:w-1/4 bg-kudu-orange' 
                                 onClick={() => navigate('create')}
                             >
                                 Add New Store

@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "@tanstack/react-query"; // Import useQuer
 import { useGeoLocatorCurrency } from "../../../hooks/geoLocatorProduct";
 import Loader from "../../../components/Loader";
 import apiClient from "../../../api/apiFactory";
+import Button from "../../../components/Button";
 
 const EditBankAccount = () => {
   const currency = useGeoLocatorCurrency();
@@ -260,14 +261,14 @@ const EditBankAccount = () => {
                 </>
               )}
               <div className="w-full md:w-2/5">
-                <button
+                <Button
                   type="submit"
-                  disabled={isEditing}
-                  className="btn btn-primary btn-block"
-                  data-theme="kudu"
+                  variant="primary"
+                  fullWidth
+                  isLoading={isEditing}
                 >
-                  {isEditing ? "Saving..." : "Edit Account"}
-                </button>
+                  Edit Account
+                </Button>
               </div>
             </div>
           </form>

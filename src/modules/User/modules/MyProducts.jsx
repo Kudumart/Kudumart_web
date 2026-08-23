@@ -13,6 +13,7 @@ import Loader from "../../../components/Loader";
 import VendorMyProductsTable from "../../../components/VendorMyProductsTable";
 import Modal from "../../../components/modals/DialogModal";
 import { useNewModal } from "../../../components/modals/modals";
+import Button from "../../../components/Button";
 
 const MyProducts = () => {
   const productOptionModal = useNewModal();
@@ -170,18 +171,20 @@ const MyProducts = () => {
         title="Confirm Delete"
         actions={
           <div className="flex justify-end gap-2">
-            <button
-              className="btn btn-sm bg-kudu-dark-grey text-white"
+            <Button
+              size="sm"
+              variant="secondary"
               onClick={() => deleteModal.closeModal()}
             >
               Cancel
-            </button>
-            <button
-              className="btn btn-sm bg-kudu-orange text-white border-none"
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
               onClick={deleteProduct}
             >
               Delete Product
-            </button>
+            </Button>
           </div>
         }
       >

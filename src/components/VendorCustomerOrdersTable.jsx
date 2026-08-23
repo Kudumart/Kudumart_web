@@ -66,8 +66,11 @@ const VendorCustomerOrdersTable = ({
             />
           </div>
           <h1 className="text-center text-lg font-bold mb-4">
-            No order items found!
+            No Customer Orders Yet!
           </h1>
+          <div className="text-center text-gray-600 mb-6">
+            <p>You haven't received any orders from customers. Keep your products updated and run promotions to attract buyers!</p>
+          </div>
         </div>
       )}
     </div>

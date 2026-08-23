@@ -10,6 +10,7 @@ import PropTypes from "prop-types";
 import { exportToCSV } from "../helpers/exportToCSV";
 import Loader from "./Loader";
 import { useDebounce } from "../hooks/useDebounce";
+import Button from "./Button";
 
 function Table({
   title,
@@ -142,11 +143,11 @@ function Table({
 
           {/* ⬇️ Add Button */}
           {onAdd && (
-            <button
+            <Button
               onClick={onAdd}
-              className="px-3 py-2 flex gap-2 items-center rounded-md bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+              variant="primary"
             >
-              <span className="text-xs">{addButtonText}</span>
+              <span className="text-xs flex gap-2 items-center">{addButtonText}
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -160,16 +161,17 @@ function Table({
                   d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                 />
               </svg>
-            </button>
+              </span>
+            </Button>
           )}
 
           {/* ⬇️ Export Button */}
           {exportData && (
-            <button
+            <Button
               onClick={handleExport}
-              className="px-3 py-2 flex gap-2 items-center rounded-md bg-blue-900 text-white hover:bg-blue-800 transition-colors"
+              variant="secondary"
             >
-              <span className="text-xs">Export</span>
+              <span className="text-xs flex gap-2 items-center">Export
               <svg
                 width="10"
                 height="12"
@@ -185,7 +187,8 @@ function Table({
                   strokeLinejoin="round"
                 />
               </svg>
-            </button>
+              </span>
+            </Button>
           )}
         </div>
       </div>

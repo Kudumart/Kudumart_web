@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import useApiMutation from "../../api/hooks/useApiMutation";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import Button from "../../components/Button";
 
 function Forget() {
   const [isLoading, setIsLoading] = useState(false);
@@ -141,14 +142,15 @@ function Forget() {
               </div>
 
               {/* Submit Button */}
-              <button
+              <Button
                 type="submit"
+                variant="primary"
                 disabled={isLoading}
-                data-theme="kudu"
-                className="btn btn-primary"
+                isLoading={isLoading}
+                fullWidth
               >
                 Get Reset Password Link →
-              </button>
+              </Button>
             </form>
 
             {/* Sign Up Link */}
@@ -300,14 +302,15 @@ function Forget() {
                 </div>
 
                 {/* Submit Button */}
-                <button
+                <Button
                   type="submit"
+                  variant="primary"
                   disabled={isLoading}
-                  data-theme="kudu"
-                  className="btn btn-primary"
+                  isLoading={isLoading}
+                  fullWidth
                 >
                   Reset Password →
-                </button>
+                </Button>
               </form>
             </div>
           </>

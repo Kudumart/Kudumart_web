@@ -1,5 +1,5 @@
 import useApiMutation from "../../../api/hooks/useApiMutation";
-import { Button } from "@material-tailwind/react";
+import Button from "../../Button";
 import { useModal } from "../../../hooks/modal";
 import {
   useCreateFaq,
@@ -119,16 +119,16 @@ const AddFaqModal = ({ selectedItem }) => {
         <div className="flex justify-center mt-5 gap-4">
           <Button
             onClick={selectedItem ? handleUpdate : handleCreate}
-            className="bg-red-500 text-white outline-hidden px-4 py-2 rounded-lg"
+            variant="danger"
           >
             {selectedItem ? "Update" : "Add"}
           </Button>
-          <button
+          <Button
             onClick={closeModal}
-            className="bg-gray-300 text-black px-4 py-2 font-medium rounded-lg"
+            variant="secondary"
           >
             Cancel
-          </button>
+          </Button>
         </div>
       </div>
     </>

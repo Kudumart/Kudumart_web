@@ -3,6 +3,7 @@ import { useGeoLocatorCurrency } from "../../../hooks/geoLocatorProduct";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Button from "../../../components/Button";
 
 const AddBankAccount = () => {
   const currency = useGeoLocatorCurrency();
@@ -188,14 +189,15 @@ const AddBankAccount = () => {
                 </>
               )}
               <div className="w-full md:w-2/5">
-                <button
+                <Button
                   type="submit"
                   disabled={disabled}
-                  className="btn btn-primary btn-block"
-                  data-theme="kudu"
+                  variant="primary"
+                  fullWidth
+                  className="bg-kudu-orange"
                 >
                   Create Account
-                </button>
+                </Button>
               </div>
             </div>
           </form>

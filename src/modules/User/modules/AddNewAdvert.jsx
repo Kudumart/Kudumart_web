@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import { useNavigate } from "react-router-dom";
 import DropZone from "../../../components/DropZone";
+import Button from "../../../components/Button";
 
 const PostNewAdvert = () => {
   const [categories, setCategories] = useState([]);
@@ -238,14 +239,15 @@ const PostNewAdvert = () => {
                   ))}
                 </div>
               </div>
-              <button
+              <Button
                 type="submit"
-                className="btn btn-primary btn-block"
-                data-theme="kudu"
+                variant="primary"
+                fullWidth
                 disabled={disabled}
+                className="bg-kudu-orange"
               >
                 Create New Advert
-              </button>
+              </Button>
             </div>
           </form>
         </div>

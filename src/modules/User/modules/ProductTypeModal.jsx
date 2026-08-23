@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "../../../components/Button";
 
 const ProductTypeModal = ({ openAddNewAuctionProductForm, openAddNewProductForm }) => {
     return(
@@ -7,17 +8,20 @@ const ProductTypeModal = ({ openAddNewAuctionProductForm, openAddNewProductForm 
             Product Type
         </h1>
         <div className="flex justify-center mt-4">
-            <button
-                className="bg-kudu-dark-grey hover:bg-gray-400 text-white text-sm py-2 px-4 rounded-sm mr-2"
+            <Button
+                variant="secondary"
+                className="mr-2"
                 onClick={openAddNewAuctionProductForm}
             >
                 Auction
-            </button>
-            <button className="bg-kudu-orange hover:bg-kudu-dark-grey text-white text-sm py-2 px-4 rounded-sm"
+            </Button>
+            <Button 
+                variant="primary"
+                className="bg-kudu-orange"
                 onClick={openAddNewProductForm}
             >
                 Non-Auction
-            </button>
+            </Button>
         </div>
       </div>
     )

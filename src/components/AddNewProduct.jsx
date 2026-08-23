@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Button from "./Button";
 import { useForm } from "react-hook-form";
 import useApiMutation from "../api/hooks/useApiMutation";
 import { useNavigate } from "react-router-dom";
@@ -543,10 +544,11 @@ const AddNewProduct = () => {
               </div>
 
               {/* Submit Button */}
-              <button
+              <Button
                 type="submit"
-                className="btn btn-primary btn-block"
-                data-theme="kudu"
+                variant="primary"
+                fullWidth
+                isLoading={btnDisabled}
                 disabled={
                   !watch("description") ||
                   !watch("specifications") ||
@@ -554,7 +556,7 @@ const AddNewProduct = () => {
                 }
               >
                 Create New Product
-              </button>
+              </Button>
             </div>
           </form>
         </div>

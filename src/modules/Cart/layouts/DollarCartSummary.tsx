@@ -3,7 +3,7 @@ import { CartSummaryType } from "./cartSummary";
 import apiClient from "../../../api/apiFactory";
 import useAppState from "../../../hooks/appState";
 import { formatNumberWithCommas } from "../../../helpers/helperFactory";
-import { Button } from "@material-tailwind/react";
+import Button from "../../../components/Button";
 import { useModal } from "../../../hooks/modal";
 import TestDollarPayment from "../_components/TestDollarPayment";
 import DropShipDollarPayment from "../_components/DropShipDollarPayment";
@@ -190,10 +190,8 @@ export default function DollarCartSummary({
             </>
           ) : (
             <Button
-              placeholder=""
-              onPointerEnterCapture={() => {}}
-              onPointerLeaveCapture={() => {}}
-              className="btn btn-primary bg-kudu-orange"
+              variant="primary"
+              className="w-full"
               onClick={handleModal}
             >
               Set Delivery Location

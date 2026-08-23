@@ -10,6 +10,7 @@ import DraftEditor from "../../../components/Editor";
 import { FaTimes } from "react-icons/fa";
 import draftToHtml from "draftjs-to-html";
 import { toast } from "react-toastify";
+import Button from "../../../components/Button";
 
 const UpdateProduct = () => {
   const [descriptionEditor, setDescriptionEditor] = useState(() =>
@@ -603,15 +604,25 @@ const UpdateProduct = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="btn btn-primary btn-block"
-                data-theme="kudu"
-                disabled={btnDisabled}
-              >
-                Update Product
-              </button>
+              {/* Form Actions */}
+              <div className="flex justify-end gap-4 mt-8">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-1/3"
+                  onClick={() => navigate(-1)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="bg-kudu-orange w-2/3"
+                  disabled={btnDisabled}
+                >
+                  Update Product
+                </Button>
+              </div>
             </div>
           </form>
         </div>

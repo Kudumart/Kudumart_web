@@ -9,6 +9,7 @@ import { jwtDecode } from "jwt-decode";
 import { useMutation } from "@tanstack/react-query";
 import apiClient from "../../api/apiFactory";
 import { toast } from "react-toastify";
+import Button from "../../components/Button";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -255,14 +256,15 @@ function Login() {
             </div>
 
             {/* Submit Button */}
-            <button
+            <Button
               type="submit"
+              variant="primary"
               disabled={login_mutation.isPending}
-              data-theme="kudu"
-              className="btn btn-primary"
+              isLoading={login_mutation.isPending}
+              fullWidth
             >
               Sign In →
-            </button>
+            </Button>
           </form>
           <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full">
             <div className="w-full bg-white text-black px-4 flex items-center justify-center gap-2 rounded-lg">

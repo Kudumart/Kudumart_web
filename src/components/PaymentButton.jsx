@@ -1,5 +1,5 @@
 // PaymentButton.jsx
-import { Button } from "@material-tailwind/react";
+import Button from "./Button";
 import { usePaystackPayment } from "react-paystack";
 import { toast } from "react-toastify";
 
@@ -38,7 +38,8 @@ const PaymentButton = ({
     <Button
       onClick={handleClick}
       disabled={disabled}
-      className={`${noWidth ? "" : "w-3/4"} py-3 px-4 flex justify-center gap-2 ${bgColor ? bgColor : "bg-kudu-orange"} text-white rounded-lg font-medium transition-colors`}
+      variant="primary"
+      fullWidth={!noWidth}
     >
       {children}
     </Button>

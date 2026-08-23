@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button, Step, Stepper } from "@material-tailwind/react";
+import { Step, Stepper } from "@material-tailwind/react";
+import Button from "./Button";
 import { toast } from "react-toastify";
 import useApiMutation from "../api/hooks/useApiMutation";
 
@@ -142,13 +143,13 @@ const TrackOrder = ({ userType, orderId, status, admin, refetch }) => {
         userType ? (
           <div className="mt-20 flex justify-between">
             <Button
-              className="bg-red-500"
+              variant="danger"
               onClick={handlePrev}
               disabled={isLastStep}
             >
               Cancel
             </Button>
-            <Button onClick={handleNext} disabled={isLastStep}>
+            <Button variant="primary" onClick={handleNext} disabled={isLastStep}>
               Next
             </Button>
           </div>
@@ -156,7 +157,7 @@ const TrackOrder = ({ userType, orderId, status, admin, refetch }) => {
           status !== "shipped" && (
             <div className="mt-20 flex justify-between">
               <Button
-                className="bg-red-500"
+                variant="danger"
                 onClick={handlePrev}
                 disabled={isLastStep}
               >
@@ -227,21 +228,21 @@ const TrackOrder = ({ userType, orderId, status, admin, refetch }) => {
             </div>
 
             <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200">
-              <button
+              <Button
                 onClick={() => {
                   setShowDeliveryModal(false);
                   setDeliveryCode("");
                 }}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                variant="outline"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleDeliveryCodeSubmit}
-                className="px-6 py-2 bg-linear-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                variant="primary"
               >
                 Confirm Delivery
-              </button>
+              </Button>
             </div>
           </div>
         </div>

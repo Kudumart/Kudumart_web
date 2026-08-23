@@ -58,20 +58,39 @@ const ChatInterface = ({
 
   const handleMessage = (e) => {
     e.preventDefault();
-      socket.emit("sendMessage", {
-        productId: productId,
-        receiverId:
-          selectedConversation?.receiverId === userId
-            ? selectedConversation?.senderId
-            : selectedConversation?.receiverId,
-        content: text,
-        userId: userId,
-        fileUrl: showFiles[0],
-      });
-      setText("");
-      setShowFiles('')
-      queryClient.invalidateQueries(["messages", conversationId]);
-      refetch();
+    const trimmedText = text.trim();
+    if (!trimmedText && showFiles.length === 0) return;
+
+    // Optimistically add the message to the local cache so the UI updates
+    // immediately without a full refetch (which was causing the component to unmount).
+    const optimisticMessage = {
+      id: `optimistic-${Date.now()}`,
+      content: trimmedText,
+      fileUrl: showFiles[0] || null,
+      senderId: userId,
+      createdAt: new Date().toISOString(),
+    };
+    queryClient.setQueryData(["messages", conversationId], (old) => {
+      if (!old) return { data: [optimisticMessage] };
+      return { ...old, data: [...(old.data || []), optimisticMessage] };
+    });
+
+    socket.emit("sendMessage", {
+      productId: productId,
+      receiverId:
+        selectedConversation?.receiverId === userId
+          ? selectedConversation?.senderId
+          : selectedConversation?.receiverId,
+      content: trimmedText,
+      userId: userId,
+      fileUrl: showFiles[0],
+    });
+    setText("");
+    setShowFiles([]);
+    // Do NOT call refetch() here — it causes isGettingMessage=true which triggers
+    // the loader guard and unmounts the chat. The socket receiveMessage event
+    // and invalidateQueries handle background sync instead.
+    queryClient.invalidateQueries({ queryKey: ["messages", conversationId], refetchType: "none" });
   };
 
 
@@ -115,7 +134,9 @@ const ChatInterface = ({
   };
 
 
-  if (isLoading || isGettingMessage) return (
+  // Only show the full loader on the very first load (no messages yet).
+  // Do NOT show loader on refetch — that was the cause of the component remount bug.
+  if (isLoading) return (
     <div className="md:w-[68%] w-full flex flex-col gap-2 md:mt-px pt-20 bg-white relative border-l-2 overflow-auto">
       <Loader />
     </div>
@@ -306,13 +327,13 @@ const ChatInterface = ({
               />
 
               {/** Send Button */}
-              {(text !== "" && !isSending) || showFiles.length > 0 ? (
+              {(text.trim() !== "" && !isSending) || showFiles.length > 0 ? (
                 <button
                   type="submit"
                   disabled={isSending}
-                  className="py-1 px-4 bg-[rgba(72,133,237,1)] text-white font-medium text-xs rounded-md disabled:opacity-90 disabled:cursor-not-allowed"
+                  className="py-2 px-5 bg-kudu-orange text-white font-semibold text-xs rounded-lg disabled:opacity-60 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                 >
-                  {isSending ? "Sending" : "Send"}
+                  {isSending ? "Sending..." : "Send"}
                 </button>
               )
             :

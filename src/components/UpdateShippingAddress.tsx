@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
+import Button from "./Button";
 import apiClient from "../api/apiFactory";
 import { toast } from "sonner";
 import useAppState from "../hooks/appState";
@@ -212,13 +213,14 @@ export default function UpdateShipAdd({ onclose }: { onclose: () => void }) {
           />
         </div>
 
-        <button
+        <Button
           type="submit"
           disabled={mutation.isPending}
-          className="btn btn-primary w-full"
+          variant="primary"
+          fullWidth
         >
           {mutation.isPending ? "Saving..." : "Save Address"}
-        </button>
+        </Button>
       </form>
     </div>
   );

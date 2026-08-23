@@ -1,4 +1,4 @@
-import { Button } from "@material-tailwind/react";
+import Button from "../../../../components/Button";
 import ChatSideBar from "./sideBar";
 import ChatInterface from "./chatBody";
 import { useEffect, useState } from "react";

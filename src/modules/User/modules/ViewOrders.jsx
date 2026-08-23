@@ -11,7 +11,7 @@ import ReactStars from "react-rating-stars-component";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "@material-tailwind/react";
+import Button from "../../../components/Button";
 import Loader from "../../../components/Loader";
 import { dateFormat } from "../../../helpers/dateHelper";
 import useAppState from "../../../hooks/appState";
@@ -157,7 +157,7 @@ const OrderDetails = () => {
               orderDetails[0].status === "shipped" ? (
                 <Menu placement="bottom">
                   <MenuHandler>
-                    <Button>Update Delivery Status</Button>
+                    <Button variant="outline">Update Delivery Status</Button>
                   </MenuHandler>
                   <MenuList>
                     <MenuItem
@@ -263,7 +263,9 @@ const OrderDetails = () => {
               />
               <Button
                 type="submit"
-                className="bg-kudu-orange text-white px-6 py-2 w-full mt-4 rounded-lg font-semibold"
+                variant="primary"
+                fullWidth
+                className="bg-kudu-orange mt-4"
               >
                 Submit
               </Button>

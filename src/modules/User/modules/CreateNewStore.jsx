@@ -4,6 +4,7 @@ import { City, Country, State } from "country-state-city";
 import { useNavigate } from "react-router-dom";
 import NaijaStates from "naija-state-local-government";
 import useApiMutation from "../../../api/hooks/useApiMutation";
+import Button from "../../../components/Button";
 
 const AddNewStore = () => {
   const [countries] = useState(Country.getAllCountries());
@@ -108,300 +109,247 @@ const AddNewStore = () => {
   }, [mutate]);
 
   return (
-    <div className="w-full">
-      <div className="rounded-md pb-2 w-full gap-5">
-        <h2 className="text-lg font-semibold text-black-700 mb-4">
-          Add New Store
-        </h2>
+    <div className="w-full max-w-4xl mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-800">Add New Store</h2>
+        <p className="text-gray-500 mt-1">Provide the details below to list a new store on Kudumart.</p>
       </div>
-      <div className="w-full flex grow">
-        <div className="shadow-xl py-2 px-5 md:w-3/4 w-full bg-white flex rounded-xl flex-col gap-10">
-          <form
-            className="w-full flex flex-col items-center justify-center p-4"
-            onSubmit={handleSubmit(onSubmit)}
-          >
-            <div className="w-full p-6">
-              <div className="mb-4">
-                <label className="block text-md font-semibold mb-3">
-                  Store Name
-                </label>
-                <input
-                  type="text"
-                  {...register("name", { required: "Store name is required" })}
-                  placeholder="Enter store's name"
-                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none placeholder-gray-400 text-sm mb-3"
-                />
-                {errors.name && (
-                  <p className="text-red-500 text-sm">{errors.name.message}</p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-md font-semibold mb-3">
-                  Store Address
-                </label>
-                <input
-                  type="text"
-                  {...register("address", {
-                    required: "Store address is required",
-                  })}
-                  placeholder="Enter store address"
-                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none placeholder-gray-400 text-sm mb-3"
-                />
-                {errors.address && (
-                  <p className="text-red-500 text-sm">
-                    {errors.address.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <div className="grid grid-cols-12 gap-3">
-                  <div className="col-span-6 md:col-span-4">
-                    <label className="block text-md font-semibold mb-3">
-                      Country
-                    </label>
-                    <select
-                      {...register("country", {
-                        required: "Country is required",
-                      })}
-                      className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none text-sm mb-3"
-                      onChange={handleCountryChange}
-                      defaultValue=""
-                    >
-                      <option value="" disabled>
-                        Select a country
-                      </option>
-                      {countries.map((country) => (
-                        <option
-                          value={JSON.stringify(country)}
-                          key={country.isoCode}
-                        >
-                          {country.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="col-span-6 md:col-span-4">
-                    <label className="block text-md font-semibold mb-3">
-                      State
-                    </label>
-                    <select
-                      {...register("state", { required: "State is required" })}
-                      className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none text-sm mb-3"
-                      onChange={handleStateChange}
-                      defaultValue=""
-                    >
-                      <option value="" disabled>
-                        Select state
-                      </option>
-                      {states.map((state) => (
-                        <option
-                          value={JSON.stringify(state)}
-                          key={state.isoCode}
-                        >
-                          {state.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="col-span-12 md:col-span-4">
-                    <label className="block text-md font-semibold mb-3">
-                      City
-                    </label>
-                    <select
-                      {...register("city", { required: "City is required" })}
-                      className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none text-sm mb-3"
-                      onChange={handleCityChange}
-                      defaultValue=""
-                    >
-                      <option value="" disabled>
-                        Select city
-                      </option>
-                      {cities.map((city, idx) => (
-                        <option value={JSON.stringify(city)} key={idx}>
-                          {city.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-md font-semibold mb-3">
-                  Tips for finding store
-                </label>
-                <input
-                  type="text"
-                  {...register("tipsOnFinding", {
-                    required: "Tips on finding store is required",
-                  })}
-                  placeholder="Tips on finding store"
-                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none placeholder-gray-400 text-sm mb-3"
-                />
-                {errors.tipsOnFinding && (
-                  <p className="text-red-500 text-sm">
-                    {errors.tipsOnFinding.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <div className="grid grid-cols-12 gap-3">
-                  <div className="col-span-6">
-                    <label className="block text-md font-semibold mb-3">
-                      Store Currency
-                    </label>
-                    <select
-                      {...register("currencyId", {
-                        required: "Currency is required",
-                      })}
-                      className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none text-sm mb-3"
-                      defaultValue=""
-                    >
-                      <option value="" disabled>
-                        Select Currency
-                      </option>
-                      {currencies.map((currency) => (
-                        <option value={currency.id} key={currency.id}>
-                          {currency.name} ({currency.symbol})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-sm font-semibold mb-4 uppercase">
-                  Business Hours
-                </p>
-                <div className="grid grid-cols-12 gap-3">
-                  <div className="col-span-12 md:col-span-4">
-                    <label className="block text-md font-semibold mb-3">
-                      Monday - Friday
-                    </label>
-                    <input
-                      type="text"
-                      {...register("monday_friday", {
-                        required: "Required",
-                      })}
-                      placeholder="9am - 5pm"
-                      className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none text-sm mb-3"
-                    />
-                  </div>
-                  <div className="col-span-12 md:col-span-4">
-                    <label className="block text-md font-semibold mb-3">
-                      Saturday
-                    </label>
-                    <input
-                      type="text"
-                      {...register("saturday", { required: "Required" })}
-                      placeholder="9am - 5pm"
-                      className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none text-sm mb-3"
-                    />
-                  </div>
-                  <div className="col-span-12 md:col-span-4">
-                    <label className="block text-md font-semibold mb-3">
-                      Sunday
-                    </label>
-                    <input
-                      type="text"
-                      {...register("sunday", { required: "Required" })}
-                      placeholder="9am - 5pm"
-                      className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-none text-sm mb-3"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-sm font-semibold mb-4 uppercase">
-                  Delivery Options
-                </p>
-                {fields.map((field, index) => (
-                  <div
-                    className="grid grid-cols-12 gap-3 mb-4 items-end"
-                    key={field.id}
-                  >
-                    <div className="col-span-4">
-                      <label className="block text-xs font-semibold mb-1">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        {...register(`deliveryOptions.${index}.city`, {
-                          required: true,
-                        })}
-                        placeholder="City"
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-100 rounded-lg text-sm"
-                      />
-                    </div>
-                    <div className="col-span-3">
-                      <label className="block text-xs font-semibold mb-1">
-                        Price
-                      </label>
-                      <input
-                        type="number"
-                        {...register(`deliveryOptions.${index}.price`, {
-                          required: true,
-                        })}
-                        placeholder="Price"
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-100 rounded-lg text-sm"
-                      />
-                    </div>
-                    <div className="col-span-4">
-                      <label className="block text-xs font-semibold mb-1">
-                        Timeline
-                      </label>
-                      <input
-                        type="text"
-                        {...register(`deliveryOptions.${index}.arrival_day`, {
-                          required: true,
-                        })}
-                        placeholder="e.g 2-3 days"
-                        className="w-full px-4 py-3 bg-gray-100 border border-gray-100 rounded-lg text-sm"
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      {fields.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => remove(index)}
-                          className="text-red-500 p-2"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className="bg-kudu-orange mt-2 hover:bg-orange-600 cursor-pointer text-white text-sm py-2 px-4 rounded-sm"
-                  onClick={() =>
-                    append({ city: "", price: "", arrival_day: "" })
-                  }
-                >
-                  + Add Delivery Option
-                </button>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`btn btn-primary btn-block ${isLoading ? "loading" : ""}`}
-                data-theme="kudu"
-              >
-                {isLoading ? "Creating..." : "Create New Store"}
-              </button>
+      
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        
+        {/* Card 1: Store Information */}
+        <div className="bg-white rounded-xl shadow-xs border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">Store Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Store Name</label>
+              <input
+                type="text"
+                {...register("name", { required: "Store name is required" })}
+                placeholder="Enter store name"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm"
+              />
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
             </div>
-          </form>
+
+            <div className="md:col-span-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Store Currency</label>
+              <select
+                {...register("currencyId", { required: "Currency is required" })}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm"
+                defaultValue=""
+              >
+                <option value="" disabled>Select Currency</option>
+                {currencies.map((currency) => (
+                  <option value={currency.id} key={currency.id}>
+                    {currency.name} ({currency.symbol})
+                  </option>
+                ))}
+              </select>
+              {errors.currencyId && <p className="text-red-500 text-xs mt-1">{errors.currencyId.message}</p>}
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Tips for finding store</label>
+              <input
+                type="text"
+                {...register("tipsOnFinding", { required: "Tips on finding store is required" })}
+                placeholder="e.g. Opposite the main bank building"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm"
+              />
+              {errors.tipsOnFinding && <p className="text-red-500 text-xs mt-1">{errors.tipsOnFinding.message}</p>}
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* Card 2: Location Details */}
+        <div className="bg-white rounded-xl shadow-xs border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">Location Details</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Country</label>
+              <select
+                {...register("country", { required: "Country is required" })}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm"
+                onChange={handleCountryChange}
+                defaultValue=""
+              >
+                <option value="" disabled>Select a country</option>
+                {countries.map((country) => (
+                  <option value={JSON.stringify(country)} key={country.isoCode}>{country.name}</option>
+                ))}
+              </select>
+              {errors.country && <p className="text-red-500 text-xs mt-1">{errors.country.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">State</label>
+              <select
+                {...register("state", { required: "State is required" })}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm"
+                onChange={handleStateChange}
+                defaultValue=""
+              >
+                <option value="" disabled>Select state</option>
+                {states.map((state) => (
+                  <option value={JSON.stringify(state)} key={state.isoCode}>{state.name}</option>
+                ))}
+              </select>
+              {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">City</label>
+              <select
+                {...register("city", { required: "City is required" })}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm"
+                onChange={handleCityChange}
+                defaultValue=""
+              >
+                <option value="" disabled>Select city</option>
+                {cities.map((city, idx) => (
+                  <option value={JSON.stringify(city)} key={idx}>{city.name}</option>
+                ))}
+              </select>
+              {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city.message}</p>}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Store Address</label>
+            <input
+              type="text"
+              {...register("address", { required: "Store address is required" })}
+              placeholder="Enter full street address"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm"
+            />
+            {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>}
+          </div>
+        </div>
+
+        {/* Card 3: Business Hours */}
+        <div className="bg-white rounded-xl shadow-xs border border-gray-100 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">Business Hours</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Monday - Friday</label>
+              <input
+                type="text"
+                {...register("monday_friday", { required: "Required" })}
+                placeholder="e.g. 9am - 5pm"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Saturday</label>
+              <input
+                type="text"
+                {...register("saturday", { required: "Required" })}
+                placeholder="e.g. 10am - 4pm or Closed"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Sunday</label>
+              <input
+                type="text"
+                {...register("sunday", { required: "Required" })}
+                placeholder="e.g. Closed"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Delivery Options */}
+        <div className="bg-white rounded-xl shadow-xs border border-gray-100 p-6">
+          <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+            <h3 className="text-lg font-semibold text-gray-800">Delivery Options</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => append({ city: "", price: "", arrival_day: "" })}
+            >
+              + Add Option
+            </Button>
+          </div>
+          
+          <div className="space-y-4">
+            {fields.map((field, index) => (
+              <div
+                className="grid grid-cols-12 gap-4 items-start bg-gray-50 p-4 rounded-lg border border-gray-100"
+                key={field.id}
+              >
+                <div className="col-span-12 md:col-span-4">
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">City</label>
+                  <input
+                    type="text"
+                    {...register(`deliveryOptions.${index}.city`, { required: true })}
+                    placeholder="e.g. Lagos"
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                  />
+                </div>
+                <div className="col-span-12 md:col-span-3">
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Price</label>
+                  <input
+                    type="number"
+                    {...register(`deliveryOptions.${index}.price`, { required: true })}
+                    placeholder="e.g. 5000"
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                  />
+                </div>
+                <div className="col-span-10 md:col-span-4">
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Timeline</label>
+                  <input
+                    type="text"
+                    {...register(`deliveryOptions.${index}.arrival_day`, { required: true })}
+                    placeholder="e.g. 2-3 days"
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                  />
+                </div>
+                <div className="col-span-2 md:col-span-1 flex justify-end items-end h-full pb-1">
+                  {fields.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => remove(index)}
+                      className="text-red-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50"
+                      title="Remove Option"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Bar */}
+        <div className="flex flex-col-reverse sm:flex-row justify-end items-center gap-4 pt-4 pb-12">
+          <Button
+            variant="ghost"
+            type="button"
+            onClick={() => navigate(-1)}
+            fullWidth
+            className="sm:w-auto"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            fullWidth
+            className="sm:w-auto px-8"
+            isLoading={isLoading}
+          >
+            Create New Store
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };

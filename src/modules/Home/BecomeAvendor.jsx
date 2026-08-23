@@ -7,6 +7,7 @@ import { useModal } from "../../hooks/modal";
 import { useDispatch } from "react-redux";
 import { setKuduUser } from "../../reducers/userSlice";
 import SwitchVendorModal from "../User/components/switchVendor";
+import Button from "../../components/Button";
 
 export default function BecomeAvendor() {
     const { user } = useAppState();
@@ -118,7 +119,7 @@ export default function BecomeAvendor() {
                             more customers, boost your sales and grow your business effortlessly.
                             Join us now to get started!
                         </p>
-                        <button className="mt-5 bg-[#FF6F22] text-white px-6 py-3 rounded-md hover:bg-orange-700 transition w-full md:w-auto">
+                        <Button variant="primary" className="mt-5 px-6 py-3 w-full md:w-auto">
                             {user ?
                                 user?.accountType === "Vendor" ?
                                     <Link
@@ -131,7 +132,7 @@ export default function BecomeAvendor() {
                                     to="/sign-up"> List A Product</Link>
                             }
 
-                        </button>
+                        </Button>
                     </div>
 
                     {/* Right Section (Image with "K" shape) */}
@@ -209,13 +210,14 @@ export default function BecomeAvendor() {
                     <div className="space-y-2 mb-20">
                         {faqs.map((faq, index) => (
                             <div key={index} className="border rounded-lg overflow-hidden text-left">
-                                <button
+                                <Button
+                                    variant="ghost"
                                     onClick={() => toggleFAQ(index)}
                                     className="w-full flex justify-between items-center p-4 py-6 bg-white hover:bg-gray-200"
                                 >
                                     <span>Q{index + 1}: {faq.question}</span>
                                     {openIndex === index ? <FaMinus /> : <FaPlus />}
-                                </button>
+                                </Button>
                                 {openIndex === index && (
                                     <div className="p-4 bg-white py-6 border-t">{faq.answer}</div>
                                 )}

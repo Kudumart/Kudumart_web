@@ -1,5 +1,6 @@
 import React from "react";
 import ReviewTable from "./ReviewTable";
+import Button from "./Button";
 
 const VendorMyProductsTable = ({
   data = [],
@@ -73,24 +74,26 @@ const VendorMyProductsTable = ({
           My Products
         </h2>
         <div className="flex gap-2">
-          <button
-            className="flex items-center gap-2 border-2 border-orange-400 text-orange-500 px-4 py-2 rounded-md hover:bg-orange-50 text-sm font-medium transition-all"
+          <Button
             onClick={onCreateAIProduct}
             title="Create product details automatically using AI"
+            variant="outline"
           >
+            <span className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
             </svg>
             Create with AI
-          </button>
-          <button
-            className="bg-kudu-orange text-white px-6 py-2 rounded-md hover:bg-orange-600 text-center inline-block disabled:opacity-50 disabled:cursor-not-allowed"
+            </span>
+          </Button>
+          <Button
             onClick={onCreateProduct}
             disabled={false}
             title={!hasStores ? "No stores found for this vendor" : ""}
+            variant="primary"
           >
             Create New Product
-          </button>
+          </Button>
         </div>
       </div>
       <div className="bg-white rounded-md p-6 w-full">
@@ -127,15 +130,14 @@ const VendorMyProductsTable = ({
               </p>
             </div>
             <div className="text-center">
-              <button
-                data-theme="kudu"
-                className="btn btn-primary"
+              <Button
                 onClick={onCreateProduct}
                 disabled={!hasStores}
                 title={!hasStores ? "No stores found for this vendor" : ""}
+                variant="primary"
               >
                 {!hasStores ? "Create Store First" : "Add Your First Product"}
-              </button>
+              </Button>
             </div>
           </div>
         )}

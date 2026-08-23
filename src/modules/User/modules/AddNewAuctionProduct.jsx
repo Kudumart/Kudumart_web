@@ -8,6 +8,7 @@ import { renderDraftContent } from "../../../helpers/renderDraftContent";
 import { FaTimes } from "react-icons/fa";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import Button from "../../../components/Button";
 
 const AddNewAuctionProduct = () => {
   const [descriptionEditor, setDescriptionEditor] = useState(() =>
@@ -608,19 +609,29 @@ const AddNewAuctionProduct = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="btn btn-primary btn-block"
-                data-theme="kudu"
-                disabled={
-                  !watch("description") ||
-                  !watch("specification") ||
-                  btnDisabled
-                }
-              >
-                Create New Product
-              </button>
+              {/* Form Actions */}
+              <div className="flex justify-end gap-4 mt-8">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-1/3"
+                  onClick={() => navigate(-1)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="bg-kudu-orange w-2/3"
+                  disabled={
+                    !watch("description") ||
+                    !watch("specification") ||
+                    btnDisabled
+                  }
+                >
+                  Create New Product
+                </Button>
+              </div>
             </div>
           </form>
         </div>

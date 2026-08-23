@@ -5,6 +5,7 @@ import { useDispatch } from "react-redux";
 import { setCurrencyData, setKuduUser } from "../../../reducers/userSlice";
 import { redirect, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import Button from "../../../components/Button";
 
 export default function DeleteAccount() {
   const [showConfirm, setShowConfirm] = useState(false);
@@ -136,12 +137,14 @@ export default function DeleteAccount() {
                         </div>
                       </div>
                     </div>
-                    <button
-                      className="btn btn-error btn-lg w-full"
+                    <Button
+                      variant="danger"
+                      size="lg"
+                      fullWidth
                       onClick={() => setShowConfirm(true)}
                     >
                       Proceed to Delete Account
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -168,42 +171,40 @@ export default function DeleteAccount() {
                     </div>
 
                     <div className="space-y-3">
-                      <button
-                        className="btn btn-error btn-lg w-full"
+                      <Button
+                        variant="danger"
+                        size="lg"
+                        fullWidth
                         disabled={isPending}
+                        isLoading={isPending}
                         onClick={() => mutate()}
                       >
-                        {isPending ? (
-                          <>
-                            <span className="loading loading-spinner loading-sm"></span>
-                            Deleting Account...
-                          </>
-                        ) : (
-                          <>
-                            <svg
-                              className="w-5 h-5 mr-2"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              ></path>
-                            </svg>
-                            Yes, Delete My Account Forever
-                          </>
+                        {!isPending && (
+                          <svg
+                            className="w-5 h-5 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            ></path>
+                          </svg>
                         )}
-                      </button>
-                      <button
-                        className="btn btn-ghost btn-lg w-full"
+                        {isPending ? "Deleting Account..." : "Yes, Delete My Account Forever"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="lg"
+                        fullWidth
                         onClick={() => setShowConfirm(false)}
                         disabled={isPending}
                       >
                         Cancel and Keep Account
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}

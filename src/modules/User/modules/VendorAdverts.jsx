@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useApiMutation from "../../../api/hooks/useApiMutation";
-import { Button } from "@material-tailwind/react";
+import Button from "../../../components/Button";
 import Loader from "../../../components/Loader";
 import { dateFormat } from "../../../helpers/dateHelper";
 
@@ -44,7 +44,7 @@ export default function AdvertList() {
         <div className="w-full p-6 bg-white shadow rounded-lg">
             <div className="flex w-full justify-between">
                 <h2 className="text-lg font-bold mb-4">Adverts</h2>
-                <Button className="bg-kudu-orange p-2" onClick={() => navigate("create-advert")}>
+                <Button variant="primary" className="bg-kudu-orange" onClick={() => navigate("create-advert")}>
                     Create Advert
                 </Button>
             </div>
