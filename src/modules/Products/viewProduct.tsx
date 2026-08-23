@@ -260,6 +260,20 @@ export default function ViewProduct() {
   };
 
   useEffect(() => {
+    // Reset all product-level state whenever the product id changes
+    // so navigating from one product to another (Similar Products / More from Store)
+    // shows the correct data without stale flashes.
+    setProduct({});
+    setLoading(true);
+    setQuantity(0);
+    setDisabled(true);
+    setBookmarked(false);
+    setVendorProducts([]);
+    setCurrentOffer(null);
+    setPendingCheckout(false);
+    setSelectedImgIndex(0);
+    setActiveTab("description");
+
     getProductDetails();
     if (user) {
       getSavedProducts();
@@ -272,7 +286,7 @@ export default function ViewProduct() {
     } else if (searchParams.get("offer") === "1" && user) {
       setShowOfferModal(true);
     }
-  }, []);
+  }, [id]); // re-run whenever the product id changes
 
   // Inject OG meta tags for social sharing after product loads.
   // NOTE: This is a best-effort client-side injection for platforms that
