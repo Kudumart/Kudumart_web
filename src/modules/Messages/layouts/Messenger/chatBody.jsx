@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { FaTimes } from "react-icons/fa";
-import { FiArrowLeft, FiSend, FiImage, FiSmile } from "react-icons/fi";
+import { FiArrowLeft, FiSend, FiImage } from "react-icons/fi";
 import Imgix from "react-imgix";
 import { useProductById } from "../../../../api/product";
 import Loader from "../../../../components/Loader";
 import { currencyFormat, formatTime } from "../../../../helpers/helperFactory";
-import { getMessage, sendMessage } from "../../../../api/message";
+import { getMessage } from "../../../../api/message";
 import useAppState from "../../../../hooks/appState";
 import { useQueryClient } from "@tanstack/react-query";
 import EmojiPickerApp from "./EmojiPicker";
@@ -37,39 +37,37 @@ const ChatInterface = ({
   const textRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // ── Determine the other party ──────────────────────────────────────────────
+  // Determine the other party in this conversation
   const renderedUser =
     selectedConversation?.receiverUser?.id === userId
       ? selectedConversation?.senderUser
       : selectedConversation?.receiverUser;
 
-  // ── Product info ───────────────────────────────────────────────────────────
+  // Product info for the header
   const { data: product } = useProductById(productId);
 
-  // ── Messages query ─────────────────────────────────────────────────────────
-  // NOTE: We use `isLoading` (first-load only) to avoid remounting the chat
-  // on every refetch. `isFetching` would cause the loader guard to unmount UI.
+  // ── Messages query ───────────────────────────────────────────────────────
+  // Use isLoading (true only on FIRST fetch) — NOT isFetching.
+  // This prevents the loader guard from unmounting the chat on re-fetches.
   const {
     data: messageData,
     isLoading: isFirstLoad,
-    refetch,
   } = getMessage(conversationId);
 
-  // All messages — merge server data with any optimistic ones already in cache
   const messages = messageData?.message ?? [];
 
-  // ── Socket registration & incoming messages ────────────────────────────────
+  // ── Socket: register + receive incoming messages ─────────────────────────
   useEffect(() => {
     if (!socket || !userId) return;
 
     socket.emit("register", userId);
 
     const handleReceive = (incoming) => {
-      // Only update the cache — do NOT call refetch() to avoid remount
+      // Patch cache directly — never call refetch() (causes loader → remount bug)
       queryClient.setQueryData(["message", conversationId], (old) => {
         if (!old) return old;
-        const already = old.message?.some((m) => m.id === incoming.id);
-        if (already) return old;
+        const exists = old.message?.some((m) => m.id === incoming.id);
+        if (exists) return old;
         return { ...old, message: [...(old.message || []), incoming] };
       });
     };
@@ -78,21 +76,21 @@ const ChatInterface = ({
     return () => socket.off("receiveMessage", handleReceive);
   }, [socket, userId, conversationId, queryClient]);
 
-  // ── Auto-scroll to bottom on new messages ─────────────────────────────────
+  // ── Auto-scroll on new messages ──────────────────────────────────────────
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages.length]);
 
-  // ── Send message ───────────────────────────────────────────────────────────
+  // ── Send message ─────────────────────────────────────────────────────────
   const handleMessage = useCallback(
     (e) => {
       e.preventDefault();
       const trimmedText = text.trim();
       if (!trimmedText && showFiles.length === 0) return;
 
-      // 1. Optimistically append to cache — no loader, no remount
+      // 1. Optimistic update — append to cache immediately, no loading flash
       const optimistic = {
         id: `opt-${Date.now()}`,
         content: trimmedText,
@@ -106,7 +104,7 @@ const ChatInterface = ({
         return { ...old, message: [...(old.message || []), optimistic] };
       });
 
-      // 2. Emit via socket (primary channel)
+      // 2. Emit via socket
       if (socket) {
         socket.emit("sendMessage", {
           productId,
@@ -120,11 +118,11 @@ const ChatInterface = ({
         });
       }
 
-      // 3. Clear inputs immediately
+      // 3. Clear inputs
       setText("");
       setShowFiles([]);
 
-      // 4. Invalidate in background WITHOUT triggering a loading state
+      // 4. Silent background invalidation (no loading state triggered)
       queryClient.invalidateQueries({
         queryKey: ["message", conversationId],
         refetchType: "none",
@@ -133,43 +131,42 @@ const ChatInterface = ({
     [text, showFiles, userId, socket, productId, selectedConversation, conversationId, queryClient]
   );
 
-  // ── File upload ────────────────────────────────────────────────────────────
+  // ── File upload ──────────────────────────────────────────────────────────
   const handleUploadFiles = async (files) => {
-    await uploadFiles(files, (uploadedUrls) => {
-      setShowFiles(uploadedUrls);
-    });
+    await uploadFiles(files, (uploadedUrls) => setShowFiles(uploadedUrls));
   };
 
   const removeImage = (i) =>
     setShowFiles((prev) => prev.filter((_, idx) => idx !== i));
 
-  // ── First-load skeleton ────────────────────────────────────────────────────
+  // First-load skeleton (never show on re-fetches)
   if (isFirstLoad) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-white">
+      <div className="flex flex-col flex-1 h-full items-center justify-center bg-white">
         <Loader />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-white overflow-hidden">
+    // flex-col + h-full fills the parent flex-1 in Messenger/index.jsx
+    <div className="flex flex-col h-full overflow-hidden bg-white">
 
-      {/* ── Chat header ──────────────────────────────────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white shrink-0">
-        {/* Mobile back arrow */}
+        {/* Mobile back */}
         {closeInterface && (
           <button
             type="button"
             onClick={closeInterface}
-            className="md:hidden p-1 rounded-full hover:bg-gray-100 transition-colors mr-1"
-            aria-label="Back"
+            className="md:hidden p-1.5 rounded-full hover:bg-gray-100 transition-colors mr-1"
+            aria-label="Back to conversations"
           >
             <FiArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
         )}
 
-        {/* Other user avatar */}
+        {/* Avatar */}
         <div className="relative shrink-0">
           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
             {renderedUser?.photo ? (
@@ -182,11 +179,7 @@ const ChatInterface = ({
                 className="w-10 h-10 object-cover"
               />
             ) : (
-              <img
-                src={DEFAULT_AVATAR}
-                alt="User"
-                className="w-10 h-10 object-cover"
-              />
+              <img src={DEFAULT_AVATAR} alt="User" className="w-10 h-10 object-cover" />
             )}
           </div>
           <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white" />
@@ -198,7 +191,7 @@ const ChatInterface = ({
             {renderedUser?.firstName} {renderedUser?.lastName}
           </p>
           {product?.name && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 mt-0.5">
               {product?.image_url && (
                 <Imgix
                   src={product.image_url}
@@ -206,13 +199,13 @@ const ChatInterface = ({
                   width={16}
                   height={16}
                   sizes="16px"
-                  className="w-4 h-4 rounded object-cover"
+                  className="w-4 h-4 rounded object-cover shrink-0"
                 />
               )}
               <p className="text-xs text-orange-500 font-medium truncate">
                 {product.name}
                 {product?.price && (
-                  <span className="text-gray-500 font-normal ml-1">
+                  <span className="text-gray-400 font-normal ml-1">
                     · {currencyFormat(product.price)}
                   </span>
                 )}
@@ -222,14 +215,14 @@ const ChatInterface = ({
         </div>
       </div>
 
-      {/* ── Messages area ────────────────────────────────────────────────────── */}
+      {/* ── Messages area ────────────────────────────────────────────────── */}
       <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50"
+        className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50"
       >
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full py-16 text-gray-400 select-none">
-            <p className="text-sm">No messages yet. Start the conversation!</p>
+          <div className="flex flex-col items-center justify-center h-full py-10 text-gray-400 select-none">
+            <p className="text-sm">No messages yet — say hello!</p>
           </div>
         ) : (
           messages.map((msg) => {
@@ -239,34 +232,25 @@ const ChatInterface = ({
                 key={msg.id}
                 className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}
               >
-                {/* Bubble */}
                 <div
                   className={`max-w-[75%] md:max-w-[60%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
                     isMine
                       ? "bg-orange-500 text-white rounded-br-sm"
                       : "bg-white text-gray-800 rounded-bl-sm border border-gray-100"
-                  } ${msg._optimistic ? "opacity-70" : ""}`}
+                  } ${msg._optimistic ? "opacity-60" : ""}`}
                 >
                   {msg.fileUrl && (
                     <img
                       src={msg.fileUrl}
                       alt="attachment"
-                      className="w-48 h-36 object-cover rounded-lg mb-1"
+                      className="w-48 h-36 object-cover rounded-lg mb-1.5"
                     />
                   )}
                   {msg.content && <p>{msg.content}</p>}
                 </div>
-
-                {/* Timestamp */}
-                <p
-                  className={`mt-0.5 text-[10px] text-gray-400 px-1 ${
-                    isMine ? "text-right" : "text-left"
-                  }`}
-                >
+                <p className={`mt-0.5 text-[10px] text-gray-400 px-1`}>
                   {formatTime(msg.createdAt)}
-                  {msg._optimistic && (
-                    <span className="ml-1 italic">sending…</span>
-                  )}
+                  {msg._optimistic && <span className="ml-1 italic">sending…</span>}
                 </p>
               </div>
             );
@@ -274,9 +258,9 @@ const ChatInterface = ({
         )}
       </div>
 
-      {/* ── Image preview strip ───────────────────────────────────────────────── */}
+      {/* ── Image preview strip ───────────────────────────────────────────── */}
       {(showFiles.length > 0 || isLoadingUpload) && (
-        <div className="flex items-center gap-3 px-4 py-2 bg-white border-t border-gray-100">
+        <div className="flex items-center gap-3 px-4 py-2 bg-white border-t border-gray-100 shrink-0">
           {isLoadingUpload ? (
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <Loader className="w-4 h-4" />
@@ -285,11 +269,7 @@ const ChatInterface = ({
           ) : (
             showFiles.map((url, i) => (
               <div key={i} className="relative">
-                <img
-                  src={url}
-                  alt="preview"
-                  className="w-16 h-16 object-cover rounded-lg"
-                />
+                <img src={url} alt="preview" className="w-16 h-16 object-cover rounded-lg" />
                 <button
                   type="button"
                   onClick={() => removeImage(i)}
@@ -303,13 +283,13 @@ const ChatInterface = ({
         </div>
       )}
 
-      {/* ── Input bar ────────────────────────────────────────────────────────── */}
+      {/* ── Input bar ────────────────────────────────────────────────────── */}
       <div className="shrink-0 px-4 py-3 bg-white border-t border-gray-200">
         <form
           onSubmit={handleMessage}
-          className="flex items-center gap-2 bg-gray-100 rounded-2xl px-3 py-2"
+          className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2"
         >
-          {/* Emoji */}
+          {/* Emoji picker */}
           <div className="shrink-0">
             <EmojiPickerApp
               textRef={textRef}
@@ -325,7 +305,7 @@ const ChatInterface = ({
           <input
             ref={textRef}
             type="text"
-            className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder-gray-400 py-0.5"
+            className="flex-1 bg-transparent outline-none text-sm text-gray-800 placeholder-gray-400"
             placeholder="Type a message…"
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -335,7 +315,7 @@ const ChatInterface = ({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="shrink-0 p-1.5 rounded-full text-gray-500 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+            className="shrink-0 p-1 text-gray-400 hover:text-orange-500 transition-colors"
             aria-label="Attach image"
           >
             <FiImage className="w-4 h-4" />
@@ -348,11 +328,11 @@ const ChatInterface = ({
             onChange={(e) => handleUploadFiles(e.target.files)}
           />
 
-          {/* Send */}
+          {/* Send button */}
           <button
             type="submit"
             disabled={!text.trim() && showFiles.length === 0}
-            className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Send"
           >
             <FiSend className="w-4 h-4" />
