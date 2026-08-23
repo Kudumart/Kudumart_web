@@ -5,12 +5,22 @@ import { stateFromHTML } from "draft-js-import-html";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import DropZone from "../../../components/DropZone";
 import Loader from "../../../components/Loader";
-import { EditorState, convertToRaw, ContentState } from "draft-js";
+import { EditorState, convertToRaw } from "draft-js";
 import DraftEditor from "../../../components/Editor";
-import { FaTimes } from "react-icons/fa";
 import draftToHtml from "draftjs-to-html";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import Button from "../../../components/Button";
+import {
+  Package,
+  Store,
+  Tag,
+  DollarSign,
+  ShieldCheck,
+  Image as ImageIcon,
+  ArrowLeft,
+  CheckCircle2,
+  Trash2,
+} from "lucide-react";
 
 const UpdateProduct = () => {
   const [descriptionEditor, setDescriptionEditor] = useState(() =>
@@ -24,13 +34,15 @@ const UpdateProduct = () => {
   const [stores, setStores] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
-  const [files, setFiles] = useState("");
+  const [files, setFiles] = useState([]);
   const [additionalFiles, setAdditionalFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [btnDisabled, setDisabled] = useState(false);
   const [product, setProduct] = useState({});
 
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { mutate, isLoading } = useApiMutation();
 
   const conditions = [
     { id: "brand_new", name: "Brand New" },
@@ -38,52 +50,29 @@ const UpdateProduct = () => {
     { id: "refurbished", name: "Refurbished" },
   ];
 
-  const { mutate } = useApiMutation();
-  const navigate = useNavigate();
-
   const {
     register,
     handleSubmit,
     setValue,
-    getValues,
     watch,
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
-    setDisabled(true);
-    if (files.length > 0) {
-      const concatenatedFiles = files.concat(additionalFiles);
-      const uniqueFiles = [...new Set(concatenatedFiles)];
-      delete data.category;
-      const payload = {
-        ...data,
-        productId: id,
-        image_url: files[0],
-        description: draftToHtml(
-          convertToRaw(descriptionEditor.getCurrentContent()),
-        ),
-        specification: draftToHtml(
-          convertToRaw(specificationsEditor.getCurrentContent()),
-        ),
-        additional_images: uniqueFiles,
-      };
-      mutate({
-        url: "/vendor/products",
-        method: "PUT",
-        data: payload,
-        headers: true,
-        onSuccess: (response) => {
-          navigate(-1);
-        },
-        onError: () => {
-          setDisabled(false);
-        },
-      });
-    } else {
-      setDisabled(false);
-      toast.error("Product Images are required");
-    }
+  const watchedName = watch("name");
+  const watchedPrice = watch("price");
+  const watchedCondition = watch("condition");
+
+  const getSubCategories = (categoryId) => {
+    if (!categoryId) return;
+    mutate({
+      url: `/category/sub-categories?categoryId=${categoryId}`,
+      method: "GET",
+      headers: true,
+      hideToast: true,
+      onSuccess: (response) => {
+        setSubCategories(response.data?.data || []);
+      },
+    });
   };
 
   const getStore = () => {
@@ -93,9 +82,8 @@ const UpdateProduct = () => {
       headers: true,
       hideToast: true,
       onSuccess: (response) => {
-        setStores(response.data.data);
+        setStores(response.data?.data || []);
       },
-      onError: () => {},
     });
   };
 
@@ -106,9 +94,8 @@ const UpdateProduct = () => {
       headers: true,
       hideToast: true,
       onSuccess: (response) => {
-        setCategories(response.data.data);
+        setCategories(response.data?.data || []);
       },
-      onError: () => {},
     });
   };
 
@@ -119,81 +106,58 @@ const UpdateProduct = () => {
       headers: true,
       hideToast: true,
       onSuccess: (response) => {
-        setProduct(response.data.data);
+        setProduct(response.data?.data || {});
       },
-      onError: () => {},
     });
   };
 
   const handleStoreChange = (data) => {
-    const store = stores.find((store) => store.id === data);
-    setCurrency(store.currency.symbol);
-  };
-
-  const handleDrop = (data) => {
-    // Ensure data is always an array
-    const newFiles = Array.isArray(data) ? data : [data];
-
-    setFiles((prevFiles) => {
-      // Merge previous files and new ones, ensuring uniqueness
-      const updatedFiles = Array.from(new Set([...newFiles]));
-      return updatedFiles;
-    });
-  };
-
-  const handleAdditionalDrop = (data) => {
-    // Ensure data is always an array
-    const newFiles = Array.isArray(data) ? data : [data];
-
-    setAdditionalFiles((prevFiles) => {
-      // Merge previous files and new ones, ensuring uniqueness
-      const updatedFiles = Array.from(new Set([...prevFiles, ...newFiles]));
-      return updatedFiles;
-    });
-  };
-
-  const getSubCategories = (categoryId) => {
-    mutate({
-      url: `/category/sub-categories?categoryId=${categoryId}`,
-      method: "GET",
-      headers: true,
-      hideToast: true,
-      onSuccess: (response) => {
-        setSubCategories(response.data.data);
-      },
-      onError: () => {},
-    });
+    const store = stores.find((s) => s.id === data);
+    if (store?.currency?.symbol) {
+      setCurrency(store.currency.symbol);
+    }
   };
 
   useEffect(() => {
     getStore();
     getCategories();
     getProduct();
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (!product || Object.keys(product || {}).length === 0) return;
 
-    setValue("name", product.name);
-    setValue("description", product.description);
-    setValue("specification", product.specification);
-    setValue("price", product.price);
-    setValue("discount_price", product.discount_price);
-    setValue("warranty", product.warranty);
-    setValue("return_policy", product.return_policy);
-    setValue("storeId", product.storeId);
-    setValue("category", product.sub_category.categoryId);
-    getSubCategories(product.sub_category.categoryId);
-    setValue("condition", product.condition);
-    setAdditionalFiles(product.additional_images);
-    setFiles([product.image_url]);
-    setCurrency(product.store.currency.symbol);
+    setValue("name", product.name || "");
+    setValue("price", product.price || 0);
+    setValue("discount_price", product.discount_price || 0);
+    setValue("quantity", product.quantity || 0);
+    setValue("warranty", product.warranty || "");
+    setValue("return_policy", product.return_policy || "");
+    setValue("storeId", product.storeId || "");
+    setValue("condition", product.condition || "brand_new");
+
+    const parentCatId = product.sub_category?.categoryId || product.categoryId;
+    if (parentCatId) {
+      setValue("category", parentCatId);
+      getSubCategories(parentCatId);
+    }
+
+    if (product.additional_images && Array.isArray(product.additional_images)) {
+      setAdditionalFiles(product.additional_images);
+    }
+    if (product.image_url) {
+      setFiles([product.image_url]);
+    }
+    if (product.store?.currency?.symbol) {
+      setCurrency(product.store.currency.symbol);
+    }
 
     // Handle product.description (HTML case)
     if (product.description) {
       try {
-        const contentState = stateFromHTML(product.description); // Convert HTML to Draft.js state
+        const contentState = stateFromHTML(product.description);
         setDescriptionEditor(EditorState.createWithContent(contentState));
+        setValue("description", product.description);
       } catch (error) {
         console.error("Error parsing description:", error);
       }
@@ -202,8 +166,9 @@ const UpdateProduct = () => {
     // Handle product.specification (HTML case)
     if (product.specification) {
       try {
-        const contentState = stateFromHTML(product.specification); // Convert HTML to Draft.js state
+        const contentState = stateFromHTML(product.specification);
         setSpecificationsEditor(EditorState.createWithContent(contentState));
+        setValue("specification", product.specification);
       } catch (error) {
         console.error("Error parsing specification:", error);
       }
@@ -213,419 +178,550 @@ const UpdateProduct = () => {
   }, [product, setValue]);
 
   useEffect(() => {
-    if (subCategories.length > 0) {
+    if (subCategories.length > 0 && product?.sub_category?.id) {
       setValue("categoryId", product.sub_category.id);
     }
-  }, [subCategories, setValue]);
+  }, [subCategories, product, setValue]);
+
+  const handleDrop = (data) => {
+    const newFiles = Array.isArray(data) ? data : [data];
+    setFiles(newFiles);
+  };
+
+  const handleAdditionalDrop = (data) => {
+    const newFiles = Array.isArray(data) ? data : [data];
+    setAdditionalFiles((prev) => Array.from(new Set([...prev, ...newFiles])));
+  };
 
   const removeImage = (indexToRemove) => {
-    setFiles((prevFiles) =>
-      prevFiles.filter((_, index) => index !== indexToRemove),
-    );
+    setFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const handleRemoveAdditionalFile = (index) => {
-    setAdditionalFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    setAdditionalFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const setPresetPolicy = (type, value) => {
+    if (type === "return") {
+      setValue("return_policy", value);
+    } else if (type === "warranty") {
+      setValue("warranty", value);
+    }
+  };
+
+  const onSubmit = (data) => {
+    setDisabled(true);
+    if (!files || files.length === 0) {
+      setDisabled(false);
+      toast.error("At least 1 product image is required.");
+      return;
+    }
+
+    delete data.category;
+
+    const payload = {
+      ...data,
+      productId: id,
+      price: Number(data.price),
+      quantity: Number(data.quantity),
+      discount_price: Number(data.discount_price || 0),
+      image_url: files[0],
+      description: draftToHtml(
+        convertToRaw(descriptionEditor.getCurrentContent()),
+      ),
+      specification: draftToHtml(
+        convertToRaw(specificationsEditor.getCurrentContent()),
+      ),
+      additional_images: additionalFiles,
+    };
+
+    mutate({
+      url: "/vendor/products",
+      method: "PUT",
+      data: payload,
+      headers: true,
+      onSuccess: () => {
+        toast.success("Product updated successfully!");
+        navigate(-1);
+        setDisabled(false);
+      },
+      onError: () => {
+        setDisabled(false);
+      },
+    });
   };
 
   if (loading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
+      <div className="w-full min-h-[60vh] flex items-center justify-center">
         <Loader />
       </div>
     );
   }
 
   return (
-    <div className="w-full">
-      <div className="rounded-md pb-2 w-full gap-5">
-        <h2 className="text-lg font-semibold text-black-700">Update Product</h2>
-      </div>
-      <div className="w-full flex grow mt-3">
-        <div className="shadow-xl py-2 px-5 md:w-3/4 w-full bg-white flex rounded-xl flex-col gap-10">
-          <form
-            className="w-full flex flex-col items-center justify-center p-4"
-            onSubmit={handleSubmit(onSubmit)}
+    <div className="w-full min-h-screen bg-[#F9FAFB] py-8 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-6xl mx-auto">
+
+        {/* Back Link & Header */}
+        <div className="mb-8">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 mb-4 transition-colors group cursor-pointer"
           >
-            <div className="w-full p-6">
-              {/* Plan Name */}
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Store
-                </label>
-                <select
-                  id="storeId"
-                  {...register("storeId", { required: "Store is required" })}
-                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                  style={{ outline: "none" }}
-                  onChange={(event) => handleStoreChange(event.target.value)}
-                  required
-                >
-                  <option value={null} disabled selected>
-                    Select Store
-                  </option>
-                  {stores.map((store) => (
-                    <option value={store.id} key={store.id}>
-                      {store.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            Back to My Products
+          </button>
 
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Category
-                </label>
-                <select
-                  id="category"
-                  {...register("category", {
-                    required: "Category is required",
-                  })}
-                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                  style={{ outline: "none" }}
-                  onChange={(event) => getSubCategories(event.target.value)}
-                  required
-                >
-                  <option value={null} disabled selected>
-                    Select Category
-                  </option>
-                  {categories.map((catgeory) => (
-                    <option value={catgeory.id} key={catgeory.id}>
-                      {catgeory.name}
-                    </option>
-                  ))}
-                </select>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-xs">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-primary shrink-0">
+                <Package className="w-7 h-7" />
               </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Sub Category
-                </label>
-                <select
-                  id="categoryId"
-                  {...register("categoryId", {
-                    required: "Sub Category is required",
-                  })}
-                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                  style={{ outline: "none" }}
-                  required
-                >
-                  <option value={null} disabled selected>
-                    Select Sub Category
-                  </option>
-                  {subCategories.map((catgeory) => (
-                    <option value={catgeory.id} key={catgeory.id}>
-                      {catgeory.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Product Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  {...register("name", {
-                    required: "Product Name is required",
-                  })}
-                  placeholder="Enter name of product"
-                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                  style={{ outline: "none" }}
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Condition
-                </label>
-                <select
-                  id="condition"
-                  {...register("condition", {
-                    required: "Condition is required",
-                  })}
-                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                  style={{ outline: "none" }}
-                  required
-                >
-                  <option value={null} disabled selected>
-                    Select Condition
-                  </option>
-                  {conditions.map((condition) => (
-                    <option value={condition.id} key={condition.id}>
-                      {condition.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Description
-                </label>
-                <DraftEditor
-                  editorState={descriptionEditor}
-                  setEditorState={(newState) => {
-                    setDescriptionEditor(newState);
-                    setValue(
-                      "description",
-                      JSON.stringify(
-                        convertToRaw(newState.getCurrentContent()),
-                      ),
-                      {
-                        shouldValidate: true, // Ensure validation runs when value changes
-                      },
-                    );
-                  }}
-                />
-                {errors.description && (
-                  <p className="text-red-500">Description is required</p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Specifications
-                </label>
-                <DraftEditor
-                  editorState={specificationsEditor}
-                  setEditorState={(newState) => {
-                    setSpecificationsEditor(newState);
-                    setValue(
-                      "specifications",
-                      JSON.stringify(
-                        convertToRaw(newState.getCurrentContent()),
-                      ),
-                      {
-                        shouldValidate: true, // Ensure validation runs when value changes
-                      },
-                    );
-                  }}
-                />
-                {errors.specifications && (
-                  <p className="text-red-500">Specifications are required</p>
-                )}
-              </div>
-
-              <div className="mt-4 mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Quantity Available
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    id="price"
-                    {...register("quantity", {
-                      required: "Product Quantity is required",
-                      min: {
-                        value: 0,
-                        message: "Quantity cannot be negative",
-                      },
-                    })}
-                    placeholder="Enter Product Quantity"
-                    className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                    style={{ outline: "none" }}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Price
-                </label>
-                <div className="flex gap-2">
-                  <span className="flex flex-col justify-center">
-                    {currency}
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Edit Product Details</h1>
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    Live Product
                   </span>
-                  <input
-                    type="text"
-                    id="price"
-                    {...register("price", {
-                      required: "Product Price is required",
-                    })}
-                    placeholder="Enter Price"
-                    className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                    style={{ outline: "none" }}
-                    required
-                  />
                 </div>
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Discount Price (Optional)
-                </label>
-                <div className="flex gap-2">
-                  <span className="flex flex-col justify-center">
-                    {currency}
-                  </span>
-                  <input
-                    type="text"
-                    id="discount_price"
-                    {...register("discount_price")}
-                    placeholder="Enter Discount Price"
-                    className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                    style={{ outline: "none" }}
-                  />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Warranty
-                </label>
-                <input
-                  type="text"
-                  id="warranty"
-                  {...register("warranty", {
-                    required: "Product Warranty is required",
-                  })}
-                  placeholder="Enter Product Warranty"
-                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                  style={{ outline: "none" }}
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label
-                  className="block text-md font-semibold mb-3"
-                  htmlFor="email"
-                >
-                  Return policy
-                </label>
-                <input
-                  type="text"
-                  id="return_policy"
-                  {...register("return_policy", {
-                    required: "Return Policy is required",
-                  })}
-                  placeholder="Return Policy"
-                  className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                  style={{ outline: "none" }}
-                  required
-                />
-              </div>
-
-              <div className="w-full flex flex-col gap-2">
-                <div className="flex flex-col w-full gap-6">
-                  <p className="-mb-3 text-mobiFormGray">Main Product Image</p>
-                  <DropZone
-                    single
-                    onUpload={handleDrop}
-                    text={"Upload Main Image of Product"}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4 my-4">
-                  {files.map((fileObj, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={fileObj}
-                        alt="preview"
-                        className="w-full h-24 object-cover rounded-sm"
-                      />
-                      <span
-                        onClick={() => removeImage(index)}
-                        className="absolute top-1 right-1 bg-white shadow-lg text-black rounded-full p-1"
-                      >
-                        <FaTimes className="w-4 h-4" />
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="w-full flex flex-col gap-2">
-                <div className="flex flex-col w-full gap-6">
-                  <p className="-mb-3 text-mobiFormGray">
-                    Additional Product Images{" "}
-                    <span className="text-sm text-gray-400">
-                      (You can upload 4 or 5 images)
-                    </span>
-                  </p>
-                  <DropZone
-                    onUpload={handleAdditionalDrop}
-                    text={"Upload Additional Images of Product"}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4 my-4">
-                  {additionalFiles.map((fileObj, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={fileObj}
-                        alt="preview"
-                        className="w-full h-24 object-cover rounded-sm"
-                      />
-                      <span
-                        onClick={() => handleRemoveAdditionalFile(index)}
-                        className="absolute top-1 right-1 bg-white shadow-lg text-black rounded-full p-1"
-                      >
-                        <FaTimes className="w-4 h-4" />
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="flex justify-end gap-4 mt-8">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="w-1/3"
-                  onClick={() => navigate(-1)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="bg-kudu-orange w-2/3"
-                  disabled={btnDisabled}
-                >
-                  Update Product
-                </Button>
+                <p className="text-sm text-gray-500 mt-1">
+                  Update inventory, pricing, description, and product category accurately.
+                </p>
               </div>
             </div>
-          </form>
+          </div>
         </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            {/* Left Column */}
+            <div className="lg:col-span-2 space-y-6">
+
+              {/* Card 1: Store & Category Hierarchy */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                  <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center text-primary">
+                    <Store className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Store & Category Assignment</h2>
+                    <p className="text-xs text-gray-500">Ensure the correct department and store are mapped</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Storefront <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      {...register("storeId", {
+                        required: "Store is required",
+                        onChange: (e) => handleStoreChange(e.target.value),
+                      })}
+                      className="w-full px-3.5 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm cursor-pointer"
+                    >
+                      <option value="" disabled>Select Storefront</option>
+                      {stores.map((store) => (
+                        <option value={store.id} key={store.id}>
+                          {store.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Main Category <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      {...register("category", {
+                        required: "Category is required",
+                        onChange: (e) => {
+                          setValue("categoryId", "");
+                          getSubCategories(e.target.value);
+                        },
+                      })}
+                      className="w-full px-3.5 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm cursor-pointer"
+                    >
+                      <option value="" disabled>Select Category</option>
+                      {categories.map((cat) => (
+                        <option value={cat.id} key={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Sub-Category <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      {...register("categoryId", { required: "Subcategory is required" })}
+                      className="w-full px-3.5 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm cursor-pointer"
+                    >
+                      <option value="" disabled>Select Subcategory</option>
+                      {subCategories.map((sub) => (
+                        <option value={sub.id} key={sub.id}>
+                          {sub.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Details & Specs */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                  <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center text-primary">
+                    <Tag className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Product Identification & Details</h2>
+                    <p className="text-xs text-gray-500">Provide title, condition, and rich descriptions</p>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Product Title <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        {...register("name", { required: "Product name is required" })}
+                        placeholder="e.g. Apple iPhone 15 Pro Max 256GB - Titanium"
+                        className="w-full px-4 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Item Condition <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        {...register("condition", { required: "Condition is required" })}
+                        className="w-full px-3.5 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm cursor-pointer"
+                      >
+                        {conditions.map((cond) => (
+                          <option value={cond.id} key={cond.id}>
+                            {cond.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Detailed Description <span className="text-red-500">*</span>
+                    </label>
+                    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                      <DraftEditor
+                        editorState={descriptionEditor}
+                        setEditorState={(newState) => {
+                          setDescriptionEditor(newState);
+                          setValue(
+                            "description",
+                            JSON.stringify(convertToRaw(newState.getCurrentContent())),
+                            { shouldValidate: true },
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Technical Specifications <span className="text-red-500">*</span>
+                    </label>
+                    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                      <DraftEditor
+                        editorState={specificationsEditor}
+                        setEditorState={(newState) => {
+                          setSpecificationsEditor(newState);
+                          setValue(
+                            "specification",
+                            JSON.stringify(convertToRaw(newState.getCurrentContent())),
+                            { shouldValidate: true },
+                          );
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: Pricing & Inventory */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                  <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center text-primary">
+                    <DollarSign className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Pricing & Available Stock</h2>
+                    <p className="text-xs text-gray-500">Set standard prices, discounts, and inventory counts</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Sale Price <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        {...register("price", { required: "Price is required" })}
+                        placeholder="e.g. 150000"
+                        className="w-full pl-9 pr-4 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                      />
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-gray-400">
+                        {currency || "₦"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Discount Price <span className="text-gray-400 font-normal">(Optional)</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        {...register("discount_price")}
+                        placeholder="e.g. 135000"
+                        className="w-full pl-9 pr-4 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                      />
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-gray-400">
+                        {currency || "₦"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Quantity in Stock <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      {...register("quantity", { required: "Quantity is required", min: 0 })}
+                      placeholder="e.g. 10"
+                      className="w-full px-4 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 4: Warranty & Return Policy */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                  <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center text-primary">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Warranty & Customer Protection</h2>
+                    <p className="text-xs text-gray-500">Provide confidence to buyers with clear guarantees</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Warranty Terms <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setPresetPolicy("warranty", "6 Months Warranty")}
+                          className="text-[11px] text-primary font-medium hover:underline cursor-pointer"
+                        >
+                          6 Mos
+                        </button>
+                        <span className="text-gray-300 text-[11px]">|</span>
+                        <button
+                          type="button"
+                          onClick={() => setPresetPolicy("warranty", "1 Year Warranty")}
+                          className="text-[11px] text-primary font-medium hover:underline cursor-pointer"
+                        >
+                          1 Year
+                        </button>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      {...register("warranty", { required: "Warranty is required" })}
+                      placeholder="e.g. 6 Months Manufacturer Warranty"
+                      className="w-full px-4 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Return Policy <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setPresetPolicy("return", "7 Days Return Policy")}
+                          className="text-[11px] text-primary font-medium hover:underline cursor-pointer"
+                        >
+                          7 Days
+                        </button>
+                        <span className="text-gray-300 text-[11px]">|</span>
+                        <button
+                          type="button"
+                          onClick={() => setPresetPolicy("return", "14 Days Return Policy")}
+                          className="text-[11px] text-primary font-medium hover:underline cursor-pointer"
+                        >
+                          14 Days
+                        </button>
+                      </div>
+                    </div>
+                    <input
+                      type="text"
+                      {...register("return_policy", { required: "Return policy is required" })}
+                      placeholder="e.g. 7 Days Replacement Guarantee"
+                      className="w-full px-4 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 5: Media Uploads */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                  <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center text-primary">
+                    <ImageIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Product Photography</h2>
+                    <p className="text-xs text-gray-500">High resolution photos attract up to 3x more buyer inquiries</p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Cover Image <span className="text-red-500">*</span>
+                    </label>
+                    <DropZone single onUpload={handleDrop} text="Click or drag cover image here" />
+
+                    {files.length > 0 && (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-3">
+                        {files.map((fileObj, idx) => (
+                          <div key={idx} className="relative group rounded-xl overflow-hidden border border-gray-200">
+                            <img src={fileObj} alt="preview" className="w-full h-24 object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => removeImage(idx)}
+                              className="absolute top-1.5 right-1.5 p-1 bg-white/90 text-red-500 rounded-lg shadow-sm hover:bg-white"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Additional Gallery Images <span className="text-gray-400 font-normal">(Up to 5 images)</span>
+                    </label>
+                    <DropZone onUpload={handleAdditionalDrop} text="Add gallery photos from multiple angles" />
+
+                    {additionalFiles.length > 0 && (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-3">
+                        {additionalFiles.map((fileObj, idx) => (
+                          <div key={idx} className="relative group rounded-xl overflow-hidden border border-gray-200">
+                            <img src={fileObj} alt="preview" className="w-full h-24 object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAdditionalFile(idx)}
+                              className="absolute top-1.5 right-1.5 p-1 bg-white/90 text-red-500 rounded-lg shadow-sm hover:bg-white"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 sticky top-28">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Card Preview</span>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-600">
+                    Editing Product
+                  </span>
+                </div>
+
+                {/* Mini Card Preview */}
+                <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+                  <div className="h-36 bg-gray-100 flex items-center justify-center relative overflow-hidden">
+                    {files[0] ? (
+                      <img src={files[0]} alt="Product" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="w-10 h-10 text-gray-300" />
+                    )}
+                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-xs text-[10px] font-bold text-gray-800 uppercase">
+                      {watchedCondition?.replace("_", " ") || "Brand New"}
+                    </span>
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-bold text-sm text-gray-900 truncate">
+                      {watchedName || "Product Title"}
+                    </h4>
+                    <p className="text-primary font-bold text-base mt-1">
+                      {currency || "₦"} {watchedPrice ? Number(watchedPrice).toLocaleString() : "0"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-8 pt-6 border-t border-gray-100 space-y-3">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    fullWidth
+                    size="lg"
+                    isLoading={isLoading || btnDisabled}
+                    className="shadow-md shadow-primary/20"
+                  >
+                    Save Changes
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    fullWidth
+                    onClick={() => navigate(-1)}
+                    className="text-gray-500"
+                  >
+                    Cancel & Return
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </form>
+
       </div>
     </div>
   );

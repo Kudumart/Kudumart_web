@@ -148,13 +148,14 @@ const AddNewProduct = () => {
   };
 
   const getSubCategories = (categoryId) => {
+    if (!categoryId) return;
     mutate({
-      url: `/sub-categories?categoryId=${categoryId}`,
+      url: `/category/sub-categories?categoryId=${categoryId}`,
       method: "GET",
       headers: true,
       hideToast: true,
       onSuccess: (response) => {
-        setSubCategories(response.data.data);
+        setSubCategories(response.data.data || []);
       },
     });
   };
@@ -196,6 +197,9 @@ const AddNewProduct = () => {
     const specificationsHtml = draftToHtml(
       convertToRaw(specificationsEditor.getCurrentContent()),
     );
+
+    // Remove parent category ID so backend does not accidentally override subcategory
+    delete data.category;
 
     const payload = {
       ...data,
@@ -300,8 +304,10 @@ const AddNewProduct = () => {
                       Assign to Store <span className="text-red-500">*</span>
                     </label>
                     <select
-                      {...register("storeId", { required: "Store is required" })}
-                      onChange={(e) => handleStoreChange(e.target.value)}
+                      {...register("storeId", {
+                        required: "Store is required",
+                        onChange: (e) => handleStoreChange(e.target.value),
+                      })}
                       className="w-full px-3.5 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm cursor-pointer"
                       defaultValue=""
                     >
@@ -322,8 +328,13 @@ const AddNewProduct = () => {
                       Main Category <span className="text-red-500">*</span>
                     </label>
                     <select
-                      {...register("category", { required: "Category is required" })}
-                      onChange={(e) => getSubCategories(e.target.value)}
+                      {...register("category", {
+                        required: "Category is required",
+                        onChange: (e) => {
+                          setValue("categoryId", "");
+                          getSubCategories(e.target.value);
+                        },
+                      })}
                       className="w-full px-3.5 py-3 bg-gray-50/70 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm cursor-pointer"
                       defaultValue=""
                     >
