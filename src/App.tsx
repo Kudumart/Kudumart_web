@@ -7,9 +7,8 @@ import { useDispatch } from "react-redux";
 import { setIPInfo, setKuduUser } from "./reducers/userSlice";
 import { IPInfoContext } from "ip-info-react";
 import { useContext, useEffect } from "react";
-import { onMessage } from "firebase/messaging";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+// react-toastify removed — toast is now handled by Sonner via vite alias shim
+import { toast } from "./lib/toast-shim.js";
 import { messaging } from "./config/firebaseConfig";
 
 // 👇 optional helper if you want to use it elsewhere too
@@ -21,20 +20,8 @@ export function handleIncomingMessage(payload) {
   const extra = payload?.data?.custom ?? "";
 
   toast.info(
-    <div>
-      <strong>{title}</strong>
-      <div>{body}</div>
-      {extra && <small>{extra}</small>}
-    </div>,
-    {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      theme: "dark",
-    },
+    `${title}\n${body}${extra ? `\n${extra}` : ""}`,
+    { duration: 5000 },
   );
 }
 
@@ -49,16 +36,6 @@ function App() {
     dispatch(setIPInfo(ipInfo));
   }, [ipInfo]);
 
-  // useEffect(() => {
-  //   // 👇 listen for foreground messages
-  //   const unsubscribe = onMessage(messaging, (payload) => {
-  //     handleIncomingMessage(payload);
-  //   });
-
-  //   return () => unsubscribe();
-  // }, []);
-
-  // // 👇 simple auth handling
   useEffect(() => {
     if (!tokenValid) {
       localStorage.removeItem("kuduUserToken");
@@ -70,8 +47,7 @@ function App() {
     <ModalProvider>
       <ReusableModal />
       <RouterProvider router={router} />
-      {/* 👇 Needed to render all toasts */}
-      <ToastContainer />
+      {/* ToastContainer removed — Sonner <Toaster> is in main.jsx */}
     </ModalProvider>
   );
 }

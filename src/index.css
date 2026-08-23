@@ -96,153 +96,82 @@
 
 /* Added custom scrollbar for payment modal */.custom-scrollbar::-webkit-scrollbar { width: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; } .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
 
-/* ─── Premium Kudumart Toast Notifications ───────────────────────────────── */
+/* ─── Sonner Toast — Kudumart Brand Overrides ─────────────────────────────── */
 
-/* Container: bottom-right, avoids header overlap */
-.Toastify__toast-container--bottom-right {
+/* Position container */
+[data-sonner-toaster][data-position="bottom-right"] {
   bottom: 24px !important;
   right: 24px !important;
-  width: 360px !important;
-  max-width: calc(100vw - 32px);
 }
 
-/* ── Base card — dark zinc glass ── */
-.kudu-toast {
-  position: relative !important;
-  display: flex !important;
-  align-items: center !important;
-  min-height: 60px !important;
-  padding: 0 !important;
-  border-radius: 16px !important;
-  background: #18181B !important;  /* zinc-900 */
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.04),
-    0 8px 20px rgba(0,0,0,0.4),
-    0 24px 48px rgba(0,0,0,0.25) !important;
-  overflow: hidden !important;
-  margin-bottom: 10px !important;
+/* Base toast */
+[data-sonner-toast] {
   font-family: inherit !important;
-  cursor: default !important;
-}
-
-/* ── Colored left glow accent per type ── */
-.kudu-toast::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  border-radius: 16px 0 0 16px;
-  background: #FF6F22; /* default: brand orange */
-}
-.Toastify__toast--success.kudu-toast::before { background: #22C55E; }
-.Toastify__toast--error.kudu-toast::before   { background: #EF4444; }
-.Toastify__toast--warning.kudu-toast::before { background: #F59E0B; }
-.Toastify__toast--info.kudu-toast::before    { background: #3B82F6; }
-
-/* ── Icon badge ── */
-.kudu-toast .Toastify__toast-icon {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 36px !important;
-  min-width: 36px !important;
-  height: 36px !important;
-  border-radius: 50% !important;
-  margin: 0 0 0 16px !important;
-  flex-shrink: 0 !important;
-  font-size: 16px !important;
-  background: rgba(255,255,255,0.06) !important;
-}
-
-/* Icon colors */
-.Toastify__toast--success .Toastify__toast-icon { background: rgba(34,197,94,0.15) !important; color: #22C55E !important; }
-.Toastify__toast--error   .Toastify__toast-icon { background: rgba(239,68,68,0.15) !important;  color: #EF4444 !important; }
-.Toastify__toast--warning .Toastify__toast-icon { background: rgba(245,158,11,0.15) !important; color: #F59E0B !important; }
-.Toastify__toast--info    .Toastify__toast-icon { background: rgba(59,130,246,0.15) !important;  color: #3B82F6 !important; }
-.Toastify__toast--success .Toastify__toast-icon svg,
-.Toastify__toast--error   .Toastify__toast-icon svg,
-.Toastify__toast--warning .Toastify__toast-icon svg,
-.Toastify__toast--info    .Toastify__toast-icon svg { width: 18px !important; height: 18px !important; }
-
-/* ── Text body ── */
-.kudu-toast-body {
-  padding: 14px 6px 14px 12px !important;
-  font-size: 13.5px !important;
+  border-radius: 14px !important;
+  font-size: 14px !important;
   font-weight: 500 !important;
-  color: #F4F4F5 !important;      /* zinc-100 */
-  line-height: 1.4 !important;
-  flex: 1 !important;
-  margin: 0 !important;
-  letter-spacing: 0.01em !important;
 }
 
-/* ── Close button ── */
-.kudu-toast-close {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 28px !important;
-  min-width: 28px !important;
-  height: 28px !important;
-  margin-right: 10px !important;
-  background: rgba(255,255,255,0.06) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
+/* Default (no type) → brand orange accent */
+[data-sonner-toast]:not([data-type]) {
+  background: #fff !important;
+  border: 1px solid #FFE0CC !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 4px 16px rgba(255,111,34,0.12), 0 1px 4px rgba(0,0,0,0.08) !important;
+}
+
+/* Success → soft green */
+[data-sonner-toast][data-type="success"] {
+  background: #F0FDF4 !important;
+  border: 1px solid #BBF7D0 !important;
+  color: #14532D !important;
+}
+
+/* Error → soft red */
+[data-sonner-toast][data-type="error"] {
+  background: #FEF2F2 !important;
+  border: 1px solid #FECACA !important;
+  color: #7F1D1D !important;
+}
+
+/* Warning → soft amber */
+[data-sonner-toast][data-type="warning"] {
+  background: #FFFBEB !important;
+  border: 1px solid #FDE68A !important;
+  color: #78350F !important;
+}
+
+/* Info → soft blue */
+[data-sonner-toast][data-type="info"] {
+  background: #EFF6FF !important;
+  border: 1px solid #BFDBFE !important;
+  color: #1E3A8A !important;
+}
+
+/* Close button */
+[data-sonner-toast] [data-close-button] {
   border-radius: 8px !important;
-  color: #71717A !important;      /* zinc-500 */
-  font-size: 11px !important;
-  cursor: pointer !important;
+  background: rgba(0,0,0,0.05) !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  color: #6B7280 !important;
   transition: background 0.15s, color 0.15s !important;
-  flex-shrink: 0 !important;
 }
-.kudu-toast-close:hover {
-  background: rgba(255,255,255,0.12) !important;
-  color: #F4F4F5 !important;
-}
-
-/* ── Progress bar ── */
-.kudu-toast-progress {
-  height: 2px !important;
-  border-radius: 0 !important;
-  background: rgba(255,255,255,0.12) !important;
-  opacity: 1 !important;
-}
-.Toastify__toast--success .kudu-toast-progress { background: #22C55E !important; opacity: 0.5 !important; }
-.Toastify__toast--error   .kudu-toast-progress { background: #EF4444 !important; opacity: 0.5 !important; }
-.Toastify__toast--warning .kudu-toast-progress { background: #F59E0B !important; opacity: 0.5 !important; }
-.Toastify__toast--info    .kudu-toast-progress { background: #3B82F6 !important; opacity: 0.5 !important; }
-
-/* ── Slide-up animation ── */
-@keyframes kuduToastIn {
-  from { opacity: 0; transform: translateY(12px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-.kudu-toast {
-  animation: kuduToastIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+[data-sonner-toast] [data-close-button]:hover {
+  background: rgba(0,0,0,0.10) !important;
+  color: #111827 !important;
 }
 
-/* ── Mobile: full-width slide from bottom ── */
+/* Mobile */
 @media (max-width: 480px) {
-  .Toastify__toast-container--bottom-right {
+  [data-sonner-toaster][data-position="bottom-right"] {
     bottom: 0 !important;
     right: 0 !important;
     left: 0 !important;
     width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 !important;
   }
-  .kudu-toast {
+  [data-sonner-toast] {
     border-radius: 0 !important;
     border-left: none !important;
-    margin-bottom: 0 !important;
-  }
-  .kudu-toast::before {
-    width: 100% !important;
-    height: 3px !important;
-    top: 0 !important;
-    bottom: auto !important;
-    border-radius: 0 !important;
+    border-right: none !important;
   }
 }
-
-

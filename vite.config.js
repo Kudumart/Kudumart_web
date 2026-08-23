@@ -21,7 +21,11 @@ export default defineConfig({
   // },
   resolve: {
     alias: {
-      "@": "/src", // Optional: Adjust for cleaner imports
+      "@": "/src",
+      // Route all react-toastify imports → our Sonner shim
+      // This means every existing `import { toast } from 'react-toastify'`
+      // now uses Sonner under the hood — no source files need to change.
+      "react-toastify": "/src/lib/toast-shim.js",
     },
   },
 });
