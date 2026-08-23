@@ -47,17 +47,24 @@ createRoot(document.getElementById("root")).render(
     </QueryClientProvider>
     <ToastContainer
       position="top-right"
-      autoClose={4000}
-      hideProgressBar={true}
-      newestOnTop={true}
-      closeOnClick={true}
+      autoClose={3500}
+      hideProgressBar={false}
+      newestOnTop
+      closeOnClick
       rtl={false}
       pauseOnFocusLoss
       draggable
       pauseOnHover
       theme="light"
-      toastClassName="custom-toast-container"
-      bodyClassName="custom-toast-body"
+      icon={false}
+      toastClassName="kudu-toast"
+      bodyClassName="kudu-toast-body"
+      progressClassName="kudu-toast-progress"
+      closeButton={({ closeToast }) => (
+        <button onClick={closeToast} className="kudu-toast-close" aria-label="Close">
+          ✕
+        </button>
+      )}
     />
   </Provider>,
 );
