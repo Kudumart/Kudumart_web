@@ -29,26 +29,20 @@ createRoot(document.getElementById("root")).render(
      */}
     <Toaster
       position="top-right"
-      richColors
       expand={false}
       duration={3500}
       closeButton
-      offset="140px"
+      style={{
+        zIndex: 9999999,
+      }}
       toastOptions={{
         style: {
           fontFamily: "inherit",
-          fontSize: "15px",
+          fontSize: "14.5px",
           fontWeight: "500",
-          borderRadius: "14px",
-          padding: "18px 20px",
-          gap: "12px",
+          borderRadius: "12px",
+          padding: "16px 20px",
           minWidth: "340px",
-          boxShadow:
-            "0 4px 20px rgba(0,0,0,0.12), 0 24px 48px rgba(0,0,0,0.08)",
-          border: "1px solid rgba(0,0,0,0.07)",
-        },
-        classNames: {
-          toast: "kudu-sonner-toast",
         },
       }}
     />
