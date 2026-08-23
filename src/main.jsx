@@ -28,29 +28,27 @@ createRoot(document.getElementById("root")).render(
      * resolve here via the vite alias → src/lib/toast-shim.js → sonner.
      */}
     <Toaster
-      position="bottom-right"
+      position="top-right"
       richColors
       expand={false}
       duration={3500}
       closeButton
+      offset="140px"
       toastOptions={{
         style: {
           fontFamily: "inherit",
-          fontSize: "14px",
+          fontSize: "15px",
           fontWeight: "500",
           borderRadius: "14px",
-          padding: "14px 16px",
-          gap: "10px",
+          padding: "18px 20px",
+          gap: "12px",
+          minWidth: "340px",
           boxShadow:
-            "0 4px 12px rgba(0,0,0,0.15), 0 20px 40px rgba(0,0,0,0.1)",
-          border: "1px solid rgba(0,0,0,0.06)",
+            "0 4px 20px rgba(0,0,0,0.12), 0 24px 48px rgba(0,0,0,0.08)",
+          border: "1px solid rgba(0,0,0,0.07)",
         },
         classNames: {
           toast: "kudu-sonner-toast",
-          title: "kudu-sonner-title",
-          description: "kudu-sonner-desc",
-          closeButton: "kudu-sonner-close",
-          actionButton: "kudu-sonner-action",
         },
       }}
     />

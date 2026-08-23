@@ -98,9 +98,9 @@
 
 /* ─── Sonner Toast — Kudumart Brand Overrides ─────────────────────────────── */
 
-/* Position container */
-[data-sonner-toaster][data-position="bottom-right"] {
-  bottom: 24px !important;
+/* Position container — top-right, below fixed headers */
+[data-sonner-toaster][data-position="top-right"] {
+  top: 140px !important;
   right: 24px !important;
 }
 
@@ -163,15 +163,14 @@
 
 /* Mobile */
 @media (max-width: 480px) {
-  [data-sonner-toaster][data-position="bottom-right"] {
-    bottom: 0 !important;
+  [data-sonner-toaster][data-position="top-right"] {
+    top: 130px !important;
     right: 0 !important;
     left: 0 !important;
     width: 100% !important;
   }
   [data-sonner-toast] {
-    border-radius: 0 !important;
-    border-left: none !important;
-    border-right: none !important;
+    border-radius: 10px !important;
+    margin: 0 12px !important;
   }
 }
