@@ -1006,6 +1006,33 @@ export default function ViewProduct() {
                   </div>
                 )}
               </div>
+
+              {/* 3-Step Buyer Ordering Guide */}
+              <div className="p-4 bg-orange-50/50 rounded-xl border border-orange-200/60 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-[#FF6F22]" /> How Kudumart Works
+                  </span>
+                  <span className="text-[10px] font-semibold text-primary">3 Easy Steps</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1 border-t border-orange-100 text-center">
+                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-white/70 border border-orange-100/80">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-primary font-bold text-[10px] flex items-center justify-center">1</span>
+                    <span className="text-[11px] font-bold text-gray-800">Choose / Offer</span>
+                    <span className="text-[9px] text-gray-500 leading-tight">Buy now or negotiate price</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-white/70 border border-orange-100/80">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-primary font-bold text-[10px] flex items-center justify-center">2</span>
+                    <span className="text-[11px] font-bold text-gray-800">Secure Escrow</span>
+                    <span className="text-[9px] text-gray-500 leading-tight">Funds held safe until delivery</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-white/70 border border-orange-100/80">
+                    <span className="w-5 h-5 rounded-full bg-orange-100 text-primary font-bold text-[10px] flex items-center justify-center">3</span>
+                    <span className="text-[11px] font-bold text-gray-800">Fast Delivery</span>
+                    <span className="text-[9px] text-gray-500 leading-tight">Inspect item & confirm</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Seller / Store Profile Card */}
