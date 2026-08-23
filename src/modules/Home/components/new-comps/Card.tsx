@@ -1,10 +1,12 @@
 import { formatNumberWithCommas } from "../../../../helpers/helperFactory";
+import ProductCardActions from "../../../../components/ProductCardActions";
 
 export default function NewCard({ item }: { item: any }) {
   const currencySymbol = item?.store?.currency?.symbol || "₦";
   const isSoldOut = item.quantity === 0;
-  const hasValidDiscount =
-    item.discountPrice > 0 && item.discountPrice < item.price;
+  const price = parseFloat(item.price || "0");
+  const discountPrice = parseFloat(item.discount_price || item.discountPrice || "0");
+  const hasValidDiscount = discountPrice > 0 && discountPrice < price;
 
   const card = (
     <div
@@ -13,11 +15,10 @@ export default function NewCard({ item }: { item: any }) {
         isSoldOut ? "opacity-50 pointer-events-none" : ""
       }`}
     >
-      {/*{JSON.stringify(item.variants)}*/}
       {/* Image & Badges */}
       <div className="flex justify-center relative h-[200px]">
         <img
-          src={item.image_url}
+          src={item.image_url || item.image || item.additional_images?.[0]}
           alt={item.name}
           className="w-full h-full object-cover rounded-md"
         />
@@ -46,7 +47,7 @@ export default function NewCard({ item }: { item: any }) {
               item.condition === "brand_new" ? "bg-[#34A853]" : "bg-orange-500"
             }`}
           >
-            {/*{capitalizeEachWord(item?.condition?.replace(/_/g, " "))}*/}
+            {item.condition ? item.condition.replace(/_/g, " ").toUpperCase() : "NEW"}
           </span>
         </div>
       </div>
@@ -61,24 +62,25 @@ export default function NewCard({ item }: { item: any }) {
           {hasValidDiscount ? (
             <div className="flex flex-col mt-2">
               <p className="text-sm font-semibold leading-loose text-red-500 line-through">
-                {/*{currencySymbol} {formatNumberWithCommas(item.price)}*/}
+                {currencySymbol} {formatNumberWithCommas(price)}
               </p>
               <p className="text-sm font-semibold leading-loose">
-                {/*{currencySymbol} {formatNumberWithCommas(item.discountPrice)}*/}
+                {currencySymbol} {formatNumberWithCommas(discountPrice)}
               </p>
             </div>
           ) : (
             <p className="text-sm font-semibold leading-loose">
-              {/*{currencySymbol} {formatNumberWithCommas(item.price)}*/}
+              {currencySymbol} {formatNumberWithCommas(price)}
             </p>
           )}
 
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 mt-2 mb-2">
             <p className="text-sm text-kudu-roman-silver">
               Qty Available: {item.quantity}
             </p>
           </div>
         </div>
+        <ProductCardActions product={item} />
       </div>
     </div>
   );

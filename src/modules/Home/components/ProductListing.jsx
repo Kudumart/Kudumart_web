@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Range } from "react-range";
 import { Button } from "@material-tailwind/react";
+import ProductCardActions from "../../../components/ProductCardActions";
 import { useGeoLocatorCurrency } from "../../../hooks/geoLocatorProduct";
 import Loader from "../../../components/Loader";
 import useFilteredProducts from "../../../hooks/filteredProducts";
@@ -265,12 +266,13 @@ const ProductListing = ({
                             {currencySymbol} {formatNumberWithCommas(price)}
                           </p>
                         )}
-                        <div className="flex gap-2 mt-2">
+                        <div className="flex gap-2 mt-2 mb-2">
                           <p className="text-sm text-kudu-roman-silver">
                             Qty Available: {product.quantity}
                           </p>
                         </div>
                       </div>
+                      <ProductCardActions product={product} />
                     </div>
                   </div>
                 );

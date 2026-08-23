@@ -26,7 +26,7 @@ export default function ProductCardActions({ product, className = "" }) {
 
   if (!product || product.quantity === 0) return null;
 
-  const isVerified = !!product?.vendor?.isVerified || !!product?.admin;
+  const isVerified = !!product?.vendor?.isVerified || !!product?.admin || !!product?.isVerified;
   const isDropship = !!(product?.variants && product.variants.length > 0);
   const productPath = isDropship
     ? `/product-dropship/${product.id}`
@@ -43,7 +43,7 @@ export default function ProductCardActions({ product, className = "" }) {
 
   if (isDropship) {
     return (
-      <div className={`flex ${className}`}>
+      <div className={`flex w-full mt-2 ${className}`}>
         <Button
           type="button"
           onClick={(e) => {
@@ -51,9 +51,10 @@ export default function ProductCardActions({ product, className = "" }) {
             navigate(productPath);
           }}
           variant="outline"
+          size="sm"
           fullWidth
+          icon={<Eye size={16} />}
         >
-          <Eye size={16} />
           View Details
         </Button>
       </div>
@@ -62,7 +63,7 @@ export default function ProductCardActions({ product, className = "" }) {
 
   if (!isVerified) {
     return (
-      <div className={`flex ${className}`}>
+      <div className={`flex w-full mt-2 ${className}`}>
         <Button
           type="button"
           onClick={(e) => {
@@ -70,9 +71,10 @@ export default function ProductCardActions({ product, className = "" }) {
             navigate(productPath);
           }}
           variant="primary"
+          size="sm"
           fullWidth
+          icon={<PhoneIcon size={16} />}
         >
-          <PhoneIcon size={16} />
           Contact Seller
         </Button>
       </div>
@@ -81,7 +83,7 @@ export default function ProductCardActions({ product, className = "" }) {
 
   if (product.purchaseType === "offer") {
     return (
-      <div className={`flex ${className}`}>
+      <div className={`flex w-full mt-2 ${className}`}>
         <Button
           type="button"
           onClick={(e) => {
@@ -89,9 +91,10 @@ export default function ProductCardActions({ product, className = "" }) {
             navigate(user ? `${productPath}?offer=1` : "/login");
           }}
           variant="outline"
+          size="sm"
           fullWidth
+          icon={<Tag size={16} />}
         >
-          <Tag size={16} />
           Request an Offer
         </Button>
       </div>
@@ -99,16 +102,17 @@ export default function ProductCardActions({ product, className = "" }) {
   }
 
   return (
-    <div className={`flex ${className}`}>
+    <div className={`flex w-full mt-2 ${className}`}>
       <Button
         type="button"
         onClick={requireLogin(() =>
           addItemToCart({ productId: product.id, quantity: 1 }),
         )}
         variant="primary"
+        size="sm"
         fullWidth
+        icon={<ShoppingCart size={16} />}
       >
-        <ShoppingCart size={16} />
         Add to Cart
       </Button>
     </div>
