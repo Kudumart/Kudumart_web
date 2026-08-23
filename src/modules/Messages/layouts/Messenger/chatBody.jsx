@@ -52,6 +52,7 @@ const ChatInterface = ({
   const {
     data: messageData,
     isLoading: isFirstLoad,
+    refetch,
   } = getMessage(conversationId);
 
   const messages = messageData?.message ?? [];
@@ -63,12 +64,13 @@ const ChatInterface = ({
     socket.emit("register", userId);
 
     const handleReceive = (incoming) => {
-      // Patch cache directly — never call refetch() (causes loader → remount bug)
       queryClient.setQueryData(["message", conversationId], (old) => {
         if (!old) return old;
-        const exists = old.message?.some((m) => m.id === incoming.id);
-        if (exists) return old;
-        return { ...old, message: [...(old.message || []), incoming] };
+        // Remove optimistic placeholders and merge the confirmed message
+        const withoutOptimistic = (old.message || []).filter((m) => !m._optimistic);
+        const alreadyExists = withoutOptimistic.some((m) => m.id === incoming.id);
+        if (alreadyExists) return { ...old, message: withoutOptimistic };
+        return { ...old, message: [...withoutOptimistic, incoming] };
       });
     };
 
@@ -122,13 +124,16 @@ const ChatInterface = ({
       setText("");
       setShowFiles([]);
 
-      // 4. Silent background invalidation (no loading state triggered)
-      queryClient.invalidateQueries({
-        queryKey: ["message", conversationId],
-        refetchType: "none",
-      });
+      // 4. Refetch after a short delay so the server-confirmed message replaces
+      //    the optimistic one. isLoading stays false during this refetch so no
+      //    remount/loader flash happens.
+      setTimeout(() => {
+        refetch();
+        // Also refresh the conversation list so the sidebar last-message updates
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      }, 800);
     },
-    [text, showFiles, userId, socket, productId, selectedConversation, conversationId, queryClient]
+    [text, showFiles, userId, socket, productId, selectedConversation, conversationId, queryClient, refetch]
   );
 
   // ── File upload ──────────────────────────────────────────────────────────
