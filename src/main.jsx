@@ -46,7 +46,7 @@ createRoot(document.getElementById("root")).render(
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
     <ToastContainer
-      position="top-right"
+      position="bottom-right"
       autoClose={3500}
       hideProgressBar={false}
       newestOnTop
@@ -55,7 +55,7 @@ createRoot(document.getElementById("root")).render(
       pauseOnFocusLoss
       draggable
       pauseOnHover
-      theme="light"
+      theme="dark"
       icon={false}
       toastClassName="kudu-toast"
       bodyClassName="kudu-toast-body"
