@@ -13,7 +13,10 @@ const useFileUpload = (defaultOptions = {
         setError(null);
 
         try {
-            const filesArray = Array.isArray(acceptedFiles) ? acceptedFiles : [acceptedFiles];
+            const filesArray = Array.isArray(acceptedFiles)
+                ? acceptedFiles
+                : (acceptedFiles instanceof FileList ? Array.from(acceptedFiles) : [acceptedFiles]);
+
             const uploadedUrls = [];
 
             for (let i = 0; i < filesArray.length; i++) {
@@ -43,8 +46,9 @@ const useFileUpload = (defaultOptions = {
                 }
             }
 
+            const result = uploadedUrls.length === 1 ? uploadedUrls[0] : uploadedUrls;
             if (typeof onUpload === 'function') {
-                onUpload(uploadedUrls);
+                onUpload(result, uploadedUrls);
             }
             return uploadedUrls;
         } catch (err) {

@@ -9,7 +9,7 @@ export default function DropZone({ text, onUpload, single }) {
     const selectedFiles = single ? [files[0]] : (Array.isArray(files) ? files : [files]);
 
     if (selectedFiles[0]) {
-      await uploadFiles(selectedFiles, (uploadedUrls) => {
+      await uploadFiles(selectedFiles, (result, uploadedUrls) => {
         const safeList = Array.isArray(uploadedUrls) ? uploadedUrls : [uploadedUrls];
         if (typeof onUpload === "function") {
           onUpload(single ? (safeList[0] || "") : safeList);

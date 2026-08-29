@@ -493,7 +493,7 @@ const AddNewProduct = () => {
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-4 my-4">
-                  {files.map((fileObj, index) => (
+                  {(Array.isArray(files) ? files : (files ? [files] : [])).map((fileObj, index) => (
                     <div key={index} className="relative">
                       <img
                         src={fileObj}
@@ -525,7 +525,7 @@ const AddNewProduct = () => {
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-4 my-4">
-                  {additionalFiles.map((fileObj, index) => (
+                  { (Array.isArray(additionalFiles) ? additionalFiles : (additionalFiles ? [additionalFiles] : [])).map((fileObj, index) => (
                     <div key={index} className="relative">
                       <img
                         src={fileObj}
