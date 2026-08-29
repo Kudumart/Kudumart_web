@@ -13,11 +13,13 @@ const useFileUpload = (defaultOptions = {
         setError(null);
 
         try {
+            const filesArray = Array.isArray(acceptedFiles) ? acceptedFiles : [acceptedFiles];
             const uploadedUrls = [];
 
-            for (let i = 0; i < acceptedFiles.length; i++) {
-                const file = acceptedFiles[i];
-                const formData = new FormData(); // Create a new FormData for each file
+            for (let i = 0; i < filesArray.length; i++) {
+                const file = filesArray[i];
+                if (!file) continue;
+                const formData = new FormData();
                 formData.append("image", file);
 
                 const response = await fetch(uploadUrl, {
@@ -30,13 +32,25 @@ const useFileUpload = (defaultOptions = {
                 }
 
                 const data = await response.json();
-                uploadedUrls.push(data.data); // Collect all uploaded URLs
+                const url = typeof data?.data === 'string'
+                    ? data.data
+                    : (data?.data?.url || data?.url || data?.secure_url || data?.path || '');
+
+                if (url) {
+                    uploadedUrls.push(url);
+                } else if (typeof data === 'string') {
+                    uploadedUrls.push(data);
+                }
             }
 
-            onUpload(uploadedUrls); // Return all URLs once uploads are complete
+            if (typeof onUpload === 'function') {
+                onUpload(uploadedUrls);
+            }
+            return uploadedUrls;
         } catch (err) {
             setError(err.message || "Upload failed");
             console.error("Error during upload:", err);
+            return [];
         } finally {
             setIsLoading(false);
         }

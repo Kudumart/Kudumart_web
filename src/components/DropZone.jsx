@@ -6,11 +6,14 @@ export default function DropZone({ text, onUpload, single }) {
   const { uploadFiles, isLoadingUpload } = useFileUpload();
 
   const onDrop = async (files) => {
-    const selectedFiles = single ? [files[0]] : files; // Take only the first file if `single` is true
+    const selectedFiles = single ? [files[0]] : (Array.isArray(files) ? files : [files]);
 
     if (selectedFiles[0]) {
       await uploadFiles(selectedFiles, (uploadedUrls) => {
-        onUpload(single ? uploadedUrls[0] : uploadedUrls); // Return a single URL if `single` is true
+        const safeList = Array.isArray(uploadedUrls) ? uploadedUrls : [uploadedUrls];
+        if (typeof onUpload === "function") {
+          onUpload(single ? (safeList[0] || "") : safeList);
+        }
       });
     }
   };
