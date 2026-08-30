@@ -86,26 +86,25 @@ export default function NewHome() {
 
       const auctionProductRequest = new Promise(async (resolve) => {
         try {
-          const fetchUrl = async (url) => {
-            return new Promise((res) => {
-              mutate({
-                url,
-                method: "GET",
-                hideToast: true,
-                onSuccess: (response) => res(response.data?.data || []),
-                onError: () => res([]),
-              });
+          const res1 = await new Promise((res) => {
+            mutate({
+              url: `/auction/products?country=${country.value}`,
+              method: "GET",
+              hideToast: true,
+              onSuccess: (response) => res(response.data?.data || []),
+              onError: () => res([]),
             });
-          };
-
-          const [r1, r2, r3, r4] = await Promise.all([
-            fetchUrl(`/auction/products?country=${country.value}`),
-            fetchUrl(`/auction/products`),
-            fetchUrl(`/products?auctionStatus=ongoing&country=${country.value}`),
-            fetchUrl(`/products?auctionStatus=ongoing`),
-          ]);
-
-          const combined = [...r1, ...r2, ...r3, ...r4];
+          });
+          const res2 = await new Promise((res) => {
+            mutate({
+              url: `/products?auctionStatus=ongoing&country=${country.value}`,
+              method: "GET",
+              hideToast: true,
+              onSuccess: (response) => res(response.data?.data || []),
+              onError: () => res([]),
+            });
+          });
+          const combined = [...res1, ...res2];
           const uniqueMap = new Map();
           combined.forEach((item) => {
             if (item && item.id && !uniqueMap.has(item.id)) {

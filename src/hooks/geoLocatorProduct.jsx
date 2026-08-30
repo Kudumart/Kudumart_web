@@ -11,9 +11,9 @@ export const useGeoLocatorProduct = (productsArr) => {
         if (!symbol) return true;
 
         if (ipInfo?.country_name === "Nigeria") {
-            return symbol === "₦" || symbol === "NGN" || symbol === "$" || symbol === "USD";
+            return symbol === "₦" || symbol === "NGN";
         } else {
-            return symbol === "$" || symbol === "USD" || symbol === "€" || symbol === "EUR" || symbol === "₦" || symbol === "NGN";
+            return symbol === "$" || symbol === "USD" || symbol === "€" || symbol === "EUR";
         }
     });
 };
