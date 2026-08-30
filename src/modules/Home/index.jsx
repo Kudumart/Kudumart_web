@@ -84,15 +84,37 @@ export default function NewHome() {
         });
       });
 
-      const auctionProductRequest = new Promise((resolve, reject) => {
-        mutate({
-          url: `/auction/products?auctionStatus=upcoming&country=${country.value}`,
-          method: "GET",
-
-          hideToast: true,
-          onSuccess: (response) => resolve(response.data?.data || []),
-          onError: reject,
-        });
+      const auctionProductRequest = new Promise(async (resolve) => {
+        try {
+          const res1 = await new Promise((res) => {
+            mutate({
+              url: `/auction/products?country=${country.value}`,
+              method: "GET",
+              hideToast: true,
+              onSuccess: (response) => res(response.data?.data || []),
+              onError: () => res([]),
+            });
+          });
+          const res2 = await new Promise((res) => {
+            mutate({
+              url: `/products?auctionStatus=ongoing&country=${country.value}`,
+              method: "GET",
+              hideToast: true,
+              onSuccess: (response) => res(response.data?.data || []),
+              onError: () => res([]),
+            });
+          });
+          const combined = [...res1, ...res2];
+          const uniqueMap = new Map();
+          combined.forEach((item) => {
+            if (item && item.id && !uniqueMap.has(item.id)) {
+              uniqueMap.set(item.id, item);
+            }
+          });
+          resolve(Array.from(uniqueMap.values()));
+        } catch (_) {
+          resolve([]);
+        }
       });
 
       const categoriesRequest = new Promise((resolve, reject) => {

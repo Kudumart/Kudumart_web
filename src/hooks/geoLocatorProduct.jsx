@@ -1,13 +1,19 @@
 import useAppState from "./appState";
 
 export const useGeoLocatorProduct = (productsArr) => {
-    const { ipInfo } = useAppState(); // ✅ Hook is now inside a custom hook
+    const { ipInfo } = useAppState();
+
+    if (!Array.isArray(productsArr)) return [];
 
     return productsArr.filter(product => {
+        if (!product) return false;
+        const symbol = product.store?.currency?.symbol || product.currency?.symbol || product.vendor?.currency?.symbol;
+        if (!symbol) return true;
+
         if (ipInfo?.country_name === "Nigeria") {
-            return product.store?.currency?.symbol === "₦";
+            return symbol === "₦" || symbol === "NGN" || symbol === "$" || symbol === "USD";
         } else {
-            return product.store?.currency?.symbol === "$" || product.store?.currency?.symbol === "€";
+            return symbol === "$" || symbol === "USD" || symbol === "€" || symbol === "EUR" || symbol === "₦" || symbol === "NGN";
         }
     });
 };
