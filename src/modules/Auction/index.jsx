@@ -11,23 +11,45 @@ export default function Auction() {
 
     const { mutate } = useApiMutation();
 
-    const fetchAuction = () => {
-        mutate({
-            url: '/auction/products?auctionStatus=upcoming',
-            method: 'GET',
-            hideToast: true,
-            onSuccess: (response) => {
-                setProducts(response.data?.data || []);
-                setLoading(false);
-            },
-            onError: () => {
-                setLoading(false)
-            },
-        });
-    }
+    const fetchAuction = async () => {
+        try {
+            const fetchUrl = async (url) => {
+                return new Promise((resolve) => {
+                    mutate({
+                        url,
+                        method: "GET",
+                        hideToast: true,
+                        onSuccess: (response) => resolve(response.data?.data || []),
+                        onError: () => resolve([]),
+                    });
+                });
+            };
+
+            const [r1, r2, r3, r4] = await Promise.all([
+                fetchUrl("/auction/products"),
+                fetchUrl("/auction/products?auctionStatus=ongoing"),
+                fetchUrl("/products?auctionStatus=ongoing"),
+                fetchUrl("/auction/products?auctionStatus=upcoming"),
+            ]);
+
+            const combined = [...r1, ...r2, ...r3, ...r4];
+            const uniqueMap = new Map();
+            combined.forEach((item) => {
+                if (item && item.id && !uniqueMap.has(item.id)) {
+                    uniqueMap.set(item.id, item);
+                }
+            });
+
+            setProducts(Array.from(uniqueMap.values()));
+        } catch (_) {
+            setProducts([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        fetchAuction()
+        fetchAuction();
     }, []);
 
 

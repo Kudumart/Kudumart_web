@@ -14,6 +14,7 @@ const AuctionPage = ({ auctions, hideHeader }) => {
   const { user } = useAppState();
 
   const filteredAuctions = useGeoLocatorProduct(auctions);
+  const displayAuctions = filteredAuctions.length > 0 ? filteredAuctions : auctions;
 
   const { openModal } = useModal();
 
@@ -71,10 +72,10 @@ const AuctionPage = ({ auctions, hideHeader }) => {
       }
 
       {/* Auction Listings */}
-      {filteredAuctions.length > 0 ?
+      {displayAuctions.length > 0 ?
         <div className="grid grid-cols-1 sm:grid-cols-4 md:grid-cols-4 gap-4 mt-3">
           {
-            filteredAuctions.map((auction) => {
+            displayAuctions.map((auction) => {
               const auctionLocation = auction.vendor?.location
                 ? auction.vendor.location
                 : null;

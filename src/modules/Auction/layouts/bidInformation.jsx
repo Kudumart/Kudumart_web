@@ -101,11 +101,11 @@ const BidInformation = ({ content, currentBid }) => {
                     <span className="font-medium">Price:</span>
                     <span className="capitalize">{content.store.currency.symbol} {formatNumberWithCommas(content.price)}</span>
                 </div>
-                {content.interest && content.auctionStatus === 'ongoing' ?
+                {content.auctionStatus === 'ongoing' ?
                     <>
                         <div className="flex justify-between py-2 border-b border-gray-300">
                             <span className="font-medium">Current Bid:</span>
-                            <span className="font-medium">{content.store.currency.symbol} {currentBidAmt ? formatNumberWithCommas(currentBidAmt) : '0'}</span>
+                            <span className="font-medium">{content.store?.currency?.symbol || "₦"} {currentBidAmt ? formatNumberWithCommas(currentBidAmt) : '0'}</span>
                         </div>
                         <form
                             onSubmit={handleSubmit(onSubmit)}
@@ -113,8 +113,8 @@ const BidInformation = ({ content, currentBid }) => {
                             <div className="flex flex-col gap-3 justify-between pb-3">
                                 <span className="font-medium">Your Bid:</span>
                                 <div className="flex flex-row gap-2">
-                                    <p className="font-medium mt-2">{content.store.currency.symbol}</p>
-                                    <input type="text" {...register("bidAmount", {
+                                    <p className="font-medium mt-2">{content.store?.currency?.symbol || "₦"}</p>
+                                    <input type="number" {...register("bidAmount", {
                                         required: "Bid Amount is required"
                                     })}
                                         placeholder="Enter Amount" className="border focus:outline-hidden border-gray-300 rounded-lg p-2 w-full" />
