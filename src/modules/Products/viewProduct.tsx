@@ -55,8 +55,8 @@ export default function ViewProduct() {
   const [bookmarked, setBookmarked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<Product | {}>({});
-  const [quantity, setQuantity] = useState(0);
-  const [disabled, setDisabled] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const [disabled, setDisabled] = useState(false);
   const [selectedImgIndex, setSelectedImgIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<"description" | "specifications" | "safety" | "reviews">("description");
   const { openModal } = useModal();
@@ -265,8 +265,8 @@ export default function ViewProduct() {
     // shows the correct data without stale flashes.
     setProduct({});
     setLoading(true);
-    setQuantity(0);
-    setDisabled(true);
+    setQuantity(1);
+    setDisabled(false);
     setBookmarked(false);
     setVendorProducts([]);
     setCurrentOffer(null);
@@ -392,11 +392,8 @@ export default function ViewProduct() {
   };
 
   const handleDecrease = () => {
-    if (quantity > 0) {
+    if (quantity > 1) {
       setQuantity((prevState) => prevState - 1);
-    }
-    if (quantity === 1) {
-      setDisabled(true);
     }
   };
 
@@ -912,7 +909,7 @@ export default function ViewProduct() {
                       <button
                         type="button"
                         onClick={handleDecrease}
-                        disabled={quantity <= 0 || product.quantity === 0}
+                        disabled={quantity <= 1 || product.quantity === 0}
                         className="w-10 h-10 flex items-center justify-center font-bold text-lg text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-40"
                       >
                         -
