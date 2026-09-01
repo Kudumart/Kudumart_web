@@ -8,6 +8,7 @@ import draftToHtml from "draftjs-to-html";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import Button from "../../../components/Button";
+import useFileUpload from "../../../api/hooks/useFileUpload";
 import {
   PackagePlus,
   Store,
@@ -197,8 +198,23 @@ const AddNewProduct = () => {
     }
   };
 
-  const onSubmit = (data) => {
+  const { uploadFiles } = useFileUpload();
+
+  const onSubmit = async (data) => {
     setDisabled(true);
+
+    const concatenatedFiles = files.concat(additionalFiles);
+    const uniqueFiles = [...new Set(concatenatedFiles)];
+
+    let uploadedUrls = [];
+    if (uniqueFiles.length > 0) {
+      uploadedUrls = await uploadFiles(uniqueFiles);
+      if (!uploadedUrls || uploadedUrls.length === 0) {
+        toast.error("Failed to upload product images. Please try again.");
+        setDisabled(false);
+        return;
+      }
+    }
 
     const descriptionHtml = draftToHtml(
       convertToRaw(descriptionEditor.getCurrentContent()),
@@ -217,8 +233,8 @@ const AddNewProduct = () => {
       price: Number(data.price),
       quantity: Number(data.quantity),
       discount_price: Number(data.discount_price || 0),
-      image_url: files[0] || "",
-      additional_images: additionalFiles || [],
+      image_url: uploadedUrls[0] || "",
+      additional_images: uploadedUrls || [],
     };
 
     mutate({

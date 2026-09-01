@@ -9,6 +9,7 @@ import { FaTimes } from "react-icons/fa";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import Button from "../../../components/Button";
+import useFileUpload from "../../../api/hooks/useFileUpload";
 
 const AddNewAuctionProduct = () => {
   const [descriptionEditor, setDescriptionEditor] = useState(() =>
@@ -97,18 +98,27 @@ const AddNewAuctionProduct = () => {
     }
   }, [isAI, aiDataLoaded, setValue]);
 
-  const onSubmit = (data) => {
+  const { uploadFiles } = useFileUpload();
+
+  const onSubmit = async (data) => {
     setDisabled(true);
     const concatenatedFiles = files.concat(additionalFiles);
     const uniqueFiles = [...new Set(concatenatedFiles)];
 
-    if (files.length > 0) {
+    if (uniqueFiles.length > 0) {
+      const uploadedUrls = await uploadFiles(uniqueFiles);
+      if (!uploadedUrls || uploadedUrls.length === 0) {
+        toast.error("Failed to upload product images. Please try again.");
+        setDisabled(false);
+        return;
+      }
+
       delete data.category;
       const payload = {
         ...data,
         startDate: new Date(data.startDate).toISOString(),
         endDate: new Date(data.endDate).toISOString(),
-        image: files[0],
+        image: uploadedUrls[0],
         price: Number(data.price),
         bidIncrement: Number(data.bidIncrement),
         maxBidsPerUser: Number(data.maxBidsPerUser),
@@ -121,7 +131,7 @@ const AddNewAuctionProduct = () => {
             convertToRaw(specificationsEditor.getCurrentContent()),
           ),
         ),
-        additionalImages: uniqueFiles,
+        additionalImages: uploadedUrls,
       };
 
       mutate({
@@ -130,6 +140,7 @@ const AddNewAuctionProduct = () => {
         data: payload,
         headers: true,
         onSuccess: (response) => {
+          toast.success("Auction product created successfully!");
           navigate(-1);
         },
         onError: () => {

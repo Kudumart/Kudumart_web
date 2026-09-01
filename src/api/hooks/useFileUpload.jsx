@@ -1,5 +1,21 @@
 import { useState } from "react";
 
+function dataURLtoFile(dataurl, filename = 'image.jpg') {
+    try {
+        const arr = dataurl.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, { type: mime });
+    } catch (_) {
+        return null;
+    }
+}
+
 const useFileUpload = (defaultOptions = {
     uploadPreset: "mobil_holder",
     folder: "mobiHolder",
@@ -20,8 +36,21 @@ const useFileUpload = (defaultOptions = {
             const uploadedUrls = [];
 
             for (let i = 0; i < filesArray.length; i++) {
-                const file = filesArray[i];
+                let file = filesArray[i];
                 if (!file) continue;
+
+                if (typeof file === "string") {
+                    if (file.startsWith("http://") || file.startsWith("https://")) {
+                        uploadedUrls.push(file);
+                        continue;
+                    } else if (file.startsWith("data:image/")) {
+                        file = dataURLtoFile(file);
+                        if (!file) continue;
+                    } else {
+                        continue;
+                    }
+                }
+
                 const formData = new FormData();
                 formData.append("image", file);
 
