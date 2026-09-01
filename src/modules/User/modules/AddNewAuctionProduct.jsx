@@ -74,11 +74,13 @@ const AddNewAuctionProduct = () => {
             setValue("description", data.description);
           }
           // Fill specification editor
-          if (data.specification) {
-            const contentState = ContentState.createFromText(data.specification);
+          if (data.specification || data.specifications) {
+            const specText = data.specification || data.specifications;
+            const contentState = ContentState.createFromText(specText);
             const editorState = EditorState.createWithContent(contentState);
             setSpecificationsEditor(editorState);
-            setValue("specifications", data.specification);
+            setValue("specifications", specText);
+            setValue("specification", specText);
           }
           
           if (data.imagePreview) {
@@ -147,7 +149,14 @@ const AddNewAuctionProduct = () => {
       headers: true,
       hideToast: true,
       onSuccess: (response) => {
-        setStores(response.data.data);
+        const storeList = response.data.data || [];
+        setStores(storeList);
+        if (storeList.length === 1) {
+          setValue("storeId", storeList[0].id);
+          if (storeList[0].currency?.symbol) {
+            setCurrency(storeList[0].currency.symbol);
+          }
+        }
       },
       onError: () => {},
     });
@@ -623,11 +632,7 @@ const AddNewAuctionProduct = () => {
                   type="submit"
                   variant="primary"
                   className="bg-kudu-orange w-2/3"
-                  disabled={
-                    !watch("description") ||
-                    !watch("specification") ||
-                    btnDisabled
-                  }
+                  disabled={btnDisabled}
                 >
                   Create New Product
                 </Button>

@@ -94,11 +94,13 @@ const AddNewProduct = () => {
             setDescriptionEditor(editorState);
             setValue("description", data.description);
           }
-          if (data.specification) {
-            const contentState = ContentState.createFromText(data.specification);
+          if (data.specification || data.specifications) {
+            const specText = data.specification || data.specifications;
+            const contentState = ContentState.createFromText(specText);
             const editorState = EditorState.createWithContent(contentState);
             setSpecificationsEditor(editorState);
-            setValue("specifications", data.specification);
+            setValue("specifications", specText);
+            setValue("specification", specText);
           }
 
           if (data.imagePreview) {
@@ -130,7 +132,14 @@ const AddNewProduct = () => {
       headers: true,
       hideToast: true,
       onSuccess: (response) => {
-        setStores(response.data.data);
+        const storeList = response.data.data || [];
+        setStores(storeList);
+        if (storeList.length === 1) {
+          setValue("storeId", storeList[0].id);
+          if (storeList[0].currency?.symbol) {
+            setCurrency(storeList[0].currency.symbol);
+          }
+        }
       },
     });
   };
