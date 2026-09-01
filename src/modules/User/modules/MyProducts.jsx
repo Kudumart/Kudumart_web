@@ -74,14 +74,38 @@ const MyProducts = () => {
 
     const isAuction =
       selectedProductToDelete?.auctionStatus != null ||
-      selectedProductToDelete?.isAuction === true;
+      selectedProductToDelete?.isAuction === true ||
+      selectedProductToDelete?.type === "Auction";
 
     try {
       let res;
       if (isAuction) {
-        res = await deleteAuctionProd(targetId).unwrap();
+        try {
+          res = await deleteAuctionProd(targetId).unwrap();
+        } catch (aucErr) {
+          if (
+            aucErr?.status === 404 ||
+            aucErr?.data?.message?.includes("not found")
+          ) {
+            res = await deleteProd(targetId).unwrap();
+          } else {
+            throw aucErr;
+          }
+        }
       } else {
-        res = await deleteProd(targetId).unwrap();
+        try {
+          res = await deleteProd(targetId).unwrap();
+        } catch (prodErr) {
+          if (
+            prodErr?.status === 404 ||
+            prodErr?.data?.message?.includes("not found") ||
+            prodErr?.data?.message?.includes("Product not found")
+          ) {
+            res = await deleteAuctionProd(targetId).unwrap();
+          } else {
+            throw prodErr;
+          }
+        }
       }
       toast.success(res?.message || "Product deleted successfully");
       getMyProducts();
