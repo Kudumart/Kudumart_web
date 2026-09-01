@@ -13,8 +13,9 @@ const AuctionPage = ({ auctions, hideHeader }) => {
   const navigate = useNavigate();
   const { user } = useAppState();
 
-  const filteredAuctions = useGeoLocatorProduct(auctions);
-  const displayAuctions = filteredAuctions.length > 0 ? filteredAuctions : auctions;
+  const ongoingAuctions = (auctions || []).filter((a) => a && a.auctionStatus === "ongoing");
+  const filteredAuctions = useGeoLocatorProduct(ongoingAuctions);
+  const displayAuctions = filteredAuctions.length > 0 ? filteredAuctions : ongoingAuctions;
 
   const { openModal } = useModal();
 

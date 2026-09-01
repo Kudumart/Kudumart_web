@@ -25,17 +25,15 @@ export default function Auction() {
                 });
             };
 
-            const [r1, r2, r3, r4] = await Promise.all([
-                fetchUrl("/auction/products"),
+            const [r1, r2] = await Promise.all([
                 fetchUrl("/auction/products?auctionStatus=ongoing"),
                 fetchUrl("/products?auctionStatus=ongoing"),
-                fetchUrl("/auction/products?auctionStatus=upcoming"),
             ]);
 
-            const combined = [...r1, ...r2, ...r3, ...r4];
+            const combined = [...r1, ...r2];
             const uniqueMap = new Map();
             combined.forEach((item) => {
-                if (item && item.id && !uniqueMap.has(item.id)) {
+                if (item && item.id && item.auctionStatus === "ongoing" && !uniqueMap.has(item.id)) {
                     uniqueMap.set(item.id, item);
                 }
             });
