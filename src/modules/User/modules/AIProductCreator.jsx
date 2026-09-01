@@ -3,6 +3,7 @@ import { FaTimes, FaMagic, FaUpload, FaSpinner, FaCheckCircle, FaBoxOpen, FaGave
 import { useNavigate } from "react-router-dom";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import Button from "../../../components/Button";
+import useFileUpload from "../../../api/hooks/useFileUpload";
 
 export default function AIProductCreator({ onClose }) {
   const navigate = useNavigate();
