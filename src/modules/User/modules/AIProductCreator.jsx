@@ -42,6 +42,9 @@ export default function AIProductCreator({ onClose }) {
       reader.onerror = reject;
     });
 
+  const { uploadFiles } = useFileUpload();
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+
   const analyzeImage = async () => {
     if (!imageFile) {
       setError("Please upload a product image first.");
@@ -54,6 +57,13 @@ export default function AIProductCreator({ onClose }) {
     try {
       const base64 = await toBase64(imageFile);
       const mimeType = imageFile.type;
+
+      // Concurrently upload image to server so sessionStorage gets valid HTTP URL
+      uploadFiles([imageFile]).then((urls) => {
+        if (urls && urls[0]) {
+          setUploadedImageUrl(urls[0]);
+        }
+      });
 
       mutate({
         url: "/vendor/products/ai-generate",
@@ -83,8 +93,8 @@ export default function AIProductCreator({ onClose }) {
 
   const handleProceed = () => {
     if (!aiData) return;
-    // Store AI data in sessionStorage so the product form can read it
-    sessionStorage.setItem("ai_product_data", JSON.stringify({ ...aiData, imagePreview }));
+    const finalImage = uploadedImageUrl || imagePreview;
+    sessionStorage.setItem("ai_product_data", JSON.stringify({ ...aiData, imagePreview: finalImage }));
     onClose();
     if (productType === "auction") {
       navigate("/profile/auction-products/create?ai=1");

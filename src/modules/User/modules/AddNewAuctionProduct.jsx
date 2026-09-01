@@ -103,11 +103,15 @@ const AddNewAuctionProduct = () => {
   const onSubmit = async (data) => {
     setDisabled(true);
     const concatenatedFiles = files.concat(additionalFiles);
-    const uniqueFiles = [...new Set(concatenatedFiles)];
+    const uniqueFiles = [...new Set(concatenatedFiles)].filter((f) => f && f !== "");
 
     if (uniqueFiles.length > 0) {
-      const uploadedUrls = await uploadFiles(uniqueFiles);
-      if (!uploadedUrls || uploadedUrls.length === 0) {
+      const rawUploaded = await uploadFiles(uniqueFiles);
+      const validUrls = (rawUploaded || []).filter(
+        (url) => typeof url === "string" && (url.startsWith("http://") || url.startsWith("https://"))
+      );
+
+      if (validUrls.length === 0) {
         toast.error("Failed to upload product images. Please try again.");
         setDisabled(false);
         return;
@@ -118,7 +122,7 @@ const AddNewAuctionProduct = () => {
         ...data,
         startDate: new Date(data.startDate).toISOString(),
         endDate: new Date(data.endDate).toISOString(),
-        image: uploadedUrls[0],
+        image: validUrls[0],
         price: Number(data.price),
         bidIncrement: Number(data.bidIncrement),
         maxBidsPerUser: Number(data.maxBidsPerUser),
@@ -131,7 +135,7 @@ const AddNewAuctionProduct = () => {
             convertToRaw(specificationsEditor.getCurrentContent()),
           ),
         ),
-        additionalImages: uploadedUrls,
+        additionalImages: validUrls,
       };
 
       mutate({

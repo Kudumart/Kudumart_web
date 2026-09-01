@@ -204,12 +204,16 @@ const AddNewProduct = () => {
     setDisabled(true);
 
     const concatenatedFiles = files.concat(additionalFiles);
-    const uniqueFiles = [...new Set(concatenatedFiles)];
+    const uniqueFiles = [...new Set(concatenatedFiles)].filter((f) => f && f !== "");
 
-    let uploadedUrls = [];
+    let validUrls = [];
     if (uniqueFiles.length > 0) {
-      uploadedUrls = await uploadFiles(uniqueFiles);
-      if (!uploadedUrls || uploadedUrls.length === 0) {
+      const rawUploaded = await uploadFiles(uniqueFiles);
+      validUrls = (rawUploaded || []).filter(
+        (url) => typeof url === "string" && (url.startsWith("http://") || url.startsWith("https://"))
+      );
+
+      if (validUrls.length === 0) {
         toast.error("Failed to upload product images. Please try again.");
         setDisabled(false);
         return;
@@ -233,8 +237,8 @@ const AddNewProduct = () => {
       price: Number(data.price),
       quantity: Number(data.quantity),
       discount_price: Number(data.discount_price || 0),
-      image_url: uploadedUrls[0] || "",
-      additional_images: uploadedUrls || [],
+      image_url: validUrls[0] || "",
+      additional_images: validUrls || [],
     };
 
     mutate({
