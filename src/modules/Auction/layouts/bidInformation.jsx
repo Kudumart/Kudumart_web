@@ -6,6 +6,7 @@ import { useState } from "react";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import { useSocket } from "../../../store/SocketContext";
 import { formatNumberWithCommas } from "../../../helpers/helperFactory";
+import { toast } from "react-toastify";
 
 const BidInformation = ({ content, currentBid }) => {
     const socket = useSocket();
@@ -40,9 +41,31 @@ const BidInformation = ({ content, currentBid }) => {
             },
             onSuccess: (response) => {
                 setIsLoading(false);
+                toast.success("Bid placed successfully!");
             },
-            onError: () => {
+            onError: (error) => {
                 setIsLoading(false);
+                const msg = error?.response?.data?.message || error?.message || "";
+                if (msg.includes("show interest") || error?.response?.status === 403) {
+                    if (!content.participantsInterestFee || Number(content.participantsInterestFee) === 0) {
+                        mutate({
+                            url: "/user/auction/interest",
+                            method: "POST",
+                            headers: true,
+                            data: { auctionProductId: content.id, amountPaid: 0 },
+                            onSuccess: () => {
+                                onSubmit(data);
+                            },
+                            onError: () => {
+                                toast.error("Please click 'Show Interest & Pay Fee' below to participate in this auction.");
+                            }
+                        });
+                        return;
+                    }
+                    toast.error("Please click 'Show Interest & Pay Fee' below to participate in this auction before placing a bid.");
+                } else {
+                    toast.error(msg || "Failed to place bid");
+                }
             },
         });
     };
