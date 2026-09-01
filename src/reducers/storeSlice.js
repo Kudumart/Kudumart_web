@@ -103,6 +103,15 @@ export const storeSlice = createApi({
         invalidatesTags: ["Product"],
       }),
 
+      deleteAuctionProduct: builder.mutation({
+        query: (auctionProductId) => ({
+          url: `/vendor/auction/products?auctionProductId=${auctionProductId}`,
+          method: "DELETE",
+          headers: { ...headers },
+        }),
+        invalidatesTags: ["Product"],
+      }),
+
       getCurrencies: builder.query({
         query: () => ({
             url: `/vendor/currencies`,
@@ -170,6 +179,7 @@ export const {
   useEditStoreMutation,
   useDeleteStoreMutation,
   useDeleteProductMutation,
+  useDeleteAuctionProductMutation,
   useGetCurrenciesQuery,
   useGetCountriesQuery,
   useGetCategoriesQuery,

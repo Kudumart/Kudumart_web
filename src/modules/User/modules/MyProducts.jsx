@@ -4,6 +4,7 @@ import {
   useGetAllStoreQuery,
   useGetCategoriesQuery,
   useDeleteProductMutation,
+  useDeleteAuctionProductMutation,
 } from "../../../reducers/storeSlice";
 import ProductTypeModal from "./ProductTypeModal";
 import AIProductCreator from "./AIProductCreator";
@@ -21,6 +22,7 @@ const MyProducts = () => {
   const aiModal = useNewModal();
 
   const [productId, setProductId] = useState(null);
+  const [selectedProductToDelete, setSelectedProductToDelete] = useState(null);
   const [mergedProducts, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +36,7 @@ const MyProducts = () => {
     refetchOnMountOrArgChange: true,
   });
   const [deleteProd] = useDeleteProductMutation();
+  const [deleteAuctionProd] = useDeleteAuctionProductMutation();
 
   const handleOpenModal = () => {
     if (stores) {
@@ -53,21 +56,43 @@ const MyProducts = () => {
     productOptionModal.closeModal();
   };
 
-  const openDelModal = (id) => {
-    setProductId(id);
+  const openDelModal = (param) => {
+    let targetProd = null;
+    if (typeof param === "object" && param !== null) {
+      targetProd = param;
+    } else {
+      targetProd = mergedProducts.find((p) => p.id === param);
+    }
+    setSelectedProductToDelete(targetProd || null);
+    setProductId(typeof param === "object" ? param.id : param);
     deleteModal.showModal();
   };
 
-  const deleteProduct = () => {
-    deleteProd(productId)
-      .then((res) => {
-        toast.success(res.data.message);
-        getMyProducts();
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-    deleteModal.closeModal();
+  const deleteProduct = async () => {
+    const targetId = selectedProductToDelete?.id || productId;
+    if (!targetId) return;
+
+    const isAuction =
+      selectedProductToDelete?.auctionStatus != null ||
+      selectedProductToDelete?.isAuction === true;
+
+    try {
+      let res;
+      if (isAuction) {
+        res = await deleteAuctionProd(targetId).unwrap();
+      } else {
+        res = await deleteProd(targetId).unwrap();
+      }
+      toast.success(res?.message || "Product deleted successfully");
+      getMyProducts();
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error(
+        err?.data?.message || err?.message || "Failed to delete product",
+      );
+    } finally {
+      deleteModal.closeModal();
+    }
   };
 
   const handleEdit = (product) => {
