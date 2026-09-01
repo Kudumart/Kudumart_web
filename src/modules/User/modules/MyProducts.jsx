@@ -77,6 +77,18 @@ const MyProducts = () => {
       selectedProductToDelete?.isAuction === true ||
       selectedProductToDelete?.type === "Auction";
 
+    if (
+      isAuction &&
+      selectedProductToDelete?.auctionStatus &&
+      selectedProductToDelete.auctionStatus !== "upcoming"
+    ) {
+      toast.error(
+        `Cannot delete ${selectedProductToDelete.auctionStatus} auction. Only 'upcoming' auctions can be deleted to protect bidding history.`,
+      );
+      deleteModal.closeModal();
+      return;
+    }
+
     try {
       let res;
       if (isAuction) {
