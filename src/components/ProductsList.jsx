@@ -140,13 +140,18 @@ const ProductListing = ({
             </div>
           );
 
+          const isAuctionItem = item.auctionStatus != null || item.isAuction === true;
+          const targetUrl = isAuctionItem
+            ? `/auction/product/${item.id}`
+            : `/${item?.variants?.length > 0 ? "product-dropship" : "product"}/${item.id}`;
+
           return isSoldOut ? (
             <div key={item.id} className="h-full">
               {card}
             </div>
           ) : (
             <Link
-              to={`/${item?.variants?.length > 0 ? "product-dropship" : "product"}/${item.id}`}
+              to={targetUrl}
               key={item.id}
               className="h-full"
             >
