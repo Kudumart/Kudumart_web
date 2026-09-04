@@ -27,32 +27,12 @@ const AuctionPage = ({ auctions, hideHeader }) => {
   };
 
   const handleNavigate = (auctionId) => {
-    if (!user) {
-      openModal({
-        size: "sm",
-        content: (
-          <Modal submitButton={false} text={'You must be logged in to view auction details. Please sign in or create an account to access this product.'} />
-        ),
-      });
-      return;
-    }
     const isAuctionPage = location.pathname.includes("/auction");
     const targetPath = isAuctionPage ? `product/${auctionId}` : `/auction/product/${auctionId}`;
     navigate(targetPath);
   };
 
-
-
   const handleMonitor = (auctionId) => {
-    if (!user) {
-      openModal({
-        size: "sm",
-        content: (
-          <Modal submitButton={false} text={'You must be logged in to view auction details. Please sign in or create an account to access this product.'} />
-        ),
-      });
-      return;
-    }
     const isAuctionPage = location.pathname.includes("/auction");
     const targetPath = isAuctionPage ? `product/monitor/${auctionId}` : `/auction/product/monitor/${auctionId}`;
     navigate(targetPath);

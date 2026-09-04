@@ -6,9 +6,15 @@ import { useState } from "react";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import { useSocket } from "../../../store/SocketContext";
 import { formatNumberWithCommas } from "../../../helpers/helperFactory";
+import { toast } from "react-toastify";
+import useAppState from "../../../hooks/appState";
+import { useModal } from "../../../hooks/modal";
+import Modal from "../../../components/Modal";
 
 const BidInformation = ({ content, currentBid }) => {
     const socket = useSocket();
+    const { user } = useAppState();
+    const { openModal } = useModal();
 
     const timeLeft = content.auctionStatus === 'upcoming' ? content.startDate : content.endDate;
     const getTimeLeftData = getTimeLeft(timeLeft);
@@ -29,6 +35,15 @@ const BidInformation = ({ content, currentBid }) => {
 
 
     const onSubmit = (data) => {
+        if (!user) {
+            openModal({
+                size: "sm",
+                content: (
+                    <Modal submitButton={false} text={'You must be logged in to place a bid. Please sign in or create an account to participate in this auction.'} />
+                ),
+            });
+            return;
+        }
         setIsLoading(true);
         mutate({
             url: "/user/place/bid",
