@@ -13,32 +13,35 @@ const AuctionPage = ({ auctions, hideHeader }) => {
   const navigate = useNavigate();
   const { user } = useAppState();
 
-  const ongoingAuctions = (auctions || []).filter((a) => a && a.auctionStatus === "ongoing");
-  const filteredAuctions = useGeoLocatorProduct(ongoingAuctions);
-  const displayAuctions = filteredAuctions.length > 0 ? filteredAuctions : ongoingAuctions;
+  const isAuctionPage = location.pathname.includes("/auction");
+  const activeAuctions = (auctions || []).filter((a) => a && (a.auctionStatus === "ongoing" || a.auctionStatus === "upcoming"));
+  const candidateAuctions = activeAuctions.length > 0 ? activeAuctions : (auctions || []);
+  const filteredAuctions = useGeoLocatorProduct(candidateAuctions);
+  const displayAuctions = filteredAuctions.length > 0 ? filteredAuctions : candidateAuctions;
 
   const { openModal } = useModal();
 
   const capitalizeEachWord = (str) => {
-    return str
+    return (str || "")
       .split("_")
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(" ");
   };
 
   const handleNavigate = (auctionId) => {
-    const isAuctionPage = location.pathname.includes("/auction");
     const targetPath = isAuctionPage ? `product/${auctionId}` : `/auction/product/${auctionId}`;
     navigate(targetPath);
   };
 
   const handleMonitor = (auctionId) => {
-    const isAuctionPage = location.pathname.includes("/auction");
     const targetPath = isAuctionPage ? `product/monitor/${auctionId}` : `/auction/product/monitor/${auctionId}`;
     navigate(targetPath);
   };
 
-  
+  // If on the homepage/dashboard and no auctions exist, hide the section cleanly
+  if (displayAuctions.length === 0 && !isAuctionPage) {
+    return null;
+  }
 
   return (
     <div className="w-full px-4 md:px-1">
@@ -46,7 +49,11 @@ const AuctionPage = ({ auctions, hideHeader }) => {
       {!hideHeader &&
         <div className="bg-[#FFDEC1] flex justify-between items-center p-4 md:p-6 rounded-md md:mb-0">
           <h2 className="text-lg md:text-xl font-semibold">Auctions</h2>
-          <Button variant="ghost" className="text-black font-semibold text-sm md:text-base">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate("/auction")} 
+            className="text-black font-semibold text-sm md:text-base cursor-pointer hover:underline"
+          >
             See All
           </Button>
         </div>
@@ -66,6 +73,11 @@ const AuctionPage = ({ auctions, hideHeader }) => {
                   key={auction.id}
                   className="bg-white p-3 shadow-lg border rounded-lg relative"
                 >
+                  {/* Status Badge */}
+                  <span className={`absolute top-2 left-2 ${auction.auctionStatus === "ongoing" ? "bg-[#34A853]" : auction.auctionStatus === "upcoming" ? "bg-[#4285F4]" : "bg-gray-500"} text-white px-2 py-1 text-xs rounded-sm font-medium z-10`}>
+                    {auction.auctionStatus === "ongoing" ? "Ongoing 🟢" : auction.auctionStatus === "upcoming" ? "Upcoming ⏰" : "Ended 🚫"}
+                  </span>
+
                   {/* Product Image */}
                   <div className="flex justify-center relative md:h-[200px] h-[200px]">
                     <img
@@ -76,7 +88,7 @@ const AuctionPage = ({ auctions, hideHeader }) => {
                   </div>
 
                   {/* Condition Badge */}
-                  <span className={`absolute top-2 right-2 ${auction.condition === "brand_new" ? "bg-[#34A853]" : "bg-[#FF0F00]"} text-white px-2 py-1 text-xs rounded-sm`}>
+                  <span className={`absolute top-2 right-2 ${auction.condition === "brand_new" ? "bg-[#34A853]" : "bg-[#FF0F00]"} text-white px-2 py-1 text-xs rounded-sm font-medium z-10`}>
                     {capitalizeEachWord(auction.condition)}
                   </span>
 

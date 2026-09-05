@@ -86,27 +86,29 @@ export default function NewHome() {
 
       const auctionProductRequest = new Promise(async (resolve) => {
         try {
-          const res1 = await new Promise((res) => {
+          const rawCountry = typeof country === 'string' ? country : (country?.value || country?.label || "");
+          const countryParam = rawCountry ? `country=${rawCountry}` : "";
+          const qStr = countryParam ? `?${countryParam}` : "";
+
+          const fetchUrl = (url) => new Promise((res) => {
             mutate({
-              url: `/auction/products?country=${country.value}`,
+              url,
               method: "GET",
               hideToast: true,
               onSuccess: (response) => res(response.data?.data || []),
               onError: () => res([]),
             });
           });
-          const res2 = await new Promise((res) => {
-            mutate({
-              url: `/products?auctionStatus=ongoing&country=${country.value}`,
-              method: "GET",
-              hideToast: true,
-              onSuccess: (response) => res(response.data?.data || []),
-              onError: () => res([]),
-            });
-          });
-          const combined = [...res1, ...res2];
+
+          // Fetch with country filter and general fallback so customers never see empty dashboard
+          const [resCountry, resAll] = await Promise.all([
+            fetchUrl(`/auction/products${qStr}`),
+            fetchUrl(`/auction/products`),
+          ]);
+
+          const candidateList = resCountry.length > 0 ? resCountry : resAll;
           const uniqueMap = new Map();
-          combined.forEach((item) => {
+          candidateList.forEach((item) => {
             if (item && item.id && !uniqueMap.has(item.id)) {
               uniqueMap.set(item.id, item);
             }
