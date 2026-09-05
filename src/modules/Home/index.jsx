@@ -106,7 +106,8 @@ export default function NewHome() {
             fetchUrl(`/auction/products`),
           ]);
 
-          const candidateList = resCountry.length > 0 ? resCountry : resAll;
+          const candidateList = (resCountry.length > 0 ? resCountry : resAll)
+            .filter((item) => item && (item.auctionStatus === "ongoing" || item.auctionStatus === "upcoming"));
           const uniqueMap = new Map();
           candidateList.forEach((item) => {
             if (item && item.id && !uniqueMap.has(item.id)) {

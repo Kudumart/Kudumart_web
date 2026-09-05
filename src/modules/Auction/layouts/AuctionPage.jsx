@@ -14,10 +14,12 @@ const AuctionPage = ({ auctions, hideHeader }) => {
   const { user } = useAppState();
 
   const isAuctionPage = location.pathname.includes("/auction");
-  const activeAuctions = (auctions || []).filter((a) => a && (a.auctionStatus === "ongoing" || a.auctionStatus === "upcoming"));
-  const candidateAuctions = activeAuctions.length > 0 ? activeAuctions : (auctions || []);
-  const filteredAuctions = useGeoLocatorProduct(candidateAuctions);
-  const displayAuctions = filteredAuctions.length > 0 ? filteredAuctions : candidateAuctions;
+  
+  // On homepage/dashboard, strictly show active (ongoing or upcoming) auctions only
+  // On dedicated /auction page, show all auctions (upcoming, ongoing, ended)
+  const displayAuctions = isAuctionPage
+    ? (auctions || [])
+    : (auctions || []).filter((a) => a && (a.auctionStatus === "ongoing" || a.auctionStatus === "upcoming"));
 
   const { openModal } = useModal();
 

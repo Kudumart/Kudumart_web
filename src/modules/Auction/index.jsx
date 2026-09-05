@@ -28,19 +28,18 @@ export default function Auction() {
                 });
             };
 
-            const countryQuery = country?.value ? `country=${country.value}` : "";
+            const rawCountry = typeof country === 'string' ? country : (country?.value || country?.label || "");
+            const countryQuery = rawCountry ? `country=${rawCountry}` : "";
             const qStr = countryQuery ? `?${countryQuery}` : "";
-            const qStrOngoing = countryQuery ? `?auctionStatus=ongoing&${countryQuery}` : "?auctionStatus=ongoing";
 
-            const [r1, r2, r3] = await Promise.all([
+            const [r1, r2] = await Promise.all([
                 fetchUrl(`/auction/products${qStr}`),
-                fetchUrl(`/auction/products${qStrOngoing}`),
-                fetchUrl(`/products${qStrOngoing}`),
+                fetchUrl(`/auction/products`),
             ]);
 
-            const combined = [...r1, ...r2, ...r3];
+            const candidateList = r1.length > 0 ? r1 : r2;
             const uniqueMap = new Map();
-            combined.forEach((item) => {
+            candidateList.forEach((item) => {
                 if (item && item.id && !uniqueMap.has(item.id)) {
                     uniqueMap.set(item.id, item);
                 }
@@ -56,7 +55,7 @@ export default function Auction() {
 
     useEffect(() => {
         fetchAuction();
-    }, [country?.value]);
+    }, [country]);
 
 
     return (

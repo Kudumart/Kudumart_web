@@ -27,16 +27,17 @@ export default function CountrySelect() {
         >
           {countries
             .filter((item) => item.value !== country.value)
-            .map((country) => (
-              <li key={country.value}>
+            .map((c) => (
+              <li key={c.value}>
                 <a
                   onClick={() => {
-                    setCountry(country);
-                    // window.location.reload();
-                    // queryCliet.invalidateQueries({ queryKey: undefined });
+                    setCountry(c);
+                    if (document.activeElement instanceof HTMLElement) {
+                      document.activeElement.blur();
+                    }
                   }}
                 >
-                  {country.label}
+                  {c.label}
                 </a>
               </li>
             ))}
