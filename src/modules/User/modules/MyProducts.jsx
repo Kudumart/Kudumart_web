@@ -80,10 +80,10 @@ const MyProducts = () => {
     if (
       isAuction &&
       selectedProductToDelete?.auctionStatus &&
-      selectedProductToDelete.auctionStatus !== "upcoming"
+      selectedProductToDelete.auctionStatus === "ended"
     ) {
       toast.error(
-        `Cannot delete ${selectedProductToDelete.auctionStatus} auction. Only 'upcoming' auctions can be deleted to protect bidding history.`,
+        `Cannot delete ended auction. Ended auctions cannot be deleted.`,
       );
       deleteModal.closeModal();
       return;
@@ -132,10 +132,6 @@ const MyProducts = () => {
   };
 
   const handleEdit = (product) => {
-    if (product.auctionStatus === "ongoing") {
-      toast.error("Editing ongoing auction products is not permitted.");
-      return;
-    }
     navigate(
       product.auctionStatus
         ? `/profile/auction-products/edit/${product.id}`

@@ -109,13 +109,6 @@ const AuctionProducts = () => {
             })
         }
         else {
-            if (product.auctionStatus === 'ongoing') {
-                openModal({
-                    size: "sm",
-                    content: <Modal title={`Editing ongoing auction products is not permitted.`} submitButton={false} />
-                })
-                return;
-            }
             navigate(`edit/${product.id}`)
         }
     }
