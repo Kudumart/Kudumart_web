@@ -1,6 +1,7 @@
 import Imgix from "react-imgix";
 import AuctionPage from "./layouts/AuctionPage";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import useApiMutation from "../../api/hooks/useApiMutation";
 import Loader from "../../components/Loader";
 
@@ -8,10 +9,12 @@ export default function Auction() {
 
     const [auctionProducts, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const country = useSelector((state) => state.subCategory.country);
 
     const { mutate } = useApiMutation();
 
     const fetchAuction = async () => {
+        setLoading(true);
         try {
             const fetchUrl = async (url) => {
                 return new Promise((resolve) => {
@@ -25,10 +28,14 @@ export default function Auction() {
                 });
             };
 
+            const countryQuery = country?.value ? `country=${country.value}` : "";
+            const qStr = countryQuery ? `?${countryQuery}` : "";
+            const qStrOngoing = countryQuery ? `?auctionStatus=ongoing&${countryQuery}` : "?auctionStatus=ongoing";
+
             const [r1, r2, r3] = await Promise.all([
-                fetchUrl("/auction/products"),
-                fetchUrl("/auction/products?auctionStatus=ongoing"),
-                fetchUrl("/products?auctionStatus=ongoing"),
+                fetchUrl(`/auction/products${qStr}`),
+                fetchUrl(`/auction/products${qStrOngoing}`),
+                fetchUrl(`/products${qStrOngoing}`),
             ]);
 
             const combined = [...r1, ...r2, ...r3];
@@ -49,7 +56,7 @@ export default function Auction() {
 
     useEffect(() => {
         fetchAuction();
-    }, []);
+    }, [country?.value]);
 
 
     return (

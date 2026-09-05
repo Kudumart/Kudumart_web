@@ -56,8 +56,42 @@ const BidInformation = ({ content, currentBid }) => {
             onSuccess: (response) => {
                 setIsLoading(false);
             },
-            onError: () => {
-                setIsLoading(false);
+            onError: (err) => {
+                const errMsg = err?.response?.data?.message || "";
+                if (errMsg.includes("show interest") || err?.response?.status === 403) {
+                    mutate({
+                        url: "/user/auction/interest",
+                        method: "POST",
+                        headers: true,
+                        data: {
+                            auctionProductId: content.id,
+                            amountPaid: 0,
+                        },
+                        onSuccess: () => {
+                            mutate({
+                                url: "/user/place/bid",
+                                method: "POST",
+                                headers: true,
+                                data: {
+                                    auctionProductId: content.id,
+                                    bidAmount: Number(data.bidAmount),
+                                },
+                                onSuccess: () => {
+                                    setIsLoading(false);
+                                    toast.success("Bid placed successfully!");
+                                },
+                                onError: () => {
+                                    setIsLoading(false);
+                                },
+                            });
+                        },
+                        onError: () => {
+                            setIsLoading(false);
+                        },
+                    });
+                } else {
+                    setIsLoading(false);
+                }
             },
         });
     };

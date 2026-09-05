@@ -84,7 +84,7 @@ const InterestParticipate = ({ content, reload }) => {
 
     return (
         <>
-            {!content.interest && content.auctionStatus === 'upcoming' ?
+            {!content.interest && (content.auctionStatus === 'upcoming' || content.auctionStatus === 'ongoing') ?
                 <div className="max-w-md mx-auto rounded-lg mt-3 bg-[rgba(245,249,253,1)] p-4">
                     <p className="text-[13px] font-semibold">
                         If you're interested in placing a bid, an interest fee is required to participate. Secure your spot now and get a chance to win!
