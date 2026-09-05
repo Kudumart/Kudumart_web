@@ -4,61 +4,34 @@ import PaymentButton from "../../../components/PaymentButton";
 import useAppState from "../../../hooks/appState";
 import { paystackKey } from "../../../config/paymentKeys";
 import DollarPaymentButton from "../../../components/DollarPaymentButton";
+import Button from "../../../components/Button";
+import { toast } from "react-toastify";
 
 const InterestParticipate = ({ content, reload }) => {
-    const { ipInfo } = useAppState();
+    const { ipInfo, user } = useAppState();
     const { mutate } = useApiMutation();
 
     const paymentKey = paystackKey;
 
-    const totalPrice = Number(content.participantsInterestFee);
-
-
+    const totalPrice = Number(content.participantsInterestFee || 0);
 
     // Create a config object for Paystack payment.
-    // useMemo will update the config when paymentKey or effectiveTotalPrice changes.
     const config = useMemo(
         () => ({
             reference: new Date().getTime().toString(),
-            email: "greenmousedev@gmail.com", // or use user.email if available.
-            amount: totalPrice * 100, // Amount in kobo.
+            email: user?.email || "customer@kudumart.com",
+            amount: Math.round(totalPrice * 100), // Amount in kobo.
             publicKey: paymentKey,
-            currency: content.store.currency.symbol === '#' ? "NGN" : "NGN", // Specify the currency.
+            currency: content.store?.currency?.symbol === '$' ? "USD" : "NGN",
         }),
-        [paymentKey, totalPrice]
+        [paymentKey, totalPrice, user?.email, content.store]
     );
 
-
-
-    // Payment gateway key fetch function.
-    /* const getPaymentKeys = () => {
-         mutate({
-             url: `/user/payment/gateway`,
-             method: "GET",
-             headers: true,
-             hideToast: true,
-             onSuccess: (response) => {
-                 setPaymentKey(response.data.data.find((key) => key.isActive));
-             },
-             onError: (error) => {
-                 console.error("Error fetching payment keys:", error);
-             },
-         });
-     };
- 
-     useEffect(() => {
-         getPaymentKeys();
-         // eslint-disable-next-line react-hooks/exhaustive-deps
-     }, []); */
-
-
-
-
-    // Callback when the payment is successful.
-    const onSuccess = (reference) => {
+    // Callback when the payment is successful or registering free interest
+    const registerInterest = (amount) => {
         const payload = {
             auctionProductId: content.id,
-            amountPaid: totalPrice,
+            amountPaid: amount,
         };
 
         mutate({
@@ -66,43 +39,61 @@ const InterestParticipate = ({ content, reload }) => {
             method: "POST",
             data: payload,
             headers: true,
-            onSuccess: (response) => {
-                reload();
+            onSuccess: () => {
+                toast.success("Interest registered successfully!");
+                if (typeof reload === "function") {
+                    reload();
+                }
             },
-            onError: (error) => {
+            onError: (err) => {
+                toast.error(err?.response?.data?.message || "Failed to record interest.");
             },
         });
     };
 
-
+    const onSuccess = () => {
+        registerInterest(totalPrice);
+    };
 
     // Callback when the payment modal is closed.
     const onClose = () => {
         console.log("Payment closed");
-    }
-
+    };
 
     return (
         <>
             {!content.interest && (content.auctionStatus === 'upcoming' || content.auctionStatus === 'ongoing') ?
                 <div className="max-w-md mx-auto rounded-lg mt-3 bg-[rgba(245,249,253,1)] p-4">
                     <p className="text-[13px] font-semibold">
-                        If you're interested in placing a bid, an interest fee is required to participate. Secure your spot now and get a chance to win!
+                        {totalPrice > 0 
+                            ? "If you're interested in placing a bid, an interest fee is required to participate. Secure your spot now and get a chance to win!"
+                            : "Register your interest to join the bidding when the auction is active. Free participation!"}
                     </p>
                     <div className="flex my-2 gap-2 py-2 w-full justify-center">
-                        {ipInfo.currency_name === 'Naira' ?
+                        {totalPrice <= 0 ? (
+                            <Button 
+                                variant="primary" 
+                                fullWidth 
+                                onClick={() => registerInterest(0)}
+                                className="py-2.5"
+                            >
+                                <span className="text-sm font-medium">
+                                    Join Auction (Free)
+                                </span>
+                            </Button>
+                        ) : ipInfo?.currency_name === 'Naira' ? (
                             <PaymentButton noWidth config={config} onSuccess={onSuccess} onClose={onClose} bgColor="bg-white w-full border-[rgba(0,0,0,0.1)] text-[rgba(66,133,244,1)]!">
                                 <span className="text-sm font-medium normal-case">
                                     Show Interest & Pay Fee
                                 </span>
                             </PaymentButton>
-                            :
+                        ) : (
                             <DollarPaymentButton onSuccess={onSuccess} bgColor="bg-white w-full border-[rgba(0,0,0,0.1)] text-[rgba(66,133,244,1)]!" amount={totalPrice}>
                                 <span className="text-sm font-medium normal-case">
                                     Show Interest & Pay Fee
                                 </span>
                             </DollarPaymentButton>
-}
+                        )}
                     </div>
                 </div>
                 :
@@ -119,6 +110,6 @@ const InterestParticipate = ({ content, reload }) => {
                 </>
             }
         </>
-    )
+    );
 };
-export default InterestParticipate
+export default InterestParticipate;

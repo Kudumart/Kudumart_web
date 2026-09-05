@@ -222,16 +222,17 @@ export default function NewHome() {
               />
             )}
           </div>
-          {/* <div className="w-full lg:flex md:flex gap-3 md:mt-3">
-                        {loading ? (
-                            <div className="w-full h-screen flex items-center justify-center">
-                                <Loader />
-                            </div>
-                        ) : (
-                            <AuctionPage auctions={auctionProducts.slice(0, 12)} />
-                        )
-                        }
-                    </div> */}
+          {auctionProducts && auctionProducts.length > 0 && (
+            <div className="w-full lg:flex md:flex gap-3 md:mt-3">
+              {loading ? (
+                <div className="w-full h-screen flex items-center justify-center">
+                  <Loader />
+                </div>
+              ) : (
+                <AuctionPage auctions={auctionProducts.slice(0, 12)} />
+              )}
+            </div>
+          )}
           <div className="w-full lg:flex md:flex gap-3 md:mt-3">
             <TrendingJobs />
           </div>

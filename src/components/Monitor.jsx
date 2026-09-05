@@ -20,60 +20,108 @@ const Monitor = ({ auctionProductId, currency }) => {
   }, []);
 
 
-  const getAuctionBidders = () => {
-    setLoading(true);
+  const getAuctionBidders = (silent = false) => {
+    if (!silent) setLoading(true);
     mutate({
       url: `/user/auction/product/bidders?auctionproductId=${auctionProductId}`,
       method: 'GET',
       headers: true,
       hideToast: true,
       onSuccess: (response) => {
-        setBidders(response.data.data.bids);
-        if (response.data.data.bids && response.data.data.bids.length > 0) {
-          const latestBid = response.data.data.bids.reduce((max, bid) => {
+        const bidsData = response?.data?.data?.bids || [];
+        setBidders(bidsData);
+        if (bidsData.length > 0) {
+          const latestBid = bidsData.reduce((max, bid) => {
             const currentAmount = parseFloat(bid.bidAmount);
             const maxAmount = parseFloat(max.bidAmount);
             return currentAmount > maxAmount ? bid : max;
-          }, response.data.data.bids[0]);
+          }, bidsData[0]);
 
-          setCurrentBid(latestBid.bidAmount)
+          if (latestBid && latestBid.bidAmount) {
+            setCurrentBid(latestBid.bidAmount);
+          }
         }
-        setLoading(false);
+        if (!silent) setLoading(false);
       },
       onError: () => {
-        setLoading(false)
+        if (!silent) setLoading(false);
       },
     });
-  }
-
-
-
-
+  };
 
   useEffect(() => {
-    if (!socket) return;
+    // 1. Initial fetch
+    getAuctionBidders();
+
+    // 2. Periodic poll fallback every 15s to guarantee fresh state
+    const pollInterval = setInterval(() => {
+      getAuctionBidders(true);
+    }, 15000);
+
+    // 3. Tab visibility change refresh
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        getAuctionBidders(true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(pollInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [auctionProductId]);
+
+  useEffect(() => {
+    if (!socket || !auctionProductId) return;
 
     // Join the auction room
     socket.emit("joinAuction", auctionProductId);
 
-    // Listen for new bids
+    // Reconnection handler
+    const handleConnect = () => {
+      socket.emit("joinAuction", auctionProductId);
+      getAuctionBidders(true);
+    };
+
+    // Listen for new bids scoped to this auction
     const handleNewBid = (data) => {
-      setCurrentBid(data.bidAmount);
-      getAuctionBidders();
+      if (data?.auctionProductId && data.auctionProductId !== auctionProductId) return;
+      if (data?.bidAmount) {
+        setCurrentBid(data.bidAmount);
+      }
+      getAuctionBidders(true);
+    };
+
+    // Listen for auction start
+    const handleAuctionStarted = (data) => {
+      if (data?.auctionProductId && data.auctionProductId !== auctionProductId) return;
+      setAuctionStatus("Auction Ongoing 🟢");
+      getAuctionBidders(true);
     };
 
     // Listen for auction end
     const handleAuctionEnd = (data) => {
+      if (data?.auctionProductId && data.auctionProductId !== auctionProductId) return;
       setAuctionStatus("Auction Ended 🚫");
-      setWinner(data.winner ? `${data.winner.firstName} ${data.winner.lastName}` : "No Winner");
-      setWinningBid(data.winningBid);
+      const winnerName = data?.winner
+        ? `${data.winner.firstName || ""} ${data.winner.lastName || ""}`.trim() || data.winner.email || "Winner Determined"
+        : "No Winner";
+      setWinner(winnerName);
+      setWinningBid(data?.winningBid || 0);
+      getAuctionBidders(true);
     };
 
+    socket.on("connect", handleConnect);
     socket.on("newBid", handleNewBid);
+    socket.on("auctionStarted", handleAuctionStarted);
     socket.on("auctionEnded", handleAuctionEnd);
 
     return () => {
+      socket.emit("leaveAuction", auctionProductId);
+      socket.off("connect", handleConnect);
       socket.off("newBid", handleNewBid);
+      socket.off("auctionStarted", handleAuctionStarted);
       socket.off("auctionEnded", handleAuctionEnd);
     };
   }, [socket, auctionProductId]);

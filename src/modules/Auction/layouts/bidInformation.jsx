@@ -55,10 +55,14 @@ const BidInformation = ({ content, currentBid }) => {
             },
             onSuccess: (response) => {
                 setIsLoading(false);
+                toast.success("Bid placed successfully!");
             },
             onError: (err) => {
                 const errMsg = err?.response?.data?.message || "";
-                if (errMsg.includes("show interest") || err?.response?.status === 403) {
+                const participationFee = Number(content.participantsInterestFee || 0);
+
+                if ((errMsg.includes("show interest") || err?.response?.status === 403) && participationFee === 0) {
+                    // Auto-register free interest only if there is NO participation fee
                     mutate({
                         url: "/user/auction/interest",
                         method: "POST",
@@ -80,17 +84,20 @@ const BidInformation = ({ content, currentBid }) => {
                                     setIsLoading(false);
                                     toast.success("Bid placed successfully!");
                                 },
-                                onError: () => {
+                                onError: (retryErr) => {
                                     setIsLoading(false);
+                                    toast.error(retryErr?.response?.data?.message || "Failed to place bid.");
                                 },
                             });
                         },
                         onError: () => {
                             setIsLoading(false);
+                            toast.error("Failed to register free participation.");
                         },
                     });
                 } else {
                     setIsLoading(false);
+                    toast.error(errMsg || "Failed to place bid.");
                 }
             },
         });
@@ -100,22 +107,33 @@ const BidInformation = ({ content, currentBid }) => {
 
 
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !content?.id) return;
 
         // Join the auction room
         socket.emit("joinAuction", content.id);
 
-        // Listen for new bids
+        // Listen for new bids in this auction
         const handleNewBid = (data) => {
-            setCurrentBid(data.bidAmount);
+            if (data?.auctionProductId && data.auctionProductId !== content.id) return;
+            if (data?.bidAmount) {
+                setCurrentBid(data.bidAmount);
+            }
+        };
+
+        // Reconnect handler
+        const handleConnect = () => {
+            socket.emit("joinAuction", content.id);
         };
 
         socket.on("newBid", handleNewBid);
+        socket.on("connect", handleConnect);
 
         return () => {
+            socket.emit("leaveAuction", content.id);
             socket.off("newBid", handleNewBid);
+            socket.off("connect", handleConnect);
         };
-    }, [socket, content.id]);
+    }, [socket, content?.id]);
 
 
 
