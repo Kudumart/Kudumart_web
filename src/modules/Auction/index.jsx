@@ -1,7 +1,7 @@
 import Imgix from "react-imgix";
 import AuctionPage from "./layouts/AuctionPage";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useCountrySelect } from "../../store/clientStore";
 import useApiMutation from "../../api/hooks/useApiMutation";
 import Loader from "../../components/Loader";
 
@@ -9,7 +9,7 @@ export default function Auction() {
 
     const [auctionProducts, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const country = useSelector((state) => state.subCategory.country);
+    const { country } = useCountrySelect();
 
     const { mutate } = useApiMutation();
 
