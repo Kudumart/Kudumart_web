@@ -86,9 +86,9 @@ export default function NewHome() {
 
       const auctionProductRequest = new Promise(async (resolve) => {
         try {
-          const rawCountry = typeof country === 'string' ? country : (country?.value || country?.label || "");
-          const countryParam = rawCountry ? `country=${rawCountry}` : "";
-          const qStr = countryParam ? `?${countryParam}` : "";
+          const rawCountry = typeof country === 'string' ? country : (country?.label || country?.value || "");
+          const countryParam = rawCountry ? `country=${encodeURIComponent(rawCountry)}` : "";
+          const qStr = countryParam ? `?${countryParam}&limit=20` : "?limit=20";
 
           const fetchUrl = (url) => new Promise((res) => {
             mutate({
@@ -103,7 +103,7 @@ export default function NewHome() {
           // Fetch with country filter and general fallback so customers never see empty dashboard
           const [resCountry, resAll] = await Promise.all([
             fetchUrl(`/auction/products${qStr}`),
-            fetchUrl(`/auction/products`),
+            fetchUrl(`/auction/products?limit=20`),
           ]);
 
           const rawCountryList = resCountry.length > 0 ? resCountry : resAll;

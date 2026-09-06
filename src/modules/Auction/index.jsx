@@ -28,13 +28,13 @@ export default function Auction() {
                 });
             };
 
-            const rawCountry = typeof country === 'string' ? country : (country?.value || country?.label || "");
-            const countryQuery = rawCountry ? `country=${rawCountry}` : "";
-            const qStr = countryQuery ? `?${countryQuery}` : "";
+            const rawCountry = typeof country === 'string' ? country : (country?.label || country?.value || "");
+            const countryQuery = rawCountry ? `country=${encodeURIComponent(rawCountry)}` : "";
+            const qStr = countryQuery ? `?${countryQuery}&limit=50` : "?limit=50";
 
             const [r1, r2] = await Promise.all([
                 fetchUrl(`/auction/products${qStr}`),
-                fetchUrl(`/auction/products`),
+                fetchUrl(`/auction/products?limit=50`),
             ]);
 
             const candidateList = r1.length > 0 ? r1 : r2;
