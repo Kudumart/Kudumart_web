@@ -13,6 +13,7 @@ import {
   Users,
   Hammer,
   ShoppingBag,
+  Gavel,
 } from "lucide-react";
 import useAppState from "../../hooks/appState";
 
@@ -74,6 +75,14 @@ const FlyoutMenu = () => {
           >
             <Home size={20} style={{ color: "#ff6f22" }} />
             Home
+          </Link>
+          <Link
+            to="/auction"
+            className="px-6 py-4 text-base text-black cursor-pointer hover:bg-gray-200 flex items-center gap-3"
+            onClick={() => setOpen(false)}
+          >
+            <Gavel size={20} style={{ color: "#ff6f22" }} />
+            Auction
           </Link>
           <Link
             to="/about"
