@@ -18,6 +18,7 @@ import {
     Users,
     UserPlus,
     Hammer,
+    Gavel,
 } from "lucide-react";
 
 export default function Sidebar({ onSelected }) {
@@ -103,6 +104,14 @@ export default function Sidebar({ onSelected }) {
                     >
                         <Home size={20} style={{ color: "#ff6f22" }} />
                         Home
+                    </Link>
+                    <Link
+                        to="/auction"
+                        className="px-6 py-4 text-base text-black cursor-pointer hover:bg-gray-200 flex items-center gap-3"
+                        onClick={handleClose}
+                    >
+                        <Gavel size={20} style={{ color: "#ff6f22" }} />
+                        Auctions
                     </Link>
                     <Link
                         to="/about"
@@ -193,14 +202,6 @@ export default function Sidebar({ onSelected }) {
                         <ScrollText size={20} style={{ color: "#ff6f22" }} />
                         Terms and Conditions
                     </Link>
-                    {/* <Link
-                        to="/auction"
-                        className="px-6 py-4 text-base text-black cursor-pointer hover:bg-gray-200 flex items-center gap-3"
-                        
-                    >
-                        <Hammer size={20} style={{ color: "#ff6f22" }} />
-                        Auction
-                    </Link> */}
                     {/* <Accordion open={open} className="">
                     <AccordionHeader onClick={() => handleOpen()}>
                 
