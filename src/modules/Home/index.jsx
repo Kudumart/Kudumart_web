@@ -106,8 +106,13 @@ export default function NewHome() {
             fetchUrl(`/auction/products`),
           ]);
 
-          const candidateList = (resCountry.length > 0 ? resCountry : resAll)
-            .filter((item) => item && (item.auctionStatus === "ongoing" || item.auctionStatus === "upcoming"));
+          const rawCountryList = resCountry.length > 0 ? resCountry : resAll;
+          const activeList = rawCountryList.filter(
+            (item) => item && (item.auctionStatus === "ongoing" || item.auctionStatus === "upcoming")
+          );
+          // Prioritize active auctions (ongoing/upcoming); if none are active in this country, show the country's auctions
+          const candidateList = activeList.length > 0 ? activeList : rawCountryList;
+
           const uniqueMap = new Map();
           candidateList.forEach((item) => {
             if (item && item.id && !uniqueMap.has(item.id)) {

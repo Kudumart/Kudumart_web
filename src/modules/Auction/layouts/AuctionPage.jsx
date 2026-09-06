@@ -15,11 +15,14 @@ const AuctionPage = ({ auctions, hideHeader }) => {
 
   const isAuctionPage = location.pathname.includes("/auction");
   
-  // On homepage/dashboard, strictly show active (ongoing or upcoming) auctions only
+  // On homepage/dashboard, prioritize active (ongoing or upcoming) auctions; if none are active, fallback to available auctions
   // On dedicated /auction page, show all auctions (upcoming, ongoing, ended)
+  const activeAuctions = (auctions || []).filter(
+    (a) => a && (a.auctionStatus === "ongoing" || a.auctionStatus === "upcoming")
+  );
   const displayAuctions = isAuctionPage
     ? (auctions || [])
-    : (auctions || []).filter((a) => a && (a.auctionStatus === "ongoing" || a.auctionStatus === "upcoming"));
+    : (activeAuctions.length > 0 ? activeAuctions : (auctions || []));
 
   const { openModal } = useModal();
 
