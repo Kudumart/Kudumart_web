@@ -77,17 +77,6 @@ const MyProducts = () => {
       selectedProductToDelete?.isAuction === true ||
       selectedProductToDelete?.type === "Auction";
 
-    if (
-      isAuction &&
-      selectedProductToDelete?.auctionStatus &&
-      selectedProductToDelete.auctionStatus === "ended"
-    ) {
-      toast.error(
-        `Cannot delete ended auction. Ended auctions cannot be deleted.`,
-      );
-      deleteModal.closeModal();
-      return;
-    }
 
     try {
       let res;
