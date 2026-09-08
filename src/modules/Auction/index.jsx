@@ -30,11 +30,11 @@ export default function Auction() {
 
             const rawCountry = typeof country === 'string' ? country : (country?.label || country?.value || "");
             const countryQuery = rawCountry ? `country=${encodeURIComponent(rawCountry)}` : "";
-            const qStr = countryQuery ? `?${countryQuery}&limit=50` : "?limit=50";
+            const qStr = countryQuery ? `?${countryQuery}&limit=100` : "?limit=100";
 
             const [r1, r2] = await Promise.all([
                 fetchUrl(`/auction/products${qStr}`),
-                fetchUrl(`/auction/products?limit=50`),
+                fetchUrl(`/auction/products?limit=100`),
             ]);
 
             const candidateList = r1.length > 0 ? r1 : r2;
@@ -45,7 +45,22 @@ export default function Auction() {
                 }
             });
 
-            setProducts(Array.from(uniqueMap.values()));
+            const sortedList = Array.from(uniqueMap.values()).sort((a, b) => {
+                const priority = (s) => {
+                    const st = (s || "").toLowerCase().trim();
+                    if (st === "ongoing") return 1;
+                    if (st === "upcoming") return 2;
+                    return 3;
+                };
+                const pA = priority(a.auctionStatus);
+                const pB = priority(b.auctionStatus);
+                if (pA !== pB) return pA - pB;
+                const dateA = new Date(a.createdAt || a.startDate || 0).getTime();
+                const dateB = new Date(b.createdAt || b.startDate || 0).getTime();
+                return dateB - dateA;
+            });
+
+            setProducts(sortedList);
         } catch (_) {
             setProducts([]);
         } finally {
@@ -78,7 +93,7 @@ export default function Auction() {
                             </div>
                         ) : (
                             <div className="w-full lg:flex md:flex gap-3">
-                                <AuctionPage auctions={auctionProducts.slice(0, 20)} />
+                                <AuctionPage auctions={auctionProducts} />
                             </div>
                         )}
                     </div>

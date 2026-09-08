@@ -88,7 +88,7 @@ export default function NewHome() {
         try {
           const rawCountry = typeof country === 'string' ? country : (country?.label || country?.value || "");
           const countryParam = rawCountry ? `country=${encodeURIComponent(rawCountry)}` : "";
-          const qStr = countryParam ? `?${countryParam}&limit=20` : "?limit=20";
+          const qStr = countryParam ? `?${countryParam}&limit=100` : "?limit=100";
 
           const fetchUrl = (url) => new Promise((res) => {
             mutate({
@@ -103,7 +103,7 @@ export default function NewHome() {
           // Fetch with country filter and general fallback so customers never see empty dashboard
           const [resCountry, resAll] = await Promise.all([
             fetchUrl(`/auction/products${qStr}`),
-            fetchUrl(`/auction/products?limit=20`),
+            fetchUrl(`/auction/products?limit=100`),
           ]);
 
           const rawCountryList = resCountry.length > 0 ? resCountry : resAll;
@@ -119,7 +119,23 @@ export default function NewHome() {
               uniqueMap.set(item.id, item);
             }
           });
-          resolve(Array.from(uniqueMap.values()));
+
+          const sortedList = Array.from(uniqueMap.values()).sort((a, b) => {
+            const priority = (s) => {
+              const st = (s || "").toLowerCase().trim();
+              if (st === "ongoing") return 1;
+              if (st === "upcoming") return 2;
+              return 3;
+            };
+            const pA = priority(a.auctionStatus);
+            const pB = priority(b.auctionStatus);
+            if (pA !== pB) return pA - pB;
+            const dateA = new Date(a.createdAt || a.startDate || 0).getTime();
+            const dateB = new Date(b.createdAt || b.startDate || 0).getTime();
+            return dateB - dateA;
+          });
+
+          resolve(sortedList);
         } catch (_) {
           resolve([]);
         }
