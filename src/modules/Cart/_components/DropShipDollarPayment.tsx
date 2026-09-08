@@ -36,7 +36,7 @@ export default function DropShipDollarPayment({
   cartItemIds?: string[];
 }>) {
   const { user } = useAppState();
-  const stripePromise = loadStripe(testKey);
+  const stripePromise = loadStripe(stripeKey);
 
   const ref = useNewModal();
   const location = user.location;
