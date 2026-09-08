@@ -87,14 +87,23 @@ const UpdateAuctionProducts = () => {
 
   const getStore = () => {
     mutate({
-      url: `/admin/store`,
+      url: `/admin/general/stores?page=1&limit=10000`,
       method: "GET",
       headers: true,
       hideToast: true,
       onSuccess: (response) => {
-        setStores(response.data.data);
+        setStores(response.data.data || []);
       },
-      onError: () => {},
+      onError: () => {
+        mutate({
+          url: `/admin/store`,
+          method: "GET",
+          headers: true,
+          hideToast: true,
+          onSuccess: (resp) => setStores(resp.data.data || []),
+          onError: () => {},
+        });
+      },
     });
   };
 
@@ -113,20 +122,33 @@ const UpdateAuctionProducts = () => {
 
   const getProduct = () => {
     mutate({
-      url: `/admin/auction/product?auctionProductId=${id}`,
+      url: `/admin/general/auction/product/view?auctionProductId=${id}`,
       method: "GET",
       headers: true,
       hideToast: true,
       onSuccess: (response) => {
-        setProduct(response.data.data);
+        setProduct(response.data.data || {});
       },
-      onError: () => {},
+      onError: () => {
+        mutate({
+          url: `/admin/auction/product?auctionProductId=${id}`,
+          method: "GET",
+          headers: true,
+          hideToast: true,
+          onSuccess: (response) => {
+            setProduct(response.data.data || {});
+          },
+          onError: () => {},
+        });
+      },
     });
   };
 
   const handleStoreChange = (data) => {
-    const store = stores.find((store) => store.id === data);
-    setCurrency(store.currency.symbol);
+    const store = stores.find((s) => s.id === data);
+    if (store?.currency?.symbol) {
+      setCurrency(store.currency.symbol);
+    }
   };
 
   const handleDrop = (data) => {

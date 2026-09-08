@@ -256,7 +256,7 @@ function Table({
                           <MenuHandler>
                             <IconButton
                               variant="text"
-                              className="text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors duration-150 opacity-0 group-hover:opacity-100"
+                              className="text-gray-500 hover:text-orange-600 hover:bg-orange-50 transition-colors duration-150 p-1 rounded-md"
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
