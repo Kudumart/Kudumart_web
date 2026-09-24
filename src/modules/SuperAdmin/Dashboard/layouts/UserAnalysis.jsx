@@ -6,7 +6,7 @@ const UserAnalysis = ({ usersLength, vendorsLength }) => {
 
     return (
         <>
-            <div className="md:px-5 px-2 pt-6 pb-12 md:rounded-lg bg-white">
+            <div className="rounded-2xl bg-white px-5 pb-7 pt-6 shadow-[0_8px_28px_rgba(15,23,42,.045)]">
                 <div className="flex lg:flex-row md:flex-row flex-col lg:gap-0 md:gap-0 gap-3 justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">User Analysis</h3>
                     <div className="flex space-x-2">
@@ -20,7 +20,7 @@ const UserAnalysis = ({ usersLength, vendorsLength }) => {
                         </button> */}
                     </div>
                 </div>
-                <div className="py-2 rounded-lg border border-mobiBorderTable px-3">
+                <div className="rounded-xl bg-slate-50/70 px-3 py-2">
                     <div className="mx-4" style={{ position: 'relative', width: '300px', height: '300px' }}>
                         {/* SVG Donut Chart */}
                         <svg width="300" height="300" viewBox="0 0 42 42" className="donut-chart">

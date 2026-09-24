@@ -1,87 +1,30 @@
-import { useState } from "react";
+import { Bell, ChevronDown, Moon, Search, Settings, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
+import useAppState from "../../hooks/appState";
+import { useAdminTheme } from "../../hooks/adminTheme";
 
-function Navbar() {
-  const [keyword, setKeyword] = useState("");
+export default function Navbar() {
+  const { user } = useAppState();
+  const { darkMode, toggleTheme } = useAdminTheme();
+  const name = user?.name || "Administrator";
+  const initials = name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
 
-  const handleKeywordChange = (event) => {
-    setKeyword(event.target.value);
-  };
-
-  return (
-    <header className="flex items-center pt-5 justify-between Abinah All mt-5">
-      {/* Search Bar Removed - Use table-level search instead */}
-      <div className="flex-1"></div>
-
-      {/* Action Icons */}
-      <div className="flex items-center space-x-5 mx-8">
-        <button className="bg-white rounded-lg p-4  hover:bg-gray-100">
-          <i className="text-gray-500">
-            {/* Settings Icon */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-              stroke="currentColor"
-              className="w-5 h-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19.5 12a7.5 7.5 0 01-15 0m15 0a7.5 7.5 0 00-15 0m15 0h3m-18 0H3"
-              />
-            </svg>
-          </i>
+  return <header className="sticky top-0 z-30 px-4 py-4 md:px-0">
+    <div className="mx-auto flex max-w-[1500px] items-center gap-4 rounded-2xl bg-white/95 px-5 py-3 shadow-[0_8px_28px_rgba(15,23,42,.06)] backdrop-blur-xl md:px-6">
+      <div className="relative hidden max-w-md flex-1 lg:block">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <input aria-label="Search admin" placeholder="Search the admin workspace" className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm outline-none transition focus:border-orange-400 focus:bg-white focus:ring-4 focus:ring-orange-100/60" />
+      </div>
+      <div className="ml-auto flex items-center gap-2">
+        <button type="button" onClick={toggleTheme} aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`} title={`Switch to ${darkMode ? "light" : "dark"} mode`} className="grid h-10 w-10 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 active:scale-95">{darkMode ? <Sun size={18}/> : <Moon size={18}/>}</button>
+        <Link to="/admin/settings" aria-label="Settings" className="grid h-10 w-10 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 active:scale-95"><Settings size={18} /></Link>
+        <Link to="/admin/notifications" aria-label="Notifications" className="relative grid h-10 w-10 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 active:scale-95"><Bell size={18} /><span className="absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full bg-orange-500 ring-2 ring-white" /></Link>
+        <button type="button" className="flex cursor-pointer items-center gap-3 rounded-lg p-1.5 pr-2 text-left transition hover:bg-slate-50 active:scale-[0.98]">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#172033] text-xs font-bold text-white">{initials}</span>
+          <span className="hidden sm:block"><span className="block text-sm font-bold text-slate-800">{name}</span><span className="block text-[11px] font-medium text-slate-500">Super administrator</span></span>
+          <ChevronDown className="hidden h-4 w-4 text-slate-400 sm:block" />
         </button>
-        <Link
-          to="/admin/notifications"
-          className="bg-white rounded-lg p-4 hover:bg-gray-100"
-        >
-          <i className="text-purple-500">
-            {/* Notification Icon */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-              stroke="currentColor"
-              className="w-5 h-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11.5a6.5 6.5 0 00-5-6.32V4a2 2 0 10-4 0v1.18A6.5 6.5 0 004 11.5v2.658c0 .217-.07.428-.195.605L2.5 17h5m7 0a3 3 0 01-6 0m6 0H9"
-              />
-            </svg>
-          </i>
-        </Link>
       </div>
-
-      {/* Profile Section */}
-      <div className="flex items-center bg-white rounded-lg px-2 py-1 xl:space-x-52 md:space-x-48">
-        <div className="flex items-center bg-[#FBEBE9] rounded-lg px-4 py-2 xl:space-x-48 md:space-x-44">
-          <span className="text-sm text-black-700 font-medium">
-            Super Admin
-          </span>
-          <div
-            className="w-9 h-9 rounded-full bg-cover bg-center"
-            style={{
-              backgroundImage:
-                "url('https://res.cloudinary.com/greenmouse-tech/image/upload/v1737214961/kuduMart/Group_1321314866_u2x7bj.png')",
-            }}
-          >
-            {/* Replace with profile image */}
-          </div>
-        </div>
-      </div>
-    </header>
-  );
+    </div>
+  </header>;
 }
-
-export default Navbar;

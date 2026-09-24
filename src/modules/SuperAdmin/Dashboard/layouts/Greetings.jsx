@@ -3,7 +3,7 @@ import { todayDate } from "../../../../helpers/dateHelper";
 function Greeting() {
   return (
     <div
-      className="to-black-900 text-white px-4 py-10 md:mt-1 rounded-xl w-full"
+      className="w-full rounded-2xl px-6 py-9 text-white shadow-[0_12px_35px_rgba(15,23,42,.12)]"
       style={{
         backgroundImage: `
             url(https://res.cloudinary.com/greenmouse-tech/image/upload/v1737204832/kuduMart/Group_1321314866_fiej2r.jpg)
@@ -16,13 +16,13 @@ function Greeting() {
     >
       <div className="flex gap-6">
         <div className="flex grow gap-1">
-          <h2 className="text-lg">
+          <h2 className="text-xl font-semibold tracking-tight">
             Welcome, Admin 👋 <br></br>{" "}
-            <span className="text-sm leading-loose">Have a great day!</span>
+            <span className="mt-1 inline-block text-sm font-normal text-white/75">Here is what is happening across Kudu Mart today.</span>
           </h2>
         </div>
         <div
-          className="flex items-center py-2 border px-5 rounded-md"
+          className="flex items-center rounded-xl bg-white/10 px-4 py-2.5 text-sm backdrop-blur-sm"
           style={{ width: "fit-content" }}
         >
           <svg

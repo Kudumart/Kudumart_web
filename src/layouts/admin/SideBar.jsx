@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Bell,
   Tag,
+  Share2,
 } from "lucide-react";
 
 const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
@@ -80,10 +81,10 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
   return (
     <>
       <div
-        className={`bg-kudu-made h-full px-6 pt-6 rounded-md flex-col w-full md:w-[20%] relative md:fixed flex ${onMobile ? "overflow-y-auto" : "overflow-hidden"}  transition-all mb-10`}
+        className={`h-full w-full flex-col bg-[#F7F8FA] p-4 md:fixed md:inset-y-0 md:left-0 md:w-[272px] ${onMobile ? "flex overflow-y-auto" : "hidden md:flex"}`}
       >
         <div
-          className={`h-full bg-white pb-20 rounded-md flex-col w-full md:w-[21%] relative md:fixed flex ${onMobile ? "overflow-y-auto" : "overflow-hidden"} bg-mobiDarkCloud transition-all mb-10`}
+          className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white pb-5 shadow-sm"
         >
           {/* Logo */}
           <div className="px-4 flex flex-col gap-2">
@@ -386,6 +387,20 @@ const Sidebar = ({ onMobile = false, onSelected = () => {} }) => {
               </i>
               <span className={`text-md font-semibold`}>Offers</span>
             </Link>
+            {hasPerm("view-referrals") && (
+              <Link
+                to={"/admin/referrals"}
+                onClick={() => handleMenuClick()}
+                className={`flex items-center px-4 h-[57px] rounded-lg transition ${
+                  isActive("/admin/referrals")
+                    ? "bg-[#FFF1E9] text-black"
+                    : "text-[#7F7F7F] hover:bg-[#FFF1E9]"
+                }`}
+              >
+                <i className="mr-5"><Share2 size={20} /></i>
+                <span className="text-md font-semibold">Referrals</span>
+              </Link>
+            )}
             {hasPerm("view-transactions") && (
               <Link
                 to={"/admin/transactions"}

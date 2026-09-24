@@ -55,6 +55,7 @@ import AdminNotifications from "../modules/SuperAdmin/Dashboard/admin-notificati
 import ViewServiceCategories from "../modules/SuperAdmin/Dashboard/view-service-category.js";
 import AliExpressDropShip from "../modules/SuperAdmin/Dashboard/aliexpress/index.js";
 import Offers from "../modules/SuperAdmin/Dashboard/offers/Offers";
+import ReferralManagement from "../modules/SuperAdmin/Dashboard/referrals.jsx";
 
 export const adminRoutes = [
   {
@@ -288,6 +289,7 @@ export const adminRoutes = [
       // },
       { path: "aliexpress", element: <AliExpressDropShip /> },
       { path: "offers", element: <Offers /> },
+      { path: "referrals", element: <ReferralManagement /> },
     ],
   },
 ];

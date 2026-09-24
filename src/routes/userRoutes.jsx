@@ -30,6 +30,7 @@ import { VendorViewService } from "../modules/User/modules/vendor-view-service";
 import VendorEditService from "../modules/User/modules/vendor-edit-service";
 import VendorOffers from "../modules/Vendor/modules/VendorOffers";
 import MyOffers from "../modules/User/MyOffers";
+import SalesWorkspace from "../modules/Sales/Workspace";
 
 export const userRoutes = [
   {
@@ -158,6 +159,10 @@ export const userRoutes = [
             element: <VendorEditService />,
           },
         ],
+      },
+      {
+        path: "sales-workspace",
+        element: <SalesWorkspace />,
       },
     ],
   },

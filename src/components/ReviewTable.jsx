@@ -82,7 +82,7 @@ function Table({
   };
 
   return (
-    <div className="md:px-5 px-3 pt-6 pb-12 md:rounded-lg overflow-hidden bg-white">
+    <div className="overflow-hidden rounded-2xl bg-white px-4 pb-8 pt-6 shadow-[0_8px_28px_rgba(15,23,42,.045)] md:px-5">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
         <div>
           {title && <p className="text-base font-medium mb-2">{title}</p>}
@@ -104,7 +104,7 @@ function Table({
                 }
               }}
               placeholder={searchPlaceholder}
-              className="border px-3 py-2 pl-10 rounded-md w-full md:w-64 outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="h-10 w-full rounded-lg bg-slate-100 px-3 pl-10 text-sm outline-hidden transition focus:bg-white focus:ring-4 focus:ring-orange-100 md:w-64"
             />
             <svg
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"
@@ -193,10 +193,10 @@ function Table({
         </div>
       </div>
 
-      <div className="overflow-hidden border rounded-lg bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl bg-slate-50/70">
         <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           <table className="table-auto text-left w-full min-w-[600px]">
-            <thead className="bg-linear-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+            <thead className="bg-slate-100/80">
               <tr>
                 {processedColumns.map((col) => (
                   <th

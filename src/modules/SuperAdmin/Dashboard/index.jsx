@@ -153,7 +153,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="w-full flex h-full animate__animated animate__fadeIn">
+      <div className="mx-auto flex h-full w-full max-w-[1500px] animate__animated animate__fadeIn px-4 md:px-0">
         <div className="w-full flex flex-col gap-5 h-full">
           <Greeting />
           <div className="w-full flex lg:flex-row md:flex-row flex-col h-full gap-5 my-2 md:px-0 px-3">

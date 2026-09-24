@@ -22,7 +22,7 @@ const ReusableModal = () => {
       >
         <div className="relative rounded-lg bg-white shadow-xl">
           <div className="p-4">
-            <DialogBody className="montserrat">{content || <></>}</DialogBody>
+            <DialogBody>{content || <></>}</DialogBody>
           </div>
         </div>
       </div>

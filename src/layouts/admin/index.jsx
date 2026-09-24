@@ -2,11 +2,13 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import { Drawer } from "@material-tailwind/react";
 import { useState } from "react";
-import SideBar from "./SideBar";
+import SideBar from "./AdminSidebar";
 import NavBar from "./navBar";
+import { AdminThemeProvider, useAdminTheme } from "../../hooks/adminTheme";
 
-const AdminLayout = () => {
+const AdminLayoutContent = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { darkMode } = useAdminTheme();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -14,17 +16,17 @@ const AdminLayout = () => {
 
   return (
     <>
-      <div className="w-full flex flex-col md:flex-row h-full animate__animated animate__fadeIn bg-kudu-light-gray overflow-hidden">
+      <div className={`admin-shell min-h-screen w-full bg-[#f4f6f9] text-slate-900 transition-colors ${darkMode ? "admin-dark" : ""}`}>
         <Header openMenu={toggleMenu} />
-        <div className="hidden md:flex">
+        <div className="hidden md:block">
           <SideBar />
         </div>
-        <div className="w-full lg:ml-[24%] md:mx-4 flex flex-col gap-5 md:ml-[23%] h-full overflow-hidden">
+        <main className="flex min-h-screen w-full flex-col md:pl-[272px] md:pr-4">
           <NavBar />
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 pb-4">
             <Outlet />
           </div>
-        </div>
+        </main>
       </div>
       <Drawer
         open={isMenuOpen}
@@ -40,5 +42,7 @@ const AdminLayout = () => {
     </>
   );
 };
+
+const AdminLayout = () => <AdminThemeProvider><AdminLayoutContent /></AdminThemeProvider>;
 
 export default AdminLayout;

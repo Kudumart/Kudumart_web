@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import App from "./App.jsx";
+import App from "./App.tsx";
 import "./index.css";
 import { Provider } from "react-redux";
 import { store } from "./store/index.js";
@@ -29,20 +29,12 @@ createRoot(document.getElementById("root")).render(
      */}
     <Toaster
       position="top-right"
-      expand={false}
-      duration={3500}
-      closeButton
-      style={{
-        zIndex: 9999999,
-      }}
       toastOptions={{
-        style: {
-          fontFamily: "inherit",
-          fontSize: "14.5px",
-          fontWeight: "500",
-          borderRadius: "12px",
-          padding: "16px 20px",
-          minWidth: "340px",
+        style: { fontFamily: "inherit" },
+        classNames: {
+          toast: "font-sans text-sm",
+          error: "!bg-red-950 !border-red-800 !text-red-200",
+          success: "!bg-emerald-950 !border-emerald-800 !text-emerald-200",
         },
       }}
     />

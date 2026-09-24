@@ -9,16 +9,16 @@ const StatCard = ({ number, label, iconColor, IconComponent, colorGradient, cron
 
     return (
         <div
-        className="bg-white rounded-md py-6 px-4 w-full flex items-center justify-between"
+        className="flex w-full items-center justify-between rounded-2xl bg-white px-5 py-5 shadow-[0_8px_28px_rgba(15,23,42,.045)]"
         style={style}
     >
         {/* Left Section */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
             <span
                 className={`${
                     cronTop
                         ? 'text-sm text-[] font-semibold'
-                        : 'text-mobiRomanSilver text-xl font-bold text-[#7F7F7F]'
+                        : 'text-2xl font-bold tracking-tight text-slate-900'
                 } flex gap-1`}
             >
                 {cronTopIcon} {cronTop ? label : number}
@@ -27,7 +27,7 @@ const StatCard = ({ number, label, iconColor, IconComponent, colorGradient, cron
                 className={`${
                     cronTop
                         ? 'text-xl font-bold text-mobiDarkCloud'
-                        : 'text-sm font-semibold text-gray-600'
+                        : 'text-xs font-semibold uppercase tracking-wide text-slate-500'
                 } flex gap-2`}
             >
                 {cronTop ? number : label}
@@ -37,7 +37,7 @@ const StatCard = ({ number, label, iconColor, IconComponent, colorGradient, cron
 
         {/* Right Icon Section */}
         <div
-            className={`w-20 h-20 rounded-full flex items-center justify-center ${iconColor}`}
+            className={`flex h-14 w-14 items-center justify-center rounded-2xl ${iconColor}`}
         >
             {IconComponent}
         </div>

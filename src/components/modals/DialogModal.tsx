@@ -4,7 +4,6 @@ import React, {
   useRef,
   type PropsWithChildren,
 } from "react";
-import { Toaster } from "sonner";
 import { X } from "lucide-react"; // Import the X icon
 
 interface ModalProps extends PropsWithChildren {
@@ -37,7 +36,6 @@ const Modal = forwardRef<ModalHandle, ModalProps>(
         className="modal modal-middle sm:modal-middle"
         data-theme="kudu"
       >
-        <Toaster theme="dark" richColors />
         <div className="modal-box max-w-2xl flex flex-col max-h-[90vh] p-6 rounded-lg shadow-xl relative">
           <div className="flex">
             {title && <h3 className="font-bold text-lg ">{title}</h3>}

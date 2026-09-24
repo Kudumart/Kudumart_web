@@ -21,6 +21,7 @@ import {
   Settings2,
   WorkflowIcon,
   Tag,
+  Target,
 } from "lucide-react";
 
 const ProfileSideBar = ({ close }) => {
@@ -70,6 +71,12 @@ const ProfileSideBar = ({ close }) => {
       label: "Orders",
       icon: <ShoppingCart size={20} color="#FF6F22" />,
       route: "orders",
+      vendor: null,
+    },
+    {
+      label: "Sales Workspace",
+      icon: <Target size={20} color="#FF6F22" />,
+      route: "/sales-workspace",
       vendor: null,
     },
     {

@@ -8,6 +8,14 @@
 
 @config '../tailwind.config.js';
 
+@layer base {
+    html { font-family: "Inter", ui-sans-serif, system-ui, sans-serif; color: #0f172a; -webkit-font-smoothing: antialiased; }
+    body { margin: 0; background: #f6f7fb; font-family: inherit; font-feature-settings: "kern" 1; text-rendering: optimizeLegibility; }
+    button, a, [role="button"], select, summary { cursor: pointer; }
+    button:focus-visible, a:focus-visible, [role="button"]:focus-visible { outline: 2px solid #f56620; outline-offset: 2px; }
+    .admin-shell *, .admin-shell ::before, .admin-shell ::after { border-color: #e2e8f0; }
+}
+
 @plugin "daisyui/theme" {
     name: "kudu";
     default: false;
@@ -96,129 +104,69 @@
 
 /* Added custom scrollbar for payment modal */.custom-scrollbar::-webkit-scrollbar { width: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; } .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
 
-/* ─── Sonner Toast — Kudumart Brand Overrides ─────────────────────────────── */
+.status-badge { display: inline-flex; align-items: center; gap: 0.375rem; border: 1px solid; border-radius: 9999px; padding: 0.25rem 0.625rem; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.025em; }
+.status-badge--active { border-color: #a7f3d0; background: #d1fae5; color: #065f46; }
+.status-badge--neutral { border-color: #e2e8f0; background: #f1f5f9; color: #475569; }
+.status-badge--info { border-color: #bfdbfe; background: #eff6ff; color: #1d4ed8; }
+.status-badge--warning { border-color: #fde68a; background: #fffbeb; color: #a16207; }
+.status-badge--danger { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+.status-badge__dot { width: 0.375rem; height: 0.375rem; border-radius: 9999px; background: #059669; }
 
-/* Position container — True Top-Right Corner with high z-index */
-[data-sonner-toaster] {
-  z-index: 99999999 !important;
-}
+/* Matches the compact dark semantic toasts used by the Cryptware admin. */
+[data-sonner-toast][data-type="success"] { background: #022c22 !important; border-color: #065f46 !important; color: #a7f3d0 !important; }
+[data-sonner-toast][data-type="error"] { background: #450a0a !important; border-color: #991b1b !important; color: #fecaca !important; }
 
-[data-sonner-toaster][data-position="top-right"] {
-  top: 24px !important;
-  right: 24px !important;
-}
+/* Referral workspace theme pilot. Scoped here until the admin-wide theme migration. */
+.referral-theme { color-scheme: light; }
+.referral-theme.referral-dark { color-scheme: dark; background: #0b1120; }
+.referral-dark .bg-white { background-color: #111827 !important; }
+.referral-dark .bg-white\/60, .referral-dark .bg-white\/95 { background-color: rgb(17 24 39 / .92) !important; }
+.referral-dark .bg-slate-50, .referral-dark .bg-slate-50\/60, .referral-dark .bg-slate-50\/70 { background-color: #0f172a !important; }
+.referral-dark .bg-slate-100, .referral-dark .bg-slate-100\/80 { background-color: #182235 !important; }
+.referral-dark .border-slate-200, .referral-dark .border-slate-300 { border-color: #293548 !important; }
+.referral-dark .divide-slate-100 > :not(:last-child) { border-color: #253147 !important; }
+.referral-dark .text-slate-950, .referral-dark .text-slate-900, .referral-dark .text-slate-800 { color: #f8fafc !important; }
+.referral-dark .text-slate-700, .referral-dark .text-slate-600 { color: #cbd5e1 !important; }
+.referral-dark .text-slate-500 { color: #94a3b8 !important; }
+.referral-dark .text-slate-400 { color: #7c8ba1 !important; }
+.referral-dark input, .referral-dark select, .referral-dark textarea { background-color: #0f172a !important; border-color: #334155 !important; color: #f8fafc !important; }
+.referral-dark input::placeholder, .referral-dark textarea::placeholder { color: #64748b !important; }
+.referral-dark tr:hover { background-color: rgb(30 41 59 / .72) !important; }
+.referral-dark .shadow-sm, .referral-dark .shadow-md { --tw-shadow-color: rgb(0 0 0 / .24); }
+.referral-dark .referral-account-note { background: rgb(124 45 18 / .18) !important; border-color: rgb(249 115 22 / .3) !important; color: #fed7aa !important; }
 
-/* Base toast card */
-[data-sonner-toast] {
-  font-family: inherit !important;
-  border-radius: 12px !important;
-  font-size: 14.5px !important;
-  font-weight: 500 !important;
-  padding: 16px 20px !important;
-  background: #ffffff !important;
-  color: #111827 !important;
-  border: 1px solid #E5E7EB !important;
-  border-left: 5px solid #FF6F22 !important; /* Kudumart Brand Orange */
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
-  gap: 14px !important;
-  align-items: center !important;
-}
+/* Admin-wide dark theme. Utility overrides keep legacy screens usable while
+   they are gradually moved onto the shared component library. */
+.admin-shell.admin-dark { color-scheme: dark; background: #080d18 !important; color: #e5e7eb !important; }
+.admin-dark .bg-white, .kudu-admin-dark #drawer.bg-white, .kudu-admin-dark #drawer .bg-white { background-color: #111827 !important; }
+.admin-dark .bg-white\/95 { background-color: rgb(17 24 39 / .94) !important; }
+.admin-dark .bg-white\/60 { background-color: rgb(17 24 39 / .72) !important; }
+.admin-dark .bg-slate-50, .admin-dark .bg-gray-50, .admin-dark .bg-kudu-light-blue { background-color: #0d1524 !important; }
+.admin-dark .bg-slate-50\/60, .admin-dark .bg-slate-50\/70, .admin-dark .bg-slate-100\/80 { background-color: rgb(15 23 42 / .8) !important; }
+.admin-dark .bg-slate-100, .admin-dark .bg-gray-100, .admin-dark .bg-gray-200 { background-color: #1b2638 !important; }
+.admin-dark .border-slate-100, .admin-dark .border-slate-200, .admin-dark .border-slate-300,
+.admin-dark .border-gray-100, .admin-dark .border-gray-200, .admin-dark .border-gray-300 { border-color: #2a374b !important; }
+.admin-dark .divide-slate-100 > :not(:last-child), .admin-dark .divide-gray-200 > :not(:last-child) { border-color: #253147 !important; }
+.admin-dark .text-black, .admin-dark .text-slate-950, .admin-dark .text-slate-900, .admin-dark .text-slate-800,
+.admin-dark .text-gray-950, .admin-dark .text-gray-900, .admin-dark .text-gray-800 { color: #f8fafc !important; }
+.admin-dark .text-slate-700, .admin-dark .text-slate-600, .admin-dark .text-gray-700, .admin-dark .text-gray-600 { color: #cbd5e1 !important; }
+.admin-dark .text-slate-500, .admin-dark .text-gray-500 { color: #94a3b8 !important; }
+.admin-dark .text-slate-400, .admin-dark .text-gray-400 { color: #74839a !important; }
+.admin-dark input:not([type="checkbox"]):not([type="radio"]), .admin-dark select, .admin-dark textarea { background-color: #0c1422 !important; border-color: #334155 !important; color: #f8fafc !important; }
+.admin-dark input::placeholder, .admin-dark textarea::placeholder { color: #64748b !important; }
+.admin-dark table thead, .admin-dark thead.bg-gray-100, .admin-dark thead.bg-slate-50 { background: #172033 !important; }
+.admin-dark tbody tr { border-color: #253147 !important; }
+.admin-dark tbody tr:hover, .admin-dark .hover\:bg-slate-50:hover, .admin-dark .hover\:bg-gray-100:hover { background-color: #182235 !important; }
+.admin-dark .ring-white { --tw-ring-color: #111827 !important; }
+.admin-dark .shadow-sm, .admin-dark .shadow-md, .admin-dark .shadow-lg, .admin-dark .shadow-xl { --tw-shadow-color: rgb(0 0 0 / .35); }
+.admin-dark img { color-scheme: normal; }
 
-/* Toast description/text */
-[data-sonner-toast] [data-title],
-[data-sonner-toast] [data-description] {
-  color: #1F2937 !important;
-  font-weight: 500 !important;
-  line-height: 1.45 !important;
-}
+/* Portalled admin drawers and modals live outside .admin-shell. */
+.kudu-admin-dark #drawer { color-scheme: dark; background: #111827 !important; color: #e5e7eb !important; }
+.kudu-admin-dark #drawer .text-black, .kudu-admin-dark #drawer .text-slate-900 { color: #f8fafc !important; }
+.kudu-admin-dark #drawer .text-slate-600, .kudu-admin-dark #drawer .text-slate-500 { color: #cbd5e1 !important; }
+.kudu-admin-dark body > div .fixed [role="dialog"], .kudu-admin-dark body > div .fixed .relative.rounded-lg.bg-white { background-color: #111827 !important; color: #e5e7eb !important; }
+.kudu-admin-dark body > div .fixed [role="dialog"] .text-black,
+.kudu-admin-dark body > div .fixed [role="dialog"] .text-slate-900,
+.kudu-admin-dark body > div .fixed .relative.rounded-lg.bg-white .text-black { color: #f8fafc !important; }
 
-/* Icons styling — Kudumart Brand Orange */
-[data-sonner-toast] [data-icon] {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 28px !important;
-  height: 28px !important;
-  border-radius: 50% !important;
-  background: #FFF2EA !important; /* light orange tint */
-  color: #FF6F22 !important; /* Kudumart orange */
-  flex-shrink: 0 !important;
-}
-
-[data-sonner-toast] [data-icon] svg {
-  width: 16px !important;
-  height: 16px !important;
-  stroke-width: 2.5 !important;
-  color: #FF6F22 !important;
-}
-
-/* Success toast — Kudumart Brand styling */
-[data-sonner-toast][data-type="success"] {
-  background: #ffffff !important;
-  border: 1px solid #FED7AA !important;
-  border-left: 5px solid #FF6F22 !important;
-}
-
-[data-sonner-toast][data-type="success"] [data-icon] {
-  background: #FFF2EA !important;
-  color: #FF6F22 !important;
-}
-
-/* Error toast */
-[data-sonner-toast][data-type="error"] {
-  background: #ffffff !important;
-  border: 1px solid #FECACA !important;
-  border-left: 5px solid #EF4444 !important;
-}
-
-[data-sonner-toast][data-type="error"] [data-icon] {
-  background: #FEF2F2 !important;
-  color: #EF4444 !important;
-}
-
-[data-sonner-toast][data-type="error"] [data-icon] svg {
-  color: #EF4444 !important;
-}
-
-/* Warning toast */
-[data-sonner-toast][data-type="warning"] {
-  background: #ffffff !important;
-  border: 1px solid #FDE68A !important;
-  border-left: 5px solid #F59E0B !important;
-}
-
-[data-sonner-toast][data-type="warning"] [data-icon] {
-  background: #FFFBEB !important;
-  color: #F59E0B !important;
-}
-
-/* Close button */
-[data-sonner-toast] [data-close-button] {
-  border-radius: 6px !important;
-  background: #F3F4F6 !important;
-  border: 1px solid #E5E7EB !important;
-  color: #6B7280 !important;
-  width: 22px !important;
-  height: 22px !important;
-  transition: all 0.15s ease !important;
-}
-
-[data-sonner-toast] [data-close-button]:hover {
-  background: #E5E7EB !important;
-  color: #111827 !important;
-}
-
-/* Mobile responsive */
-@media (max-width: 640px) {
-  [data-sonner-toaster][data-position="top-right"] {
-    top: 16px !important;
-    right: 16px !important;
-    left: 16px !important;
-    width: auto !important;
-  }
-  [data-sonner-toast] {
-    width: 100% !important;
-    min-width: 0 !important;
-    margin: 0 !important;
-  }
-}

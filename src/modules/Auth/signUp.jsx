@@ -12,6 +12,7 @@ import { jwtDecode } from "jwt-decode";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
 import Button from "../../components/Button";
+import { getReferralAttribution } from "../../helpers/referral";
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +45,7 @@ function SignUp() {
     mutate({
       url,
       method: "POST",
-      data: { ...data, platform: "web" },
+      data: { ...data, ...getReferralAttribution(), platform: "web" },
       onSuccess: (response) => {
         localStorage.setItem("kuduEmail", JSON.stringify(data.email));
         toast.success("Verification Sent to Email");
@@ -66,6 +67,7 @@ function SignUp() {
         providerId: "google.com",
         accountType: "Customer",
         platform: "web",
+        ...getReferralAttribution(),
       };
       setIsLoading(true);
       mutate({

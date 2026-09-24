@@ -10,6 +10,7 @@ import { useContext, useEffect } from "react";
 // react-toastify removed — toast is now handled by Sonner via vite alias shim
 import { toast } from "./lib/toast-shim.js";
 import { messaging } from "./config/firebaseConfig";
+import { captureReferralFromUrl } from "./helpers/referral";
 
 // 👇 optional helper if you want to use it elsewhere too
 export function handleIncomingMessage(payload) {
@@ -41,6 +42,14 @@ function App() {
       localStorage.removeItem("kuduUserToken");
       dispatch(setKuduUser(null));
     }
+  }, []);
+
+  useEffect(() => {
+    captureReferralFromUrl().catch((error) => {
+      const message = error?.response?.data?.message || error.message || "Unknown error";
+      console.warn("Referral link could not be recorded:", message);
+      if (import.meta.env.DEV) toast.error(`Referral tracking failed: ${message}`);
+    });
   }, []);
 
   return (
