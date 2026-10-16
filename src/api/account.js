@@ -1,0 +1,14 @@
+import { request, unwrap } from './client';
+export const accountApi = {
+  login: async (email, password) => unwrap(await request('/auth/login', { method: 'POST', body: { email, password, platform: 'web' } })),
+  register: async (values, accountType) => unwrap(await request(accountType === 'Vendor' ? '/auth/register/vendor' : '/auth/register/customer', { method: 'POST', body: { ...values, platform: 'web' } })),
+  savedProducts: async (signal) => unwrap(await request('/user/saved/products', { authenticated: true, signal })),
+  saveProduct: async (productId) => unwrap(await request('/user/save/product', { method: 'POST', authenticated: true, body: { productId } })),
+  removeSavedProduct: async (productId) => unwrap(await request('/user/save/product', { method: 'DELETE', authenticated: true, params: { productId } })),
+  offers: async (signal) => unwrap(await request('/user/offers', { authenticated: true, params: { limit: 50 }, signal })),
+  submitOffer: async (productId, offeredPrice, message) => unwrap(await request(`/user/products/${productId}/offers`, { method: 'POST', authenticated: true, body: { offeredPrice, ...(message?.trim() ? { message: message.trim() } : {}) } })),
+  cart: async (signal) => unwrap(await request('/user/cart', { authenticated: true, signal })),
+  addToCart: async (productId, quantity = 1, variant) => unwrap(await request('/user/cart/add', { method: 'POST', authenticated: true, body: { productId, quantity, ...(variant ? { product_id: productId, dropshipProductSkuAttr: variant.sku_attr, dropshipProductSkuId: variant.sku_id } : {}) } })),
+  removeFromCart: async (cartId) => unwrap(await request('/user/cart/remove', { method: 'DELETE', authenticated: true, params: { cartId } })),
+  updateCart: async (cartId, quantity) => unwrap(await request('/user/cart/update', { method: 'PUT', authenticated: true, body: { cartId, quantity } })),
+};

@@ -1,0 +1,41 @@
+import { request, unwrap } from './client';
+
+const optionalList = async (path, options = {}) => {
+  try { return unwrap(await request(path, { authenticated: true, ...options })); }
+  catch (error) { if (error.status === 404) return []; throw error; }
+};
+
+export const sellerApi = {
+  kyc: async signal => unwrap(await request('/vendor/kyc', { authenticated: true, signal })),
+  submitKyc: async values => unwrap(await request('/vendor/kyc', { method: 'POST', authenticated: true, body: values })),
+  stats: async signal => unwrap(await request('/vendor/dashboard/stats', { authenticated: true, signal })),
+  products: signal => optionalList('/vendor/vendors/products', { signal }),
+  auctionProducts: signal => optionalList('/vendor/auction/products', { signal }),
+  stores: signal => optionalList('/vendor/store', { signal }),
+  orders: signal => optionalList('/vendor/order/items', { signal }),
+  offers: (page = 1, status = '', signal) => request('/vendor/offers', { authenticated: true, params: { page, limit: 10, status }, signal }),
+  respondToOffer: async (offerId, status, counterPrice) => unwrap(await request(`/vendor/offers/${offerId}`, { method: 'PUT', authenticated: true, body: { status, ...(status === 'countered' ? { counterPrice } : {}) } })),
+  currencies: async signal => unwrap(await request('/vendor/currencies', { authenticated: true, signal })),
+  createStore: async values => unwrap(await request('/vendor/store', { method: 'POST', authenticated: true, body: values })),
+  updateStore: async values => unwrap(await request('/vendor/store', { method: 'PUT', authenticated: true, body: values })),
+  createProduct: async values => unwrap(await request('/vendor/products', { method: 'POST', authenticated: true, body: values })),
+  updateProduct: async values => unwrap(await request('/vendor/products', { method: 'PUT', authenticated: true, body: values })),
+  product: async (productId, signal) => unwrap(await request('/vendor/product', { authenticated: true, params: { productId }, signal })),
+  categories: async signal => unwrap(await request('/categories', { signal })),
+  subCategories: async (categoryId, signal) => unwrap(await request('/category/sub-categories', { params: { categoryId }, signal })),
+};
+
+export async function uploadSellerImage(file) {
+  const url = import.meta.env.VITE_IMAGE_UPLOAD_URL || 'https://api.kudumart.com/api/upload/file';
+  const form = new FormData(); form.append('image', file);
+  let response;
+  try { response = await fetch(url, { method: 'POST', body: form }); }
+  catch { throw new Error('Could not reach the photo upload service. Please try again in a moment.'); }
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(payload?.message || `Photo upload failed (${response.status}). Please try again.`);
+  const image = typeof payload?.data === 'string' ? payload.data : payload?.data?.url || payload?.url || payload?.secure_url || payload?.path;
+  if (!image) throw new Error('The image upload did not return a URL.');
+  return image;
+}
+
+export function sellerList(result) { return Array.isArray(result) ? result : Array.isArray(result?.data) ? result.data : Array.isArray(result?.items) ? result.items : []; }
