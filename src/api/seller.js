@@ -16,6 +16,8 @@ export const sellerApi = {
   wallet: async signal => unwrap(await request('/vendor/wallet/stats', { authenticated: true, signal })),
   transactions: (page = 1, signal) => request('/vendor/wallet/transactions', { authenticated: true, params: { page, limit: 10 }, signal }),
   banks: signal => optionalList('/vendor/bank/informations', { signal }),
+  supportedBanks: signal => optionalList('/vendor/banks', { signal }),
+  resolveBank: async (bankCode, accountNumber) => unwrap(await request('/vendor/bank/resolve', { authenticated: true, params: { bankCode, accountNumber } })),
   addBank: async values => unwrap(await request('/vendor/bank/informations/v2', { method: 'POST', authenticated: true, body: values })),
   withdrawals: signal => optionalList('/vendor/withdrawals', { signal }),
   requestWithdrawal: async values => unwrap(await request('/vendor/withdrawal', { method: 'POST', authenticated: true, body: values })),

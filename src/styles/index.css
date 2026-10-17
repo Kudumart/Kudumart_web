@@ -75,3 +75,20 @@
 .admin-verify-id{font-family:monospace;color:#8392a6;white-space:nowrap}
 .admin-pagination>span{margin-right:auto;align-self:center;color:#7b8ba1;font-size:14px}
 @media(max-width:700px){.admin-verify-toolbar input{width:100%}.admin-verify-tabs{width:100%}.admin-verify-tabs button{flex:1}}
+/* Seller payout accounts */
+.seller-bank-list{display:grid;gap:10px;margin-bottom:22px}
+.seller-bank-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:13px;padding:14px;border:1px solid #e5eaee;border-radius:11px;background:#fbfcfd}
+.seller-bank-card__icon{width:40px;height:40px;border-radius:10px;background:#eaf1fb;color:#3e6fae;display:grid;place-items:center}
+.seller-bank-card__details{display:grid;gap:4px;min-width:0}
+.seller-bank-card__details strong{font-size:12px}
+.seller-bank-card__details small{font-size:10px;color:#8491a2;text-transform:uppercase;letter-spacing:.025em}
+.seller-bank-card__number{font-size:12px;font-weight:800;white-space:nowrap}
+.seller-bank-card__verified{display:flex;align-items:center;gap:4px;color:#26805d;background:#e7f5ed;border-radius:20px;padding:6px 9px;font-size:10px;font-weight:800;white-space:nowrap}
+.seller-bank-form{padding-top:20px;border-top:1px solid #edf0f2}
+.seller-bank-verify{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.seller-bank-result{display:flex;align-items:center;gap:9px;color:#26805d;background:#eef8f2;border:1px solid #cfe9da;border-radius:9px;padding:9px 12px}
+.seller-bank-result span{display:grid;gap:2px}
+.seller-bank-result small{font-size:9px;color:#60806e;text-transform:uppercase;font-weight:800;letter-spacing:.06em}
+.seller-bank-result strong{font-size:12px;color:#1f664b}
+.seller-bank-form>.button{justify-self:start}
+@media(max-width:600px){.seller-bank-card{grid-template-columns:auto minmax(0,1fr)}.seller-bank-card__number,.seller-bank-card__verified{grid-column:2}}
