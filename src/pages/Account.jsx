@@ -1,4 +1,4 @@
-import { ArrowRight, BadgeCheck, Box, LogOut, Package, ShieldCheck, ShoppingBag, Store, UserRound } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Box, Landmark, LogOut, Package, ShieldCheck, ShoppingBag, Store, UserRound } from 'lucide-react';
 import { sellerApi, sellerList } from '../api/seller';
 import { useResource } from '../hooks/useResource';
 import { Skeleton } from '../components/ui';
@@ -7,26 +7,29 @@ import { Button } from '../components/ui';
 import { useApp } from '../contexts/AppContext';
 function VendorOnboarding({ user }) {
   const progress = useResource(async signal => {
-    const [kyc, stores, products] = await Promise.allSettled([sellerApi.kyc(signal), sellerApi.stores(signal), sellerApi.products(signal)]);
+    const [kyc, stores, products, banks] = await Promise.allSettled([sellerApi.kyc(signal), sellerApi.stores(signal), sellerApi.products(signal), sellerApi.banks(signal)]);
     return {
       kyc: kyc.status === 'fulfilled' ? kyc.value : null,
       kycError: kyc.status === 'rejected' && kyc.reason?.status !== 404,
       stores: stores.status === 'fulfilled' ? sellerList(stores.value) : null,
       products: products.status === 'fulfilled' ? sellerList(products.value) : null,
+      banks: banks.status === 'fulfilled' ? sellerList(banks.value) : null,
     };
   }, [user.id]);
   if (progress.loading) return <Skeleton className="vendor-onboarding-skeleton"/>;
   const data = progress.data || {};
   const approved = Boolean(user.isVerified || data.kyc?.isVerified || String(data.kyc?.status || '').toLowerCase() === 'approved');
   const submitted = Boolean(data.kyc?.id || data.kyc?.kycId || (data.kyc?.businessName && data.kyc?.idVerification?.number));
-  const rejected = String(data.kyc?.status || '').toLowerCase() === 'rejected';
+  const rejected = String(data.kyc?.status || '').toLowerCase() === 'rejected' || Boolean(data.kyc?.adminNote && !data.kyc?.isVerified);
   const hasStore = Boolean(data.stores?.length);
   const hasProduct = Boolean(data.products?.length);
-  if (approved && hasStore && hasProduct) return null;
+  const hasBank = Boolean(data.banks?.length);
+  if (approved && hasStore && hasProduct && hasBank) return null;
   const steps = [
     { title: 'Verify your business', description: rejected ? 'Review your details and submit them again.' : approved ? 'Your seller identity has been approved.' : submitted ? 'Your details are being reviewed.' : data.kycError ? 'Check your verification status.' : 'Submit your business and identity details.', state: approved ? 'Done' : rejected ? 'Needs attention' : submitted ? 'Under review' : 'To do', icon: ShieldCheck, to: '/seller/verification', action: approved ? 'View' : submitted && !rejected ? 'Check status' : 'Start verification' },
     { title: 'Create a store', description: 'Set up your storefront, hours, and delivery options.', state: data.stores === null ? 'Check status' : hasStore ? 'Done' : 'To do', icon: Store, to: hasStore ? '/seller/stores' : '/seller/stores/new', action: hasStore ? 'View stores' : 'Create store' },
     { title: 'List a product', description: 'Add your first item for buyers to discover.', state: data.products === null ? 'Check status' : hasProduct ? 'Done' : 'To do', icon: Box, to: hasProduct ? '/seller/products' : '/seller/products/new', action: hasProduct ? 'View products' : 'Add product' },
+    { title: 'Link payout account', description: approved ? 'Add the bank account used for withdrawals.' : 'Available after your verification is approved.', state: data.banks === null ? 'Check status' : hasBank ? 'Done' : approved ? 'To do' : 'Locked', icon: Landmark, to: approved ? '/seller/finance' : '/seller/verification', action: hasBank ? 'View account' : approved ? 'Add account' : 'Complete verification' },
   ];
   return <section className="vendor-onboarding" aria-labelledby="vendor-onboarding-title"><div className="vendor-onboarding__intro"><span className="eyebrow">GET READY TO SELL</span><h2 id="vendor-onboarding-title">Set up your seller account</h2><p>Pick up where you left off. Verification can be completed while you prepare your store.</p></div><div className="vendor-onboarding__steps">{steps.map(({ title, description, state, icon: Icon, to, action }) => <article key={title} className="vendor-onboarding__step"><div className="vendor-onboarding__step-top"><span className="vendor-onboarding__icon"><Icon size={20}/></span><span className={`vendor-onboarding__state ${state === 'Done' ? 'vendor-onboarding__state--done' : ''}`}>{state === 'Done' && <BadgeCheck size={14}/>} {state}</span></div><h3>{title}</h3><p>{description}</p><Link to={to}>{action} <ArrowRight size={15}/></Link></article>)}</div></section>;
 }

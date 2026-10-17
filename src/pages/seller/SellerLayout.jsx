@@ -1,4 +1,4 @@
-import { ArrowLeft, BarChart3, Box, Handshake, Menu, Package, ShieldCheck, Store, X } from 'lucide-react';
+import { ArrowLeft, BarChart3, Box, Handshake, Landmark, Menu, Package, ShieldCheck, Store, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Navigate, Outlet } from 'react-router-dom';
 import { useApp } from '../../contexts/AppContext';
@@ -9,6 +9,7 @@ const links = [
   { to: '/seller/orders', label: 'Orders', icon: Package },
   { to: '/seller/offers', label: 'Offers', icon: Handshake },
   { to: '/seller/stores', label: 'Stores', icon: Store },
+  { to: '/seller/finance', label: 'Finance', icon: Landmark },
   { to: '/seller/verification', label: 'Verification', icon: ShieldCheck },
 ];
 

@@ -17,7 +17,7 @@ const isKycRecord = value => value && typeof value === 'object' && !Array.isArra
 function statusFor(record, user) {
   if (record?.isVerified || String(record?.status || '').toLowerCase() === 'approved' || user?.isVerified) return 'approved';
   if (!record || !Object.keys(record).length) return 'not-started';
-  if (String(record.status || '').toLowerCase() === 'rejected') return 'rejected';
+  if (String(record.status || '').toLowerCase() === 'rejected' || (!record.isVerified && Boolean(record.adminNote))) return 'rejected';
   return 'pending';
 }
 
@@ -97,7 +97,7 @@ export default function SellerVerification() {
         {status === 'approved' ? <BadgeCheck size={24}/> : status === 'rejected' || status === 'unconfirmed' ? <TriangleAlert size={24}/> : status === 'pending' ? <Clock3 size={24}/> : <ShieldCheck size={24}/>}
         <div><strong>{status === 'approved' ? 'Your business is verified' : status === 'rejected' ? 'Verification needs attention' : status === 'unconfirmed' ? 'Submission status needs checking' : status === 'pending' ? 'Your details are under review' : 'Complete your verification'}</strong>
           <p>{status === 'approved' ? 'Your seller verification has been approved.' : status === 'rejected' ? 'Your previous submission was not approved. Review the details below and submit them again.' : status === 'unconfirmed' ? 'The submission request was accepted, but we could not confirm that your KYC record is available for admin review. Check again shortly before submitting another form.' : status === 'pending' ? 'Your saved business and ID details are awaiting admin review.' : 'Tell us about your business and provide an identification number to begin.'}</p>
-          {status === 'rejected' && (record?.note || record?.rejectionReason) && <p><strong>Reason:</strong> {record.note || record.rejectionReason}</p>}
+          {status === 'rejected' && (record?.adminNote || record?.note || record?.rejectionReason) && <p><strong>Reason:</strong> {record.adminNote || record.note || record.rejectionReason}</p>}
           {status === 'unconfirmed' && <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Check again</Button>}
         </div>
       </section>
