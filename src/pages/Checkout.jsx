@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CreditCard, LockKeyhole, MapPin, PackageCheck, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CreditCard, MapPin, PackageCheck, ShieldCheck } from 'lucide-react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
+import PaystackPop from '@paystack/inline-js';
 import { accountApi } from '../api/account';
 import { checkoutApi } from '../api/checkout';
 import AddressForm from '../components/AddressForm';
-import { PaystackPayment, StripePayment } from '../components/PaymentMethods';
+import { StripePayment } from '../components/PaymentMethods';
 import { Button, EmptyState, Modal, Skeleton } from '../components/ui';
 import { useApp } from '../contexts/AppContext';
 import { useResource } from '../hooks/useResource';
-import { availableStock, calculateNairaQuote, formatAddress, hasDeliveryAddress, isDropship, parseLocation, paymentMode, testPaymentsConfigured } from '../utils/checkout';
+import { availableStock, calculateNairaQuote, formatAddress, hasDeliveryAddress, isDropship, parseLocation, paymentMode } from '../utils/checkout';
 import { imageFor, money } from '../utils/format';
 
 export default function Checkout() {
@@ -48,8 +49,7 @@ export default function Checkout() {
     return stock !== null && Number(item.quantity) > stock;
   });
   const addressText = needsDelivery ? formatAddress(location) : 'Pickup at Kudumart Store';
-  const paymentEnabled = testPaymentsConfigured(mode);
-  const canPay = Boolean(user && items.length && (hasAddress || (!needsDelivery && canPickup)) && !stockIssues.length && !cart.loading && !cart.error && !pendingPayment && paymentEnabled && (mode !== 'NGN' || (!charges.loading && (!needsDelivery || !deliveryFees.loading) && !charges.error && (!needsDelivery || !deliveryFees.error) && quote?.total > 0)));
+  const canPay = Boolean(user && items.length && (hasAddress || (!needsDelivery && canPickup)) && !stockIssues.length && !cart.loading && !cart.error && !pendingPayment && (mode !== 'NGN' || (!charges.loading && (!needsDelivery || !deliveryFees.loading) && !charges.error && (!needsDelivery || !deliveryFees.error) && quote?.total > 0)));
 
   const completeOrder = async payment => {
     if (!payment || confirming) return;
@@ -95,6 +95,29 @@ export default function Checkout() {
     return () => { active = false; };
   }, []);
 
+  const startNaira = async () => {
+    if (!canPay) return;
+    setPreparing(true);
+    setConfirmationError('');
+    try {
+      const prepared = await checkoutApi.prepareNaira();
+      const accessCode = prepared?.paystackDetails?.access_code;
+      if (!prepared?.refId || !accessCode) throw new Error('Paystack did not return a secure payment session.');
+      const pending = { refId: prepared.refId, mode: 'NGN', shippingAddress: addressText, shippingAddressZipCode: location?.zipCode };
+      sessionStorage.setItem('kuduPendingCheckout', JSON.stringify(pending));
+      const paystack = new PaystackPop();
+      paystack.resumeTransaction(accessCode, {
+        onLoad: () => setPreparing(false),
+        onSuccess: result => completeOrder({ ...pending, refId: result?.reference || pending.refId }),
+        onCancel: () => { sessionStorage.removeItem('kuduPendingCheckout'); setPreparing(false); },
+        onError: error => { sessionStorage.removeItem('kuduPendingCheckout'); setConfirmationError(error?.message || 'Paystack could not open the payment session.'); setPreparing(false); },
+      });
+    } catch (error) {
+      setConfirmationError(error.message);
+      setPreparing(false);
+    }
+  };
+
   const startDollar = async () => {
     if (!canPay) return;
     setPreparing(true);
@@ -121,14 +144,12 @@ export default function Checkout() {
         </section>
         <section className="checkout-panel">
           <div className="checkout-panel__heading"><div className="checkout-step">2</div><div><h2>Payment</h2><p>Protected payment, with your details reviewed first.</p></div></div>
-          {paymentEnabled && <p className="checkout-summary__hint">Test payment gateway</p>}
           {stockIssues.length > 0 && <div className="form-alert" role="alert">Some items are no longer available in the requested quantity. <Link to="/cart">Update your cart</Link> before paying.</div>}
           {mode === 'NGN' && (hasAddress || !needsDelivery) && !quote && !charges.loading && !deliveryFees.loading && <div className="form-alert" role="alert">We couldn’t calculate a valid total. Review your cart before paying.</div>}
           {pendingPayment ? <div className="checkout-warning"><strong>Payment verification pending</strong><p>{confirmationError || `Checking reference ${pendingPayment.refId} with the payment provider. Do not pay again.`}</p><Button variant="outline" loading={confirming} onClick={() => completeOrder(pendingPayment)}>Retry verification</Button></div>
             : needsDelivery && !hasAddress ? <div className="checkout-warning"><MapPin size={20}/><div><strong>Add a delivery address to continue</strong><p>We’ll show the final delivery cost and unlock payment once your address is saved.</p></div></div>
-            : !paymentEnabled ? <div className="checkout-warning"><LockKeyhole size={20}/><div><strong>Test payments are unavailable</strong><p>A test payment key is required before checkout can continue.</p></div></div>
-            : mode === 'NGN' ? charges.error || (needsDelivery && deliveryFees.error) ? <div className="form-alert">We couldn’t verify the current charges or delivery fee. Please try again.</div> : <PaystackPayment amount={quote?.total || 0} email={user.email} onPaid={completeOrder} disabled={!canPay}/>
-            : paymentReady ? <StripePayment clientSecret={paymentReady.clientSecret} amount={money(paymentReady.totalAmount, '$')} onPaid={completeOrder} onError={setConfirmationError}/>
+            : mode === 'NGN' ? charges.error || (needsDelivery && deliveryFees.error) ? <div className="form-alert">We couldn’t verify the current charges or delivery fee. Please try again.</div> : <Button className="checkout-pay-button" type="button" icon={CreditCard} onClick={startNaira} disabled={!canPay} loading={preparing}>Continue to secure payment</Button>
+            : paymentReady ? <StripePayment clientSecret={paymentReady.clientSecret} publicKey={paymentReady.publicKey} amount={money(paymentReady.totalAmount, '$')} onPaid={completeOrder} onError={setConfirmationError}/>
             : <Button loading={preparing} disabled={!canPay} onClick={startDollar} icon={CreditCard}>Continue to secure payment</Button>}
           {confirmationError && !pendingPayment && <div className="form-alert" role="alert">{confirmationError}</div>}
         </section>
