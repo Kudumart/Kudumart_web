@@ -9,6 +9,8 @@ import { useDispatch } from "react-redux";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import Loader from "../../../components/Loader";
 import Button from "../../../components/Button";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 export default function ProfileSettings() {
   const { user } = useAppState();
@@ -17,7 +19,8 @@ export default function ProfileSettings() {
   const parsedLocation = user.location ? user.location : {};
 
   const [isLoading, setIsLoading] = useState(true);
-  const { mutate } = useApiMutation();
+  const { mutate, isPending: isProfileSaving } = useApiMutation();
+  const { mutate: updatePhone, isPending: isPhoneSaving } = useApiMutation();
   const dispatch = useDispatch();
 
   const {
@@ -31,6 +34,7 @@ export default function ProfileSettings() {
       firstName: user?.firstName || "",
       lastName: user?.lastName || "",
       email: user?.email || "",
+      phoneNumber: user?.phoneNumber || "",
       gender: user?.gender || "",
       country: parsedLocation.country || "",
       state: parsedLocation.state || "",
@@ -118,6 +122,7 @@ export default function ProfileSettings() {
       setValue("firstName", user.firstName || "");
       setValue("lastName", user.lastName || "");
       setValue("email", user.email || "");
+      setValue("phoneNumber", user.phoneNumber || "");
       setValue("gender", user.gender || "");
 
       if (parsedLocation.country) {
@@ -160,7 +165,7 @@ export default function ProfileSettings() {
     }
   }, [user, countries]);
 
-  const onSubmit = (data) => {
+  const saveProfile = (data) => {
     const payload = {
       ...data,
       location: { country: data.country, state: data.state, city: data.city },
@@ -183,6 +188,28 @@ export default function ProfileSettings() {
         setIsLoading(false);
       },
     });
+  };
+
+  const onSubmit = (data) => {
+    const normalizedPhoneNumber = data.phoneNumber
+      ? `+${String(data.phoneNumber).replace(/\D/g, "")}`
+      : "";
+    const currentPhoneNumber = user?.phoneNumber
+      ? `+${String(user.phoneNumber).replace(/\D/g, "")}`
+      : "";
+
+    if (normalizedPhoneNumber && normalizedPhoneNumber !== currentPhoneNumber) {
+      updatePhone({
+        url: "/user/profile/update/phone",
+        method: "PUT",
+        data: { newPhoneNumber: normalizedPhoneNumber },
+        headers: true,
+        onSuccess: () => saveProfile({ ...data, phoneNumber: normalizedPhoneNumber }),
+      });
+      return;
+    }
+
+    saveProfile(data);
   };
 
   if (isLoading) {
@@ -282,6 +309,50 @@ export default function ProfileSettings() {
 
           <div>
             <label
+              htmlFor="phoneNumber"
+              className="block text-sm font-medium mb-4 mt-4"
+            >
+              Phone Number
+            </label>
+            <PhoneInput
+              country="ng"
+              value={watch("phoneNumber")}
+              onChange={(value) =>
+                setValue("phoneNumber", value, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+              inputProps={{
+                id: "phoneNumber",
+                name: "phoneNumber",
+                required: true,
+                autoComplete: "tel",
+              }}
+              inputClass="!w-full !h-[58px] !bg-gray-50 !border-gray-200 !rounded-lg"
+              buttonClass="!bg-gray-50 !border-gray-200 !rounded-l-lg"
+              containerClass="!w-full"
+              enableSearch
+              countryCodeEditable={false}
+            />
+            <input
+              type="hidden"
+              {...register("phoneNumber", {
+                required: "Phone number is required",
+                validate: (value) =>
+                  String(value || "").replace(/\D/g, "").length >= 10 ||
+                  "Enter a valid phone number",
+              })}
+            />
+            {errors.phoneNumber && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.phoneNumber.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
               htmlFor="gender"
               className="block text-sm font-medium mb-4 mt-4"
             >
@@ -362,8 +433,8 @@ export default function ProfileSettings() {
             <Button
               type="submit"
               variant="primary"
-              disabled={isLoading}
-              isLoading={isLoading}
+              disabled={isProfileSaving || isPhoneSaving}
+              isLoading={isProfileSaving || isPhoneSaving}
               className="py-4 px-4 text-xs"
             >
               Update Infos
