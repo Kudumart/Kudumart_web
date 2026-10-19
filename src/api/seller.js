@@ -42,9 +42,9 @@ export const sellerApi = {
   serviceBookings: (page = 1, status = '', signal) => request('/vendor/service/bookings', { authenticated: true, params: { page, limit: 10, status }, signal }),
   confirmServiceBooking: async bookingId => unwrap(await request(`/vendor/service/bookings/${bookingId}/confirm`, { method: 'PATCH', authenticated: true })),
   cancelServiceBooking: async bookingId => unwrap(await request(`/vendor/service/bookings/${bookingId}/cancel`, { method: 'PATCH', authenticated: true })),
-  serviceCategories: async signal => unwrap(await request('/service/categories', { params: { page: 1, limit: 100 }, signal })),
-  serviceSubCategories: async (categoryId, signal) => unwrap(await request(`/service/subcategories/${categoryId}`, { params: { page: 1, limit: 100 }, signal })),
-  serviceAttributes: async (categoryId, signal) => unwrap(await request(`/services/categories/${categoryId}/attributes`, { params: { page: 1, limit: 100 }, signal })),
+  serviceCategories: async signal => unwrap(await request('/service/categories', { params: { page: 1, limit: 50 }, signal })),
+  serviceSubCategories: async (categoryId, signal) => unwrap(await request(`/service/subcategories/${categoryId}`, { params: { page: 1, limit: 50 }, signal })),
+  serviceAttributes: async (categoryId, signal) => unwrap(await request(`/services/categories/${categoryId}/attributes`, { params: { page: 1, limit: 50 }, signal })),
 };
 
 export async function uploadSellerImage(file) {
