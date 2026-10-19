@@ -109,7 +109,9 @@ export function SellerServiceForm() {
       const imageUrl = mainFile ? await uploadSellerImage(mainFile) : form.image_url;
       if (!imageUrl) throw new Error('Add a main service image.');
       const uploaded = await Promise.all(extraFiles.map(uploadSellerImage));
-      const payload = { ...form, image_url: imageUrl, price: Number(form.price), discount_price: form.discount_price ? Number(form.discount_price) : '', work_experience_years: Number(form.work_experience_years), service_category_id: Number(form.service_category_id), service_subcategory_id: Number(form.service_subcategory_id), is_negotiable: !!form.is_negotiable, additional_images: [...existingImages, ...uploaded], attributes: attributes.map(attribute => ({ attributeId: Number(attribute.id), value: attributeValues[attribute.id] })).filter(item => item.value !== '' && item.value !== undefined && item.value !== null && (!Array.isArray(item.value) || item.value.length)) };
+      const additionalImages = [...existingImages, ...uploaded];
+      const serviceAttributes = attributes.map(attribute => ({ attributeId: Number(attribute.id), value: attributeValues[attribute.id] })).filter(item => item.value !== '' && item.value !== undefined && item.value !== null && (!Array.isArray(item.value) || item.value.length));
+      const payload = { ...form, image_url: imageUrl, price: Number(form.price), discount_price: form.discount_price ? Number(form.discount_price) : '', work_experience_years: Number(form.work_experience_years), service_category_id: Number(form.service_category_id), service_subcategory_id: Number(form.service_subcategory_id), is_negotiable: !!form.is_negotiable, ...(additionalImages.length ? { additional_images: additionalImages } : {}), ...(serviceAttributes.length ? { attributes: serviceAttributes } : {}) };
       if (id) await sellerApi.updateService(id, payload); else await sellerApi.createService(payload);
       notify(id ? 'Service updated.' : 'Service created as an unpublished listing.', 'success');
       navigate('/seller/services');
