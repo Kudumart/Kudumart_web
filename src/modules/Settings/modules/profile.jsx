@@ -28,7 +28,7 @@ export default function ProfileSettings() {
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, submitCount },
   } = useForm({
     defaultValues: {
       firstName: user?.firstName || "",
@@ -253,6 +253,14 @@ export default function ProfileSettings() {
           className="grid grid-cols-2 gap-6"
           onSubmit={handleSubmit(onSubmit)}
         >
+          {submitCount > 0 && Object.keys(errors).length > 0 && (
+            <div
+              className="col-span-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+              role="alert"
+            >
+              Please complete the highlighted fields before updating your profile.
+            </div>
+          )}
           <div>
             <label
               htmlFor="firstName"
@@ -378,7 +386,9 @@ export default function ProfileSettings() {
           <div>
             <label className="block text-sm font-medium">Country</label>
             <select
-              className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg"
+              className={`w-full px-4 py-4 bg-gray-100 border rounded-lg ${
+                errors.country ? "border-red-500" : "border-gray-100"
+              }`}
               {...register("country", { required: "Country is required" })}
             >
               <option value="" disabled>
@@ -390,13 +400,20 @@ export default function ProfileSettings() {
                 </option>
               ))}
             </select>
+            {errors.country && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.country.message}
+              </p>
+            )}
           </div>
 
           {/* State Dropdown */}
           <div>
             <label className="block text-sm font-medium">State</label>
             <select
-              className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg"
+              className={`w-full px-4 py-4 bg-gray-100 border rounded-lg ${
+                errors.state ? "border-red-500" : "border-gray-100"
+              }`}
               {...register("state", { required: "State is required" })}
               disabled={!selectedCountryName}
             >
@@ -409,13 +426,20 @@ export default function ProfileSettings() {
                 </option>
               ))}
             </select>
+            {errors.state && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.state.message}
+              </p>
+            )}
           </div>
 
           {/* City Dropdown */}
           <div className="col-span-2">
             <label className="block text-sm font-medium">City</label>
             <select
-              className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg"
+              className={`w-full px-4 py-4 bg-gray-100 border rounded-lg ${
+                errors.city ? "border-red-500" : "border-gray-100"
+              }`}
               {...register("city", { required: "City is required" })}
               disabled={!selectedStateName}
             >
@@ -428,6 +452,11 @@ export default function ProfileSettings() {
                 </option>
               ))}
             </select>
+            {errors.city && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.city.message}
+              </p>
+            )}
           </div>
           <div className="col-span-2 flex justify-start">
             <Button
