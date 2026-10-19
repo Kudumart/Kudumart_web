@@ -32,6 +32,19 @@ export const sellerApi = {
   product: async (productId, signal) => unwrap(await request('/vendor/product', { authenticated: true, params: { productId }, signal })),
   categories: async signal => unwrap(await request('/categories', { signal })),
   subCategories: async (categoryId, signal) => unwrap(await request('/category/sub-categories', { params: { categoryId }, signal })),
+  services: (page = 1, signal) => optionalList('/vendor/services', { params: { page, limit: 50 }, signal }),
+  service: async (serviceId, signal) => unwrap(await request(`/vendor/services/${serviceId}`, { authenticated: true, signal })),
+  createService: async values => unwrap(await request('/vendor/services', { method: 'POST', authenticated: true, body: values })),
+  updateService: async (serviceId, values) => unwrap(await request(`/vendor/services/${serviceId}`, { method: 'PUT', authenticated: true, body: values })),
+  deleteService: async serviceId => request(`/vendor/services/${serviceId}`, { method: 'DELETE', authenticated: true }),
+  publishService: async serviceId => request(`/vendor/services/${serviceId}/publish`, { method: 'PATCH', authenticated: true }),
+  unpublishService: async serviceId => request(`/vendor/services/${serviceId}/unpublish`, { method: 'PATCH', authenticated: true }),
+  serviceBookings: (page = 1, status = '', signal) => request('/vendor/service/bookings', { authenticated: true, params: { page, limit: 10, status }, signal }),
+  confirmServiceBooking: async bookingId => unwrap(await request(`/vendor/service/bookings/${bookingId}/confirm`, { method: 'PATCH', authenticated: true })),
+  cancelServiceBooking: async bookingId => unwrap(await request(`/vendor/service/bookings/${bookingId}/cancel`, { method: 'PATCH', authenticated: true })),
+  serviceCategories: async signal => unwrap(await request('/service/categories', { params: { page: 1, limit: 100 }, signal })),
+  serviceSubCategories: async (categoryId, signal) => unwrap(await request(`/service/subcategories/${categoryId}`, { params: { page: 1, limit: 100 }, signal })),
+  serviceAttributes: async (categoryId, signal) => unwrap(await request(`/services/categories/${categoryId}/attributes`, { params: { page: 1, limit: 100 }, signal })),
 };
 
 export async function uploadSellerImage(file) {
