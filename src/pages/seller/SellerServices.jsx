@@ -99,7 +99,8 @@ export function SellerServiceForm() {
   const removeMainImage = () => { setMainFile(null); setForm(current => ({ ...current, image_url: '' })); };
   const addSupportingImages = event => {
     const remaining = Math.max(0, 3 - existingImages.length - extraFiles.length);
-    setExtraFiles(current => [...current, ...Array.from(event.target.files || []).slice(0, remaining)]);
+    const selected = Array.from(event.target.files || []).slice(0, remaining);
+    setExtraFiles(current => [...current, ...selected]);
     event.target.value = '';
   };
   const submit = async event => {
