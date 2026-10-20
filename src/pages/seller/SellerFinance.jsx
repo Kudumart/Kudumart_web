@@ -1,7 +1,7 @@
-import { CheckCircle2, Landmark, ShieldCheck, WalletCards } from 'lucide-react';
+import { CheckCircle2, Landmark, ShieldCheck, Trash2, WalletCards } from 'lucide-react';
 import { useState } from 'react';
 import { sellerApi, sellerList } from '../../api/seller';
-import { Button, EmptyState, SelectField, Skeleton, TextField } from '../../components/ui';
+import { Button, ConfirmModal, EmptyState, SelectField, Skeleton, TextField } from '../../components/ui';
 import { useApp } from '../../contexts/AppContext';
 import { useResource } from '../../hooks/useResource';
 import { money } from '../../utils/format';
@@ -17,6 +17,8 @@ export default function SellerFinance() {
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
   const [values, setValues] = useState(emptyBank);
+  const [bankToDelete, setBankToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const supportedBanks = useResource(signal => sellerApi.supportedBanks(signal), []);
   const finance = useResource(async signal => {
     const [wallet, savedBanks, transactions, plans] = await Promise.allSettled([
@@ -72,6 +74,17 @@ export default function SellerFinance() {
     } catch (failure) { setError(failure.message || 'The payout account could not be added.'); }
     finally { setBusy(false); }
   };
+  const deleteBank = async () => {
+    if (!bankToDelete) return;
+    setDeleting(true);
+    try {
+      await sellerApi.deleteBank(bankToDelete.id);
+      notify('Payout account deleted.', 'success');
+      setBankToDelete(null);
+      setRefresh(value => value + 1);
+    } catch (failure) { notify(failure.message || 'The payout account could not be deleted.', 'error'); }
+    finally { setDeleting(false); }
+  };
 
   return <>
     <SellerHeading eyebrow="MONEY" title="Finance" description="See pending sales, available funds, payout accounts, and transaction history."/>
@@ -90,6 +103,7 @@ export default function SellerFinance() {
             <span className="seller-bank-card__details"><strong>{bank.bankName || bank.bankInfo?.bankName}</strong><small>{bank.accountHolderName || bank.bankInfo?.accountName}</small></span>
             <span className="seller-bank-card__number">•••• {String(bank.accountNumber || bank.bankInfo?.accountNumber || '').slice(-4)}</span>
             <span className="seller-bank-card__verified"><CheckCircle2 size={15}/> Saved</span>
+            <button type="button" className="seller-bank-card__delete" aria-label={`Delete ${bank.bankName || bank.bankInfo?.bankName} payout account`} title="Delete payout account" onClick={() => setBankToDelete(bank)}><Trash2 size={17}/></button>
           </div>)}</div> : <EmptyState icon={Landmark} title="No payout account" description={user?.isVerified ? 'Add the account where withdrawals should be paid.' : 'Your KYC must be approved before adding a payout account.'}/>}
           {user?.isVerified && <form className="seller-form seller-bank-form" onSubmit={addBank}>
             <div className="seller-form-grid">
@@ -115,5 +129,6 @@ export default function SellerFinance() {
         </section>
       </div>
     </>}
+    {bankToDelete && <ConfirmModal title="Delete payout account?" description={<>Remove <strong>{bankToDelete.bankName || bankToDelete.bankInfo?.bankName}</strong> ending in <strong>{String(bankToDelete.accountNumber || bankToDelete.bankInfo?.accountNumber || '').slice(-4)}</strong>? It will no longer be available for withdrawals.</>} confirmLabel="Delete account" loading={deleting} onClose={() => setBankToDelete(null)} onConfirm={deleteBank}/>}
   </>;
 }

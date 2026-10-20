@@ -19,6 +19,7 @@ export const sellerApi = {
   supportedBanks: signal => optionalList('/vendor/banks', { signal }),
   resolveBank: async (bankCode, accountNumber) => unwrap(await request('/vendor/bank/resolve', { authenticated: true, params: { bankCode, accountNumber } })),
   addBank: async values => unwrap(await request('/vendor/bank/informations/v2', { method: 'POST', authenticated: true, body: values })),
+  deleteBank: async bankId => unwrap(await request('/vendor/bank/information', { method: 'DELETE', authenticated: true, params: { bankId } })),
   withdrawals: signal => optionalList('/vendor/withdrawals', { signal }),
   requestWithdrawal: async values => unwrap(await request('/vendor/withdrawal', { method: 'POST', authenticated: true, body: values })),
   subscriptionPlans: async signal => unwrap(await request('/vendor/subscription/plans', { authenticated: true, signal })),
