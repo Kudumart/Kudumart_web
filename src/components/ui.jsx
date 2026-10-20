@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { AlertCircle, Check, Info, Trash2, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 export function Button({ variant = 'primary', size = 'md', loading = false, icon: Icon, children, className = '', ...props }) {
   return <button className={`button button--${variant} button--${size} ${className}`} disabled={loading || props.disabled} {...props}>{loading ? <span className="spinner" aria-hidden="true"/> : Icon ? <Icon size={18} strokeWidth={2.1}/> : null}<span>{children}</span></button>;
@@ -22,7 +23,14 @@ export function ConfirmModal({ title, description, confirmLabel = 'Confirm', can
   return <Modal title={title} onClose={loading ? () => {} : onClose} footer={<><Button variant="ghost" disabled={loading} onClick={onClose}>{cancelLabel}</Button><Button variant={tone === 'danger' ? 'danger' : 'primary'} loading={loading} onClick={onConfirm}>{confirmLabel}</Button></>}><div className={`confirm-modal confirm-modal--${tone}`}><span className="confirm-modal__icon"><Icon size={22}/></span><p>{description}</p></div></Modal>;
 }
 export function AppOverlays() {
-  const { toasts, setToasts, modal, setModal } = useApp();
+  const { toasts, setToasts, modal, setModal, sessionExpired, setSessionExpired, signOut } = useApp();
+  const navigate = useNavigate();
   const icons = { success: Check, error: AlertCircle, info: Info };
-  return <><div className="toast-stack" aria-live="polite">{toasts.map(toast => { const Icon = icons[toast.type] || Info; return <div className={`toast toast--${toast.type}`} role="status" key={toast.id}><span className="toast__icon"><Icon size={17}/></span><span>{toast.message}</span><button aria-label="Dismiss notification" onClick={() => setToasts(items => items.filter(item => item.id !== toast.id))}><X size={16}/></button></div>; })}</div>{modal && <Modal title={modal.title} footer={modal.footer} onClose={() => setModal(null)}>{modal.content}</Modal>}</>;
+  const signInAgain = () => {
+    const returnTo = sessionExpired?.returnTo || '/account';
+    setSessionExpired(null);
+    signOut();
+    navigate('/login', { replace: true, state: { from: returnTo } });
+  };
+  return <><div className="toast-stack" aria-live="polite">{toasts.map(toast => { const Icon = icons[toast.type] || Info; return <div className={`toast toast--${toast.type}`} role="status" key={toast.id}><span className="toast__icon"><Icon size={17}/></span><span>{toast.message}</span><button aria-label="Dismiss notification" onClick={() => setToasts(items => items.filter(item => item.id !== toast.id))}><X size={16}/></button></div>; })}</div>{sessionExpired ? <Modal title="Your session has expired" footer={<Button onClick={signInAgain}>Sign in again</Button>} onClose={signInAgain}><div className="confirm-modal"><span className="confirm-modal__icon"><AlertCircle size={22}/></span><p>For your security, please sign in again to continue where you left off.</p></div></Modal> : modal && <Modal title={modal.title} footer={modal.footer} onClose={() => setModal(null)}>{modal.content}</Modal>}</>;
 }

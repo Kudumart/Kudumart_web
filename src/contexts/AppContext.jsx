@@ -35,6 +35,14 @@ export function AppProvider({ children }) {
   const markUnsaved = productId => setSavedIds(ids => { const next = new Set(ids); next.delete(productId); return next; });
   const [toasts, setToasts] = useState([]);
   const [modal, setModal] = useState(null);
+  const [sessionExpired, setSessionExpired] = useState(null);
+  useEffect(() => {
+    const handleSessionExpired = event => setSessionExpired(current => current || {
+      returnTo: event.detail?.returnTo || '/account',
+    });
+    window.addEventListener('kudu:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('kudu:session-expired', handleSessionExpired);
+  }, []);
   const notify = (message, type = 'info') => {
     const id = crypto.randomUUID();
     setToasts(items => [...items, { id, message, type }]);
@@ -54,7 +62,7 @@ export function AppProvider({ children }) {
     setUser(profile);
   };
   const signOut = () => { tokenStore.clear(); localStorage.removeItem('kuduUser'); sessionStorage.removeItem('kuduPendingCheckout'); setUser(null); setCartCount(0); setSavedIds(new Set()); };
-  const value = useMemo(() => ({ country, countries: COUNTRIES, changeCountry, user, signIn, updateUser, signOut, cartCount, setCartCount, savedIds, markSaved, markUnsaved, toasts, setToasts, notify, modal, setModal }), [country, user, cartCount, savedIds, toasts, modal]);
+  const value = useMemo(() => ({ country, countries: COUNTRIES, changeCountry, user, signIn, updateUser, signOut, cartCount, setCartCount, savedIds, markSaved, markUnsaved, toasts, setToasts, notify, modal, setModal, sessionExpired, setSessionExpired }), [country, user, cartCount, savedIds, toasts, modal, sessionExpired]);
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 export const useApp = () => useContext(AppContext);
