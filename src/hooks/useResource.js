@@ -4,8 +4,14 @@ export function useResource(loader, dependencies = []) {
   useEffect(() => {
     const controller = new AbortController();
     setState(previous => ({ ...previous, loading: true, error: null }));
-    loader(controller.signal).then(data => setState({ data, loading: false, error: null })).catch(error => {
-      if (error.name !== 'AbortError') setState({ data: null, loading: false, error });
+    loader(controller.signal).then(data => {
+      if (!controller.signal.aborted) {
+        setState({ data, loading: false, error: null });
+      }
+    }).catch(error => {
+      if (!controller.signal.aborted && error.name !== 'AbortError') {
+        setState({ data: null, loading: false, error });
+      }
     });
     return () => controller.abort();
   }, dependencies);

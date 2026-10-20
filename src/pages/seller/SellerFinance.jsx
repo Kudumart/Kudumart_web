@@ -27,7 +27,11 @@ export default function SellerFinance() {
       banks: savedBanks.status === 'fulfilled' ? sellerList(savedBanks.value) : [],
       transactions: transactions.status === 'fulfilled' ? transactionList(transactions.value) : [],
       plans: plans.status === 'fulfilled' ? sellerList(plans.value) : [],
-      error: [wallet, savedBanks, transactions, plans].some(result => result.status === 'rejected' && result.reason?.status !== 404),
+      error: [wallet, savedBanks, transactions, plans].some(result => (
+        result.status === 'rejected'
+        && result.reason?.name !== 'AbortError'
+        && result.reason?.status !== 404
+      )),
     };
   }, [user?.id, refresh]);
   const data = finance.data || {};
