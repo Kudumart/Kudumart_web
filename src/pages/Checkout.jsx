@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CreditCard, MapPin, PackageCheck, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, CreditCard, MapPin, PackageCheck, ShieldCheck } from 'lucide-react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import PaystackPop from '@paystack/inline-js';
@@ -12,9 +12,10 @@ import { useApp } from '../contexts/AppContext';
 import { useResource } from '../hooks/useResource';
 import { availableStock, calculateNairaQuote, formatAddress, hasDeliveryAddress, isDropship, parseLocation, paymentMode } from '../utils/checkout';
 import { imageFor, money } from '../utils/format';
+import './Checkout.css';
 
 export default function Checkout() {
-  const { user, country, notify, setCartCount } = useApp();
+  const { user, country, setCartCount } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showAddress, setShowAddress] = useState(false);
@@ -23,6 +24,7 @@ export default function Checkout() {
   const [preparing, setPreparing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [confirmationError, setConfirmationError] = useState('');
+  const [orderSuccess, setOrderSuccess] = useState(false);
   const [pendingPayment, setPendingPayment] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('kuduPendingCheckout') || 'null'); }
     catch { return null; }
@@ -74,8 +76,7 @@ export default function Checkout() {
       sessionStorage.removeItem('kuduPendingCheckout');
       setPendingPayment(null);
       setCartCount(0);
-      notify('Your order is confirmed.', 'success');
-      navigate('/account/orders', { replace: true });
+      setOrderSuccess(true);
     } catch (error) {
       setConfirmationError(`We could not verify payment reference ${pending.refId}: ${error.message}. Do not pay again. Retry verification or contact support with this reference.`);
     } finally { setConfirming(false); }
@@ -158,5 +159,6 @@ export default function Checkout() {
           : paymentReady ? <><div className="checkout-summary__row"><span>Items</span><strong>{money(paymentReady.paymentBreakdown?.subtotal, '$')}</strong></div><div className="checkout-summary__row"><span>Charges</span><strong>{money(paymentReady.paymentBreakdown?.chargeAmount, '$')}</strong></div><div className="checkout-summary__total"><span>Total</span><strong>{money(paymentReady.totalAmount, '$')}</strong></div></> : <p className="checkout-summary__hint">{needsDelivery && !hasAddress ? 'Add a delivery address to see your final total.' : 'Your final dollar total comes from the payment quote before you pay.'}</p>}
         <p className="checkout-summary__assurance"><ShieldCheck size={17}/> Your order is confirmed only after payment is verified.</p></aside></div>}
     {showAddress && <Modal title="Delivery address" onClose={() => setShowAddress(false)}><AddressForm onSaved={() => { setShowAddress(false); setPaymentReady(null); }} onCancel={() => setShowAddress(false)}/></Modal>}
+    {orderSuccess && <Modal title="Order confirmed" icon={<CheckCircle2 size={20}/>} onClose={() => navigate('/account/orders', { replace: true })} footer={<Button icon={PackageCheck} onClick={() => navigate('/account/orders', { replace: true })}>View my orders</Button>}><div className="checkout-success"><span className="checkout-success__icon"><CheckCircle2 size={38}/></span><h3>Thank you for your order!</h3><p>Your payment was verified and your order has been placed successfully. You can follow its progress from your orders page.</p></div></Modal>}
   </div>;
 }
