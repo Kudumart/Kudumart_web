@@ -23,7 +23,7 @@ export async function request(path, { method = 'GET', body, params, signal, auth
   });
   let payload;
   try { payload = await response.json(); } catch { payload = null; }
-  if (response.status === 401 && authenticated && token) {
+  if (response.status === 401 && authenticated && token && tokenStore.get() === token) {
     tokenStore.clear();
     window.dispatchEvent(new CustomEvent('kudu:session-expired', {
       detail: { returnTo: `${window.location.pathname}${window.location.search}${window.location.hash}` },

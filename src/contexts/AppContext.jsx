@@ -51,6 +51,7 @@ export function AppProvider({ children }) {
   const changeCountry = value => { setCountry(value); localStorage.setItem('kuduCountry', value.name); };
   const signIn = data => {
     tokenStore.set(data.token);
+    setSessionExpired(null);
     const profile = profileFrom(data);
     localStorage.setItem('kuduUser', JSON.stringify(profile));
     setUser(profile);
