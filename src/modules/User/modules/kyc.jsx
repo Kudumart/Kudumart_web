@@ -23,6 +23,7 @@ export default function UpdatedKYC() {
   const isVendor = user?.accountType !== 'Customer';
 
   const [updatedKYC] = useUpdateKycMutation();
+  const isKycVerified = Boolean(kycData.isVerified);
 
   const cardOptions = [
     {
@@ -81,6 +82,11 @@ export default function UpdatedKYC() {
       }).finally(() => {
         setIsLoading(false);
       });
+  };
+
+  const onInvalid = (errors) => {
+    const firstError = Object.values(errors)[0];
+    toast.error(firstError?.message || "Please complete the required fields before updating KYC.");
   };
 
 
@@ -161,7 +167,7 @@ export default function UpdatedKYC() {
       <h2 className="text-lg font-bold mb-2">KYC</h2>
       <div className='w-full h-[5px] mb-4 border' />
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)}>
         <div className="mb-8">
           <h3 className="font-semibold text-black-500 mb-4">Business Information</h3>
 
@@ -246,7 +252,7 @@ export default function UpdatedKYC() {
                 style={{ outline: "none", }}
                 className="border rounded-sm p-2 w-full"
                 {...register("businessRegistrationNumber")}
-                disabled={Boolean(kycData.isVerified)}
+                disabled={isKycVerified}
               />
             </div>
           </div>
@@ -258,11 +264,11 @@ export default function UpdatedKYC() {
               <div className='w-[49%]'>
                 <label className="block text-sm font-medium mb-3">Card Name</label>
                 <select
-                  {...register("name", { required: "Card Name is required" })}
+                  {...register("name", { required: isKycVerified ? false : "Card Name is required" })}
                   className="w-full px-4 py-3 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
                   style={{ outline: "none" }}
-                  required
-                  disabled={Boolean(kycData.isVerified)}
+                  required={!isKycVerified}
+                  disabled={isKycVerified}
                 >
                   <option value="" disabled>Select Card</option>
                   {cardOptions.map((card) => (
@@ -279,9 +285,9 @@ export default function UpdatedKYC() {
                   name="number"
                   style={{ outline: "none", }}
                   className="border rounded-sm p-2 w-full"
-                  {...register("number", { required: "Number is required" })}
-                  required
-                  disabled={Boolean(kycData.isVerified)}
+                  {...register("number", { required: isKycVerified ? false : "Card number is required" })}
+                  required={!isKycVerified}
+                  disabled={isKycVerified}
                 />
               </div>
             </div>
@@ -294,22 +300,22 @@ export default function UpdatedKYC() {
                   name="expiryDate"
                   style={{ outline: "none", }}
                   className="border rounded-sm p-2 w-full"
-                  {...register("expiryDate", { required: "Card Expiry Date is required" })}
-                  required
-                  disabled={Boolean(kycData.isVerified)}
+                  {...register("expiryDate", { required: isKycVerified ? false : "Card expiration date is required" })}
+                  required={!isKycVerified}
+                  disabled={isKycVerified}
                 />
               </div>
             </div>
 
           </div>
-          {kycData.isVerified && (
+          {isKycVerified && (
             <p className="mt-3 text-sm text-gray-500">
               Your registration and identity details are locked after verification. You can still update your business and contact information.
             </p>
           )}
         </div>
 
-        <button disabled={isLoading} className="bg-kudu-orange disabled:opacity-60 text-white py-2 px-6 rounded-lg md:min-w-[160px] w-full">
+        <button type="submit" disabled={isLoading} className="bg-kudu-orange disabled:opacity-60 text-white py-2 px-6 rounded-lg md:min-w-[160px] w-full">
           {isLoading ? <PulseLoader color="#ffffff" size={5} /> : Object.keys(kycData || {}).length ? "Update KYC" : "Submit KYC"}
         </button>
       </form>
