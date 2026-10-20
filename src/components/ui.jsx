@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { AlertCircle, Check, Info, X } from 'lucide-react';
+import { AlertCircle, Check, Info, Trash2, X } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 export function Button({ variant = 'primary', size = 'md', loading = false, icon: Icon, children, className = '', ...props }) {
   return <button className={`button button--${variant} button--${size} ${className}`} disabled={loading || props.disabled} {...props}>{loading ? <span className="spinner" aria-hidden="true"/> : Icon ? <Icon size={18} strokeWidth={2.1}/> : null}<span>{children}</span></button>;
@@ -16,6 +16,10 @@ export function Modal({ title, children, footer, onClose }) {
   onCloseRef.current = onClose;
   useEffect(() => { closeRef.current?.focus(); const onKey = event => { if (event.key === 'Escape') onCloseRef.current(); }; document.addEventListener('keydown', onKey); document.body.style.overflow = 'hidden'; return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; }; }, []);
   return <div className="modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section className="modal" role="dialog" aria-modal="true" aria-label={title}><div className="modal__head"><h2>{title}</h2><button ref={closeRef} className="icon-button" aria-label="Close dialog" onClick={onClose}><X size={20}/></button></div><div className="modal__body">{children}</div>{footer && <div className="modal__footer">{footer}</div>}</section></div>;
+}
+export function ConfirmModal({ title, description, confirmLabel = 'Confirm', cancelLabel = 'Cancel', tone = 'danger', loading = false, onConfirm, onClose }) {
+  const Icon = tone === 'danger' ? Trash2 : AlertCircle;
+  return <Modal title={title} onClose={loading ? () => {} : onClose} footer={<><Button variant="ghost" disabled={loading} onClick={onClose}>{cancelLabel}</Button><Button variant={tone === 'danger' ? 'danger' : 'primary'} loading={loading} onClick={onConfirm}>{confirmLabel}</Button></>}><div className={`confirm-modal confirm-modal--${tone}`}><span className="confirm-modal__icon"><Icon size={22}/></span><p>{description}</p></div></Modal>;
 }
 export function AppOverlays() {
   const { toasts, setToasts, modal, setModal } = useApp();
