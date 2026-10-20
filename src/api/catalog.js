@@ -12,6 +12,13 @@ export const catalogApi = {
   service: async (id, signal) => unwrap(await request(`/service/${id}`, { signal })),
   serviceReviews: async (id, signal) => unwrap(await request(`/services/${id}/reviews`, { params: { page: 1, limit: 20 }, signal })),
   activeAuctions: async (country, signal) => asList(unwrap(await request('/auction/products', { params: { country, limit: 100 }, signal }))).filter(item => ['ongoing', 'upcoming'].includes(item.auctionStatus)),
-  auctions: async (country, signal) => (await catalogApi.activeAuctions(country, signal)).slice(0, 12),
+  auctions: async (country, signal) => {
+    let items = asList(unwrap(await request('/auction/products', { params: { country, limit: 100 }, signal })));
+    if (!items.length && country) items = asList(unwrap(await request('/auction/products', { params: { limit: 100 }, signal })));
+    return [...new Map(items.filter(item => item?.id).map(item => [item.id, item])).values()].sort((a, b) => {
+      const priority = status => status === 'ongoing' ? 1 : status === 'upcoming' ? 2 : 3;
+      return priority(a.auctionStatus) - priority(b.auctionStatus) || new Date(b.createdAt || b.startDate || 0) - new Date(a.createdAt || a.startDate || 0);
+    });
+  },
   services: async (signal) => asList(unwrap(await request('/services', { params: { limit: 4 }, signal }))),
 };
