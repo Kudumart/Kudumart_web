@@ -7,7 +7,7 @@
     transition: grid-template-columns 0.2s ease;
   }
 
-  .seller-shell--collapsed {
+  .seller-shell.seller-shell--collapsed {
     grid-template-columns: 78px minmax(0, 1fr);
   }
 
