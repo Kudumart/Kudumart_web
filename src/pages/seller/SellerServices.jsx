@@ -50,7 +50,7 @@ export function SellerServices() {
       else await sellerApi.publishService(service.id);
       notify(service.status === 'active' ? 'Service unpublished.' : 'Service published.', 'success');
       setRevision(value => value + 1);
-    } catch (error) { notify(error.message, 'error'); }
+    } catch (error) { notify(error.message, 'error'); if (/subscription|upgrade your plan/i.test(error.message)) navigate('/seller/subscriptions'); }
     finally { setBusyId(''); }
   };
   const remove = async service => {
