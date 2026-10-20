@@ -55,7 +55,7 @@ export default function Checkout() {
 
   const completeOrder = async payment => {
     if (!payment || confirming) return;
-    const pending = typeof payment === 'string' ? { refId: payment, mode, shippingAddress: addressText, shippingAddressZipCode: location?.zipCode } : payment;
+    const pending = typeof payment === 'string' ? { refId: payment, mode, shippingAddress: addressText, shippingAddressZipCode: location?.zipCode, deliveryMethod: needsDelivery ? 'delivery' : 'pickup' } : payment;
     if (!pending.refId) return;
     sessionStorage.setItem('kuduPendingCheckout', JSON.stringify(pending));
     setPendingPayment(pending);
@@ -101,10 +101,11 @@ export default function Checkout() {
     setPreparing(true);
     setConfirmationError('');
     try {
-      const prepared = await checkoutApi.prepareNaira();
+      const method = needsDelivery ? 'delivery' : 'pickup';
+      const prepared = await checkoutApi.prepareNaira(method);
       const accessCode = prepared?.paystackDetails?.access_code;
       if (!prepared?.refId || !accessCode) throw new Error('Paystack did not return a secure payment session.');
-      const pending = { refId: prepared.refId, mode: 'NGN', shippingAddress: addressText, shippingAddressZipCode: location?.zipCode };
+      const pending = { refId: prepared.refId, mode: 'NGN', shippingAddress: addressText, shippingAddressZipCode: location?.zipCode, deliveryMethod: method };
       sessionStorage.setItem('kuduPendingCheckout', JSON.stringify(pending));
       const paystack = new PaystackPop();
       paystack.resumeTransaction(accessCode, {
