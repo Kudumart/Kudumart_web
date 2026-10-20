@@ -19,7 +19,6 @@ function ServiceBookings() {
   const [page, setPage] = useState(1);
   const [revision, setRevision] = useState(0);
   const [busyId, setBusyId] = useState('');
-  const [serviceToDelete, setServiceToDelete] = useState(null);
   const resource = useResource(signal => sellerApi.serviceBookings(page, status, signal), [user?.id, page, status, revision]);
   const bookings = sellerList(resource.data);
   const total = Number(resource.data?.total || 0);
@@ -41,6 +40,7 @@ export function SellerServices() {
   const [query, setQuery] = useState('');
   const [revision, setRevision] = useState(0);
   const [busyId, setBusyId] = useState('');
+  const [serviceToDelete, setServiceToDelete] = useState(null);
   const resource = useResource(signal => sellerApi.services(1, signal), [user?.id, revision]);
   const services = useMemo(() => sellerList(resource.data).filter(service => `${service.title} ${service.category?.name} ${service.subCategory?.name}`.toLowerCase().includes(query.toLowerCase())), [resource.data, query]);
   const changeStatus = async service => {
