@@ -7,12 +7,15 @@ import { useEffect } from 'react';
 import useApiMutation from '../../../api/hooks/useApiMutation';
 import Loader from '../../../components/Loader';
 import useAppState from '../../../hooks/appState';
+import { useDispatch } from 'react-redux';
+import { setKuduUser } from '../../../reducers/userSlice';
 
 export default function UpdatedKYC() {
   const [isLoading, setIsLoading] = useState(false);
   const [loader, setLoader] = useState(true);
   const [kycData, setKYCData] = useState({});
   const { user } = useAppState();
+  const dispatch = useDispatch();
 
   const { mutate } = useApiMutation();
 
@@ -55,26 +58,29 @@ export default function UpdatedKYC() {
 
     setIsLoading(true)
 
-    const { name, number, ...rest } = data;
+    const { name, number, expiryDate, ...rest } = data;
 
     const payload = {
       ...rest,
       idVerification: {
         name,
         number,
+        expiryDate,
       }
     };
 
     updatedKYC(payload)
-      .then((res) => {
-        if (res.status !== 200) throw res
-
-        toast.success(res.data.message);
-        setIsLoading(false)
+      .unwrap()
+      .then((response) => {
+        const savedKYC = response.data || { ...kycData, ...payload };
+        setKYCData(savedKYC);
+        dispatch(setKuduUser({ ...user, isVerified: Boolean(savedKYC.isVerified) }));
+        toast.success(response.message || "KYC updated successfully");
       }).catch((error) => {
-        toast.error(error.error.data.message);
-        setIsLoading(false)
-      })
+        toast.error(error?.data?.message || "Unable to update KYC. Please try again.");
+      }).finally(() => {
+        setIsLoading(false);
+      });
   };
 
 
@@ -91,8 +97,9 @@ export default function UpdatedKYC() {
       headers: true,
       hideToast: true,
       onSuccess: (response) => {
-        const userKYC = response.data.data;
+        const userKYC = response.data.data || {};
         setKYCData(userKYC);
+        dispatch(setKuduUser({ ...user, isVerified: Boolean(userKYC.isVerified) }));
         setLoader(false)
       },
       onError: () => {
@@ -110,15 +117,16 @@ export default function UpdatedKYC() {
   useEffect(() => {
     if (!kycData || Object.keys(kycData || {}).length === 0) return;
 
-    setValue("businessName", kycData.businessName);
-    setValue("contactEmail", kycData.contactEmail);
-    setValue("contactPhoneNumber", kycData.contactPhoneNumber);
-    setValue("businessDescription", kycData.businessDescription);
-    setValue("businessLink", kycData.businessLink);
-    setValue("businessAddress", kycData.businessAddress);
-    setValue("businessRegistrationNumber", kycData.businessRegistrationNumber);
-    setValue("name", kycData.idVerification.name);
-    setValue("number", kycData.idVerification.number);
+    setValue("businessName", kycData.businessName || "");
+    setValue("contactEmail", kycData.contactEmail || "");
+    setValue("contactPhoneNumber", kycData.contactPhoneNumber || "");
+    setValue("businessDescription", kycData.businessDescription || "");
+    setValue("businessLink", kycData.businessLink || "");
+    setValue("businessAddress", kycData.businessAddress || "");
+    setValue("businessRegistrationNumber", kycData.businessRegistrationNumber || "");
+    setValue("name", kycData.idVerification?.name || "");
+    setValue("number", kycData.idVerification?.number || "");
+    setValue("expiryDate", kycData.idVerification?.expiryDate || "");
     setLoader(false)
   }, [kycData, setValue]);
 
@@ -238,6 +246,7 @@ export default function UpdatedKYC() {
                 style={{ outline: "none", }}
                 className="border rounded-sm p-2 w-full"
                 {...register("businessRegistrationNumber")}
+                disabled={Boolean(kycData.isVerified)}
               />
             </div>
           </div>
@@ -253,8 +262,9 @@ export default function UpdatedKYC() {
                   className="w-full px-4 py-3 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
                   style={{ outline: "none" }}
                   required
+                  disabled={Boolean(kycData.isVerified)}
                 >
-                  <option value={null} disabled selected>Select Card</option>
+                  <option value="" disabled>Select Card</option>
                   {cardOptions.map((card) => (
                     <option value={card.id} key={card.id}>{card.name}</option>
 
@@ -271,6 +281,7 @@ export default function UpdatedKYC() {
                   className="border rounded-sm p-2 w-full"
                   {...register("number", { required: "Number is required" })}
                   required
+                  disabled={Boolean(kycData.isVerified)}
                 />
               </div>
             </div>
@@ -285,19 +296,22 @@ export default function UpdatedKYC() {
                   className="border rounded-sm p-2 w-full"
                   {...register("expiryDate", { required: "Card Expiry Date is required" })}
                   required
+                  disabled={Boolean(kycData.isVerified)}
                 />
               </div>
             </div>
 
           </div>
+          {kycData.isVerified && (
+            <p className="mt-3 text-sm text-gray-500">
+              Your registration and identity details are locked after verification. You can still update your business and contact information.
+            </p>
+          )}
         </div>
 
-        {Object.keys(kycData || {}).length === 0 ?
-          <button className="bg-kudu-orange text-white py-2 px-6 rounded-lg md:w-[15%] w-full">{isLoading ? <PulseLoader color="#ffffff" size={5} /> :
-            user.isVerified ? "Update" : "Submit"}</button>
-          :
-          <></>
-        }
+        <button disabled={isLoading} className="bg-kudu-orange disabled:opacity-60 text-white py-2 px-6 rounded-lg md:min-w-[160px] w-full">
+          {isLoading ? <PulseLoader color="#ffffff" size={5} /> : Object.keys(kycData || {}).length ? "Update KYC" : "Submit KYC"}
+        </button>
       </form>
     </div>
   );
