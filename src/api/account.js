@@ -11,4 +11,9 @@ export const accountApi = {
   addToCart: async (productId, quantity = 1, variant) => unwrap(await request('/user/cart/add', { method: 'POST', authenticated: true, body: { productId, quantity, ...(variant ? { product_id: productId, dropshipProductSkuAttr: variant.sku_attr, dropshipProductSkuId: variant.sku_id } : {}) } })),
   removeFromCart: async (cartId) => unwrap(await request('/user/cart/remove', { method: 'DELETE', authenticated: true, params: { cartId } })),
   updateCart: async (cartId, quantity) => unwrap(await request('/user/cart/update', { method: 'PUT', authenticated: true, body: { cartId, quantity } })),
+  bookService: async (serviceId, values) => unwrap(await request(`/user/service/${serviceId}/bookings`, { method: 'POST', authenticated: true, body: values })),
+  serviceBookings: async signal => unwrap(await request('/user/service/bookings', { authenticated: true, signal })),
+  completeServiceBooking: async bookingId => unwrap(await request(`/user/service/bookings/${bookingId}/complete`, { method: 'PATCH', authenticated: true })),
+  cancelServiceBooking: async bookingId => unwrap(await request(`/user/service/bookings/${bookingId}/cancel`, { method: 'PATCH', authenticated: true })),
+  reviewService: async values => unwrap(await request('/user/service/review', { method: 'POST', authenticated: true, body: values })),
 };
