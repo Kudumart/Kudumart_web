@@ -10,6 +10,8 @@ export const accountApi = {
   respondToOffer: async (offerId, status) => unwrap(await request(`/user/offers/${offerId}/respond`, { method: 'PUT', authenticated: true, body: { status } })),
   initiateOfferPayment: async offerId => unwrap(await request(`/user/offers/${offerId}/initiate-payment`, { method: 'POST', authenticated: true })),
   checkoutOffer: async (offerId, refId, shippingAddress) => unwrap(await request(`/user/offers/${offerId}/checkout`, { method: 'POST', authenticated: true, body: { refId, shippingAddress } })),
+  notifications: async (isRead, signal) => unwrap(await request('/user/notifications', { authenticated: true, params: { limit: 50, ...(isRead === undefined ? {} : { isRead }) }, signal })),
+  markNotificationRead: async notificationId => unwrap(await request('/user/mark/notification/as/read', { method: 'PATCH', authenticated: true, params: { notificationId } })),
   cart: async (signal) => unwrap(await request('/user/cart', { authenticated: true, signal })),
   addToCart: async (productId, quantity = 1, variant) => unwrap(await request('/user/cart/add', { method: 'POST', authenticated: true, body: { productId, quantity, ...(variant ? { product_id: productId, dropshipProductSkuAttr: variant.sku_attr, dropshipProductSkuId: variant.sku_id } : {}) } })),
   removeFromCart: async (cartId) => unwrap(await request('/user/cart/remove', { method: 'DELETE', authenticated: true, params: { cartId } })),

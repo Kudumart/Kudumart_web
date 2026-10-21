@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { ArrowRight, ChevronDown, Heart, Menu, ShoppingBag, UserRound, X } from 'lucide-react';
+import { ArrowRight, Bell, ChevronDown, Heart, Menu, ShoppingBag, UserRound, X } from 'lucide-react';
+import { accountApi } from '../api/account';
+import { useResource } from '../hooks/useResource';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { Button, IconButton } from './ui';
@@ -8,6 +10,8 @@ export default function Layout() {
   const { country, countries, changeCountry, cartCount, user, signOut, notify } = useApp();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const unread = useResource(signal => user ? accountApi.notifications(false, signal) : Promise.resolve([]), [user?.id, location.pathname]);
+  const unreadCount = Array.isArray(unread.data) ? unread.data.length : 0;
   const catalogParams = new URLSearchParams(location.search);
   const catalogMode = catalogParams.get('condition') === 'brand_new' ? 'brand-new' : catalogParams.get('popular') === 'true' ? 'popular' : 'shop-all';
   const catalogClass = mode => location.pathname === '/catalog' && catalogMode === mode ? 'active' : undefined;
@@ -16,6 +20,7 @@ export default function Layout() {
       <SearchBox/>
       <div className="header__actions"><label className="country-picker"><span className="flag">{country.code === 'NG' ? '🇳🇬' : country.code === 'US' ? '🇺🇸' : '🇬🇧'}</span><select aria-label="Shopping country" value={country.name} onChange={event => changeCountry(countries.find(item => item.name === event.target.value))}>{countries.map(item => <option key={item.code}>{item.name}</option>)}</select><ChevronDown size={14}/></label>
         <Link to="/saved" className="desktop-only"><IconButton label="Saved items" icon={Heart}/></Link>
+        {user && <Link className="header-cart desktop-only" to="/account/notifications" aria-label={`${unreadCount} unread notifications`}><Bell size={20}/>{unreadCount > 0 && <b>{Math.min(unreadCount, 9)}{unreadCount > 9 ? '+' : ''}</b>}</Link>}
         <Link className="header-cart" to="/cart" aria-label={`Cart with ${cartCount} items`}><ShoppingBag size={21}/>{cartCount > 0 && <b>{cartCount}</b>}</Link>
         <Link className="header-account" to={user ? '/account' : '/login'}><UserRound size={19}/><span>{user ? 'Account' : 'Sign in'}</span></Link>
         <IconButton label={menuOpen ? 'Close menu' : 'Open menu'} icon={menuOpen ? X : Menu} className="mobile-menu-button" onClick={() => setMenuOpen(!menuOpen)}/>
