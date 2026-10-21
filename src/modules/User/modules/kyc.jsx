@@ -29,6 +29,16 @@ export default function UpdatedKYC() {
 
   const [updatedKYC] = useUpdateKycMutation();
   const isKycVerified = isApprovedKycValue(kycData.isVerified);
+  const reviewStatus = kycData.reviewStatus || (isKycVerified ? "approved" : kycData.adminNote ? "changes_requested" : kycData.id ? "pending" : "not_submitted");
+  const fieldReview = (field) => kycData.fieldReviews?.[field];
+  const canEditField = (field, businessField = false) => {
+    if (!kycData.id) return true;
+    if (reviewStatus === "changes_requested") return fieldReview(field)?.status === "rejected";
+    if (reviewStatus === "approved") return businessField;
+    return false;
+  };
+  const correctionReason = (field) => fieldReview(field)?.status === "rejected" ? fieldReview(field)?.reason : "";
+  const Reason = ({ field }) => correctionReason(field) ? <p className="mt-1 text-xs text-red-600">{correctionReason(field)}</p> : null;
 
   const showReviewModal = () => {
     openModal({
@@ -93,9 +103,9 @@ export default function UpdatedKYC() {
     const payload = {
       ...rest,
       idVerification: {
-        name,
-        number,
-        expiryDate,
+        name: name ?? kycData.idVerification?.name,
+        number: number ?? kycData.idVerification?.number,
+        expiryDate: expiryDate ?? kycData.idVerification?.expiryDate,
       }
     };
 
@@ -109,7 +119,7 @@ export default function UpdatedKYC() {
           ...user,
           phoneNumber: savedKYC.phoneNumber || savedKYC.contactPhoneNumber || user.phoneNumber,
           isVerified: isApproved,
-          kycStatus: isApproved ? "approved" : "pending",
+          kycStatus: savedKYC.reviewStatus === "changes_requested" ? "rejected" : isApproved ? "approved" : "pending",
         }));
         if (isApproved) {
           toast.success(response.message || "KYC updated successfully");
@@ -149,7 +159,7 @@ export default function UpdatedKYC() {
           ...user,
           isVerified: isApproved,
           kycStatus: userKYC.id
-            ? (isApproved ? "approved" : (userKYC.adminNote ? "rejected" : "pending"))
+            ? (isApproved ? "approved" : (userKYC.reviewStatus === "changes_requested" ? "rejected" : "pending"))
             : "not_submitted",
         }));
         setLoader(false)
@@ -213,6 +223,9 @@ export default function UpdatedKYC() {
       <h2 className="text-lg font-bold mb-2">KYC</h2>
       <div className='w-full h-[5px] mb-4 border' />
 
+      {reviewStatus === "pending" && <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"><strong>KYC under review.</strong> We will notify you when the review is complete.</div>}
+      {reviewStatus === "changes_requested" && <div className="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800"><strong>Changes requested.</strong> Update the highlighted details below and resubmit them for review.</div>}
+
       <form noValidate onSubmit={handleSubmit(onSubmit, onInvalid)}>
         <div className="mb-8">
           <h3 className="font-semibold text-black-500 mb-4">Business Information</h3>
@@ -227,8 +240,10 @@ export default function UpdatedKYC() {
                 className="border rounded-sm p-2 w-full"
                 style={{ outline: "none", }}
                 {...register("businessName", { required: "Business name is required" })}
+                disabled={!canEditField("businessName", true)}
                 required
               />
+              <Reason field="businessName" />
             </div>
 
             <div>
@@ -239,8 +254,10 @@ export default function UpdatedKYC() {
                 className="border rounded-sm p-2 w-full"
                 style={{ outline: "none", }}
                 {...register("contactEmail", { required: "Contact email is required" })}
+                disabled={!canEditField("contactEmail", true)}
                 required
               />
+              <Reason field="contactEmail" />
             </div>
 
             <div>
@@ -251,8 +268,10 @@ export default function UpdatedKYC() {
                 className="border rounded-sm p-2 w-full"
                 style={{ outline: "none", }}
                 {...register("contactPhoneNumber", { required: "Contact Phone Number is required" })}
+                disabled={!canEditField("contactPhoneNumber", true)}
                 required
               />
+              <Reason field="contactPhoneNumber" />
             </div>
 
             <div>
@@ -263,8 +282,10 @@ export default function UpdatedKYC() {
                 className="border rounded-sm p-2 w-full"
                 style={{ outline: "none", }}
                 {...register("businessDescription", { required: "Business Description is required" })}
+                disabled={!canEditField("businessDescription", true)}
                 required
               />
+              <Reason field="businessDescription" />
             </div>
 
             <div>
@@ -275,7 +296,9 @@ export default function UpdatedKYC() {
                 style={{ outline: "none", }}
                 className="border rounded-sm p-2 w-full"
                 {...register("businessLink")}
+                disabled={!canEditField("businessLink", true)}
               />
+              <Reason field="businessLink" />
             </div>
 
             <div>
@@ -286,8 +309,10 @@ export default function UpdatedKYC() {
                 style={{ outline: "none", }}
                 className="border rounded-sm p-2 w-full"
                 {...register("businessAddress", { required: "Business address is required" })}
+                disabled={!canEditField("businessAddress", true)}
                 required
               />
+              <Reason field="businessAddress" />
             </div>
 
             <div>
@@ -298,8 +323,9 @@ export default function UpdatedKYC() {
                 style={{ outline: "none", }}
                 className="border rounded-sm p-2 w-full"
                 {...register("businessRegistrationNumber")}
-                disabled={isKycVerified}
+                disabled={!canEditField("businessRegistrationNumber")}
               />
+              <Reason field="businessRegistrationNumber" />
             </div>
           </div>
 
@@ -314,7 +340,7 @@ export default function UpdatedKYC() {
                   className="w-full px-4 py-3 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
                   style={{ outline: "none" }}
                   required={!isKycVerified}
-                  disabled={isKycVerified}
+                  disabled={!canEditField("idVerification.name")}
                 >
                   <option value="" disabled>Select Card</option>
                   {cardOptions.map((card) => (
@@ -322,6 +348,7 @@ export default function UpdatedKYC() {
 
                   ))}
                 </select>
+                <Reason field="idVerification.name" />
               </div>
 
               <div className='w-[49%]'>
@@ -333,8 +360,9 @@ export default function UpdatedKYC() {
                   className="border rounded-sm p-2 w-full"
                   {...register("number", { required: isKycVerified ? false : "Card number is required" })}
                   required={!isKycVerified}
-                  disabled={isKycVerified}
+                  disabled={!canEditField("idVerification.number")}
                 />
+                <Reason field="idVerification.number" />
               </div>
             </div>
 
@@ -348,8 +376,9 @@ export default function UpdatedKYC() {
                   className="border rounded-sm p-2 w-full"
                   {...register("expiryDate", { required: isKycVerified ? false : "Card expiration date is required" })}
                   required={!isKycVerified}
-                  disabled={isKycVerified}
+                  disabled={!canEditField("idVerification.expiryDate")}
                 />
+                <Reason field="idVerification.expiryDate" />
               </div>
             </div>
 
@@ -361,8 +390,8 @@ export default function UpdatedKYC() {
           )}
         </div>
 
-        <button type="submit" disabled={isLoading} className="bg-kudu-orange disabled:opacity-60 text-white py-2 px-6 rounded-lg md:min-w-[160px] w-full">
-          {isLoading ? <PulseLoader color="#ffffff" size={5} /> : Object.keys(kycData || {}).length ? "Update KYC" : "Submit KYC"}
+        <button type="submit" disabled={isLoading || reviewStatus === "pending"} className="bg-kudu-orange disabled:opacity-60 text-white py-2 px-6 rounded-lg md:min-w-[160px] w-full">
+          {isLoading ? <PulseLoader color="#ffffff" size={5} /> : reviewStatus === "pending" ? "Awaiting review" : reviewStatus === "changes_requested" ? "Resubmit corrections" : Object.keys(kycData || {}).length ? "Update KYC" : "Submit KYC"}
         </button>
       </form>
     </div>

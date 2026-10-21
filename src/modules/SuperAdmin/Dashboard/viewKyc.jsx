@@ -11,6 +11,7 @@ export default function ViewKYC() {
   const [isLoadApp, setIsApp] = useState(false);
   const [isLoadRej, setIsRej] = useState(false);
   const [kycData, setKYCData] = useState({});
+  const [fieldReviews, setFieldReviews] = useState({});
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const { id } = useParams();
@@ -48,6 +49,25 @@ export default function ViewKYC() {
   const { register, handleSubmit, setValue } = useForm();
 
   const { mutate } = useApiMutation();
+
+  const reviewFields = [
+    ["businessName", "Business name"], ["contactEmail", "Contact email"],
+    ["contactPhoneNumber", "Contact phone number"], ["businessDescription", "Business description"],
+    ["businessLink", "Business link"], ["businessAddress", "Business address"],
+    ["businessRegistrationNumber", "Business registration number"],
+    ["idVerification.name", "ID type"], ["idVerification.number", "ID number"],
+    ["idVerification.expiryDate", "ID expiration date"],
+  ];
+  const fieldValue = (key) => key.split(".").reduce((value, part) => value?.[part], kycData);
+  const setDecision = (field, patch) => setFieldReviews((current) => ({ ...current, [field]: { status: "pending", ...(current[field] || {}), ...patch } }));
+  const submitFieldReview = (reviews = fieldReviews) => {
+    const missingReason = Object.entries(reviews).find(([, item]) => item.status === "rejected" && !item.reason?.trim());
+    if (missingReason) return setError(`Add a reason for ${missingReason[0]}`);
+    setError(null); setIsApp(true);
+    mutate({ url: "/admin/kyc/approve-reject", method: "POST", headers: true, data: { kycId: kycData.id, fieldReviews: reviews },
+      onSuccess: (response) => { const saved = response.data?.data || response.data || kycData; setKYCData(saved); setFieldReviews(saved.fieldReviews || reviews); setIsApp(false); },
+      onError: () => setIsApp(false) });
+  };
 
   const submitKyc = (id, formData, state) => {
     // Set loading state depending on the action
@@ -219,6 +239,7 @@ export default function ViewKYC() {
 
           console.log("✅ Setting KYC data:", userKYC);
           setKYCData(userKYC);
+          setFieldReviews(userKYC.fieldReviews || Object.fromEntries(reviewFields.map(([field]) => [field, { status: "pending" }])));
           setIsLoading(false);
         } catch (err) {
           console.error("❌ Error processing KYC data:", err);
@@ -659,6 +680,23 @@ export default function ViewKYC() {
           </div>
         </div>
 
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold mb-2">Field review</h2>
+          <p className="text-sm text-gray-500 mb-5">Approve each correct detail. Give a clear reason for every detail that needs correction.</p>
+          <div className="space-y-3">
+            {reviewFields.filter(([field]) => fieldValue(field)).map(([field, label]) => {
+              const decision = fieldReviews[field] || { status: "pending" };
+              return <div key={field} className="border rounded-lg p-4 grid gap-3 md:grid-cols-[1fr_180px]">
+                <div><div className="font-semibold">{label}</div><div className="text-sm text-gray-600 break-all">{String(fieldValue(field))}</div></div>
+                <select value={decision.status} onChange={(event) => setDecision(field, { status: event.target.value, reason: event.target.value === "rejected" ? decision.reason : "" })} className="border rounded-lg px-3 py-2">
+                  <option value="pending">Pending</option><option value="approved">Approve</option><option value="rejected">Request correction</option>
+                </select>
+                {decision.status === "rejected" && <input value={decision.reason || ""} onChange={(event) => setDecision(field, { reason: event.target.value })} className="md:col-span-2 border border-red-300 rounded-lg px-3 py-2" placeholder={`What must be corrected in ${label.toLowerCase()}?`} />}
+              </div>;
+            })}
+          </div>
+        </div>
+
         {/* Action Buttons */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-center">
@@ -671,10 +709,8 @@ export default function ViewKYC() {
 
             <div className="flex space-x-4">
               <button
-                onClick={() =>
-                  kycData.id && submitKyc(kycData.id, null, "approve")
-                }
-                disabled={!kycData.id || kycData.isVerified}
+                onClick={() => submitFieldReview(Object.fromEntries(reviewFields.filter(([field]) => fieldValue(field)).map(([field]) => [field, { status: "approved" }]))) }
+                disabled={!kycData.id || isLoadApp}
                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 {isLoadApp ? (
@@ -694,31 +730,12 @@ export default function ViewKYC() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    {kycData.isVerified ? "Already Approved" : "Approve KYC"}
+                    Approve all
                   </>
                 )}
               </button>
 
-              <button
-                onClick={() => kycData.id && rejectKYC(kycData.id)}
-                disabled={!kycData.id}
-                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                Reject KYC
-              </button>
+              <button onClick={() => submitFieldReview()} disabled={!kycData.id || isLoadApp} className="px-6 py-2 bg-kudu-orange text-white rounded-lg disabled:opacity-50">Submit field review</button>
             </div>
           </div>
         </div>
