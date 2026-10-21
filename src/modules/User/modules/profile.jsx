@@ -25,6 +25,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+const isApprovedKycValue = (value) => value === true || value === 1 || value === "1";
+
 const AccountProfile = () => {
   const { user } = useAppState();
   const { openModal, closeModal } = useModal();
@@ -78,7 +80,7 @@ const AccountProfile = () => {
       headers: true,
       hideToast: true,
       onSuccess: (res) => {
-        setKycApproved(Boolean(res.data?.data?.isVerified));
+        setKycApproved(isApprovedKycValue(res.data?.data?.isVerified));
       },
     });
 

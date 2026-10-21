@@ -9,6 +9,10 @@ import Loader from '../../../components/Loader';
 import useAppState from '../../../hooks/appState';
 import { useDispatch } from 'react-redux';
 import { setKuduUser } from '../../../reducers/userSlice';
+import { useModal } from '../../../hooks/modal';
+import { Clock3 } from 'lucide-react';
+
+const isApprovedKycValue = (value) => value === true || value === 1 || value === "1";
 
 export default function UpdatedKYC() {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,6 +20,7 @@ export default function UpdatedKYC() {
   const [kycData, setKYCData] = useState({});
   const { user } = useAppState();
   const dispatch = useDispatch();
+  const { openModal, closeModal } = useModal();
 
   const { mutate } = useApiMutation();
 
@@ -23,7 +28,31 @@ export default function UpdatedKYC() {
   const isVendor = user?.accountType !== 'Customer';
 
   const [updatedKYC] = useUpdateKycMutation();
-  const isKycVerified = Boolean(kycData.isVerified);
+  const isKycVerified = isApprovedKycValue(kycData.isVerified);
+
+  const showReviewModal = () => {
+    openModal({
+      size: "sm",
+      content: (
+        <div className="px-3 py-4 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-50 text-primary">
+            <Clock3 size={28} />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900">KYC submitted for review</h3>
+          <p className="mt-2 text-sm leading-6 text-gray-600">
+            Thank you for submitting your details. Our team will review them and notify you when a decision has been made.
+          </p>
+          <button
+            type="button"
+            onClick={closeModal}
+            className="mt-6 w-full rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white"
+          >
+            Got it
+          </button>
+        </div>
+      ),
+    });
+  };
 
   const cardOptions = [
     {
@@ -74,13 +103,19 @@ export default function UpdatedKYC() {
       .unwrap()
       .then((response) => {
         const savedKYC = response.data || { ...kycData, ...payload };
+        const isApproved = isApprovedKycValue(savedKYC.isVerified);
         setKYCData(savedKYC);
         dispatch(setKuduUser({
           ...user,
           phoneNumber: savedKYC.phoneNumber || savedKYC.contactPhoneNumber || user.phoneNumber,
-          isVerified: Boolean(savedKYC.isVerified),
+          isVerified: isApproved,
+          kycStatus: isApproved ? "approved" : "pending",
         }));
-        toast.success(response.message || "KYC updated successfully");
+        if (isApproved) {
+          toast.success(response.message || "KYC updated successfully");
+        } else {
+          showReviewModal();
+        }
       }).catch((error) => {
         toast.error(error?.data?.message || "Unable to update KYC. Please try again.");
       }).finally(() => {
@@ -108,8 +143,15 @@ export default function UpdatedKYC() {
       hideToast: true,
       onSuccess: (response) => {
         const userKYC = response.data.data || {};
+        const isApproved = isApprovedKycValue(userKYC.isVerified);
         setKYCData(userKYC);
-        dispatch(setKuduUser({ ...user, isVerified: Boolean(userKYC.isVerified) }));
+        dispatch(setKuduUser({
+          ...user,
+          isVerified: isApproved,
+          kycStatus: userKYC.id
+            ? (isApproved ? "approved" : (userKYC.adminNote ? "rejected" : "pending"))
+            : "not_submitted",
+        }));
         setLoader(false)
       },
       onError: () => {

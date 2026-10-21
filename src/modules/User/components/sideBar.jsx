@@ -38,6 +38,15 @@ const ProfileSideBar = ({ close }) => {
   };
 
   const isVendor = user?.accountType !== "Customer";
+  const isKycApproved = user?.kycStatus === "approved" || user?.isVerified === true || user?.isVerified === 1 || user?.isVerified === "1";
+  const kycStatus = isKycApproved ? "approved" : (user?.kycStatus || "not_submitted");
+  const hasKycSubmission = kycStatus === "pending" || kycStatus === "rejected" || kycStatus === "approved";
+  const kycBadge = {
+    approved: { text: "Verified", color: "bg-green-500" },
+    pending: { text: "Pending review", color: "bg-amber-500" },
+    rejected: { text: "Changes requested", color: "bg-red-500" },
+    not_submitted: { text: "Unverified", color: "bg-red-500" },
+  }[kycStatus] || { text: "Unverified", color: "bg-red-500" };
 
   const navItems = [
     {
@@ -53,7 +62,7 @@ const ProfileSideBar = ({ close }) => {
       vendor: true,
     },
     {
-      label: `${!user?.isVerified ? "Complete KYC" : "View KYC"}`,
+      label: hasKycSubmission ? "View KYC" : "Complete KYC",
       icon: <UserCheck size={20} color="#FF6F22" />,
       route: "updated-kyc",
       vendor: true,
@@ -195,9 +204,9 @@ const ProfileSideBar = ({ close }) => {
         {user?.accountType !== "Customer" && (
           <p className="w-full justify-center flex items-center my-1">
             <Badge
-              bgColor={user?.isVerified ? "bg-green-500" : "bg-red-500"}
+              bgColor={kycBadge.color}
               textColor={"text-white"}
-              text={user?.isVerified ? "Verified" : "Unverified"}
+              text={kycBadge.text}
             />
           </p>
         )}
@@ -207,12 +216,16 @@ const ProfileSideBar = ({ close }) => {
       </div>
 
       {/* Alerts Section */}
-      {user?.accountType !== "Customer" && !user?.isVerified ? (
+      {user?.accountType !== "Customer" && !isKycApproved ? (
         <div className="mt-1 mb-6 bg-kudu-orange px-1 py-1 w-full rounded-lg">
           <div className="flex items-center justify-between text-white px-3 py-2 rounded-md">
             <div className="flex items-center">
               <span className="text-sm font-semibold">
-                Become verified by completing your KYC
+                {kycStatus === "pending"
+                  ? "Your KYC is awaiting review"
+                  : kycStatus === "rejected"
+                    ? "Update the KYC details that need attention"
+                    : "Become verified by completing your KYC"}
               </span>
             </div>
           </div>
