@@ -62,7 +62,7 @@ const AccountProfile = () => {
     });
 
     mutate({
-      url: `/vendor/products`,
+      url: `/vendor/vendors/products`,
       method: "GET",
       headers: true,
       hideToast: true,
@@ -72,17 +72,17 @@ const AccountProfile = () => {
     });
 
     mutate({
-      url: `/user/kyc`,
+      url: `/vendor/kyc`,
       method: "GET",
       headers: true,
       hideToast: true,
       onSuccess: (res) => {
-        setKycApproved(res.data?.data?.status === "Approved");
+        setKycApproved(Boolean(res.data?.data?.isVerified));
       },
     });
 
     mutate({
-      url: `/user/bank-account`,
+      url: `/vendor/bank/informations`,
       method: "GET",
       headers: true,
       hideToast: true,
