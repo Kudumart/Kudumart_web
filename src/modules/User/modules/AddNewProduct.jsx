@@ -118,12 +118,16 @@ const AddNewProduct = () => {
     }
   }, [isAI, aiDataLoaded, setValue]);
 
-  const handleDrop = (acceptedFiles) => {
-    setFiles(acceptedFiles);
+  const handleDrop = (uploaded) => {
+    const urls = (Array.isArray(uploaded) ? uploaded : [uploaded]).filter(Boolean);
+    setFiles(urls.slice(0, 1));
   };
 
-  const handleAdditionalDrop = (acceptedFiles) => {
-    setAdditionalFiles(acceptedFiles);
+  const handleAdditionalDrop = (uploaded) => {
+    const urls = (Array.isArray(uploaded) ? uploaded : [uploaded]).filter(Boolean);
+    setAdditionalFiles((current) =>
+      Array.from(new Set([...current, ...urls])).slice(0, 5),
+    );
   };
 
   const getStores = () => {
