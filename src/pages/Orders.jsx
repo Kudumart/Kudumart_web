@@ -1,14 +1,72 @@
-import { ArrowRight, Package } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, Clock3, MapPin, Package, Truck, XCircle } from 'lucide-react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { checkoutApi } from '../api/checkout';
-import { Button, EmptyState, Skeleton } from '../components/ui';
+import { Button, ConfirmModal, EmptyState, Modal, Skeleton } from '../components/ui';
 import { useApp } from '../contexts/AppContext';
 import { useResource } from '../hooks/useResource';
 import { imageFor, money } from '../utils/format';
+import './Orders.css';
+
+const stages = ['pending', 'processing', 'shipped', 'delivered'];
+const title = value => String(value || '').replace(/_/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+const date = value => value ? new Date(value).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent order';
+
+function StatusJourney({ status }) {
+  const cancelled = status === 'cancelled';
+  const active = stages.indexOf(status);
+  return <div className={`order-journey ${cancelled ? 'order-journey--cancelled' : ''}`}>{cancelled ? <div className="order-journey__cancelled"><XCircle size={19}/><span><strong>Cancelled</strong><small>This item will not be fulfilled.</small></span></div> : stages.map((stage, index) => {
+    const complete = active >= index;
+    const Icon = stage === 'pending' ? Clock3 : stage === 'processing' ? Package : stage === 'shipped' ? Truck : CheckCircle2;
+    return <div className={`order-stage ${complete ? 'order-stage--complete' : ''}`} key={stage}><span><Icon size={16}/></span><small>{title(stage)}</small></div>;
+  })}</div>;
+}
+
+function OrderDetail({ id, user }) {
+  const { notify } = useApp();
+  const [revision, setRevision] = useState(0);
+  const [action, setAction] = useState(null);
+  const [deliveryCode, setDeliveryCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const resource = useResource(signal => checkoutApi.orderItems(id, signal), [user?.id, id, revision]);
+  const items = Array.isArray(resource.data) ? resource.data : resource.data?.data || [];
+  const first = items[0];
+  const order = first?.order || {};
+
+  const update = async (item, status, code = '') => {
+    setBusy(true);
+    try {
+      await checkoutApi.updateOrderStatus(item.id, status, code.trim());
+      notify(status === 'cancelled' ? 'Order item cancelled.' : 'Delivery confirmed.', 'success');
+      setAction(null); setDeliveryCode(''); setRevision(value => value + 1);
+    } catch (error) { notify(error.message, 'error'); }
+    finally { setBusy(false); }
+  };
+
+  if (resource.loading) return <Skeleton className="cart-skeleton"/>;
+  if (resource.error) return <EmptyState title="Order couldn’t be loaded" description={resource.error.message}/>;
+  if (!items.length) return <EmptyState icon={Package} title="No items found" description="We couldn’t find items for this order."/>;
+
+  const itemTotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
+  const symbol = first.product?.store?.currency?.symbol || '₦';
+  return <>
+    <Link className="orders-back" to="/account/orders"><ArrowLeft size={17}/> All orders</Link>
+    <section className="order-detail-summary"><div><span className="eyebrow">ORDER</span><h2>{order.trackingNumber || id}</h2><p><CalendarDays size={15}/> Placed {date(order.createdAt || first.createdAt)}</p></div><div className="order-detail-summary__total"><span>Order total</span><strong>{money(order.totalAmount || itemTotal, symbol)}</strong></div></section>
+    {order.shippingAddress && <div className="order-address"><MapPin size={19}/><span><strong>Delivery address</strong><small>{order.shippingAddress}</small></span></div>}
+    <div className="order-detail-items">{items.map(item => <article className="order-detail-item" key={item.id}>
+      <div className="order-detail-item__top"><div className="order-card__image">{imageFor(item.product) && <img src={imageFor(item.product)} alt=""/>}</div><div className="order-card__main"><strong>{item.product?.name || 'Product'}</strong><span>Quantity {item.quantity || 1}</span><span>{money(Number(item.price || 0) * Number(item.quantity || 1), item.product?.store?.currency?.symbol || symbol)}</span></div><span className={`order-status order-status--${item.status}`}>{title(item.status)}</span></div>
+      <StatusJourney status={item.status}/>
+      {(item.status === 'pending' || item.status === 'shipped') && <div className="order-detail-item__actions">{item.status === 'pending' && <Button variant="ghost" onClick={() => setAction({ type: 'cancel', item })}>Cancel item</Button>}{item.status === 'shipped' && <Button onClick={() => setAction({ type: 'delivery', item })}>Confirm delivery</Button>}</div>}
+    </article>)}</div>
+    {action?.type === 'cancel' && <ConfirmModal title="Cancel this item?" description="The seller will stop processing this item. This action cannot be reversed." confirmLabel="Cancel item" loading={busy} onClose={() => setAction(null)} onConfirm={() => update(action.item, 'cancelled')}/>} 
+    {action?.type === 'delivery' && <Modal title="Confirm your delivery" icon={<CheckCircle2 size={20}/>} onClose={busy ? () => {} : () => { setAction(null); setDeliveryCode(''); }} footer={<><Button variant="ghost" disabled={busy} onClick={() => { setAction(null); setDeliveryCode(''); }}>Back</Button><Button loading={busy} disabled={!deliveryCode.trim()} onClick={() => update(action.item, 'delivered', deliveryCode)}>Confirm delivery</Button></>}><p>Enter the delivery code sent when your order was shipped. Confirm only after you have received the item.</p><label className="field"><span className="field__label">Delivery code</span><input className="field__input" autoFocus value={deliveryCode} onChange={event => setDeliveryCode(event.target.value.toUpperCase())} placeholder="Enter delivery code"/></label></Modal>}
+  </>;
+}
+
 export default function Orders({ detail = false }) {
   const { user } = useApp(); const { id } = useParams();
-  const resource = useResource(signal => !user ? Promise.resolve([]) : detail ? checkoutApi.orderItems(id, signal) : checkoutApi.orders(signal), [user?.id, id, detail]);
+  const resource = useResource(signal => !user || detail ? Promise.resolve([]) : checkoutApi.orders(signal), [user?.id, detail]);
   if (!user) return <Navigate to="/login" replace/>;
-  const items = Array.isArray(resource.data) ? resource.data : resource.data?.data || [];
-  return <div className="container orders-page"><div className="page-intro"><span className="eyebrow">YOUR KUDUMART ACCOUNT</span><h1>{detail ? 'Order details.' : 'Your orders.'}</h1><p>{detail ? 'A closer look at your purchase.' : 'Keep track of everything you’ve found.'}</p></div>{resource.loading ? <Skeleton className="cart-skeleton"/> : resource.error ? <EmptyState title="Orders couldn’t be loaded" description={resource.error.message}/> : items.length ? <div className="orders-list">{items.map((item, index) => detail ? <article className="order-card" key={item.id || index}><div className="order-card__image">{imageFor(item.product) && <img src={imageFor(item.product)} alt=""/>}</div><div className="order-card__main"><strong>{item.product?.name || 'Product'}</strong><span>Quantity {item.quantity || 1}</span><span>Status: {item.status || 'Processing'}</span></div><strong>{money(item.totalAmount || item.price || 0, item.product?.store?.currency?.symbol || '₦')}</strong></article> : <Link to={`/account/orders/${item.id}`} className="order-card" key={item.id || index}><div className="order-card__icon"><Package size={23}/></div><div className="order-card__main"><strong>Order {item.trackingNumber || item.refId || item.id}</strong><span>{item.orderItemsCount || 0} items · {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Recent order'}</span><span>{item.shippingAddress}</span></div><strong>{money(item.totalAmount || 0, item.currency?.symbol || '₦')}</strong><ArrowRight size={18}/></Link>)}</div> : <EmptyState icon={Package} title={detail ? 'No items found' : 'No orders yet'} description={detail ? 'We couldn’t find items for this order.' : 'Your future finds will appear here.'} action={<Link to="/catalog"><Button>Explore products</Button></Link>}/>}</div>;
+  const orders = Array.isArray(resource.data) ? resource.data : resource.data?.data || [];
+  return <div className="container orders-page"><div className="page-intro"><span className="eyebrow">YOUR KUDUMART ACCOUNT</span><h1>{detail ? 'Order details.' : 'Your orders.'}</h1><p>{detail ? 'Track fulfilment and manage your purchase.' : 'Keep track of everything you’ve found.'}</p></div>{detail ? <OrderDetail id={id} user={user}/> : resource.loading ? <Skeleton className="cart-skeleton"/> : resource.error ? <EmptyState title="Orders couldn’t be loaded" description={resource.error.message}/> : orders.length ? <div className="orders-list">{orders.map((order, index) => <Link to={`/account/orders/${order.id}`} className="order-card" key={order.id || index}><div className="order-card__icon"><Package size={23}/></div><div className="order-card__main"><strong>Order {order.trackingNumber || order.refId || order.id}</strong><span>{order.orderItemsCount || 0} items · {date(order.createdAt)}</span><span>{order.shippingAddress}</span></div><strong>{money(order.totalAmount || 0, order.currency?.symbol || '₦')}</strong><ArrowRight size={18}/></Link>)}</div> : <EmptyState icon={Package} title="No orders yet" description="Your future finds will appear here." action={<Link to="/catalog"><Button>Explore products</Button></Link>}/>}</div>;
 }

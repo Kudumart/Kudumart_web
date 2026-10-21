@@ -12,4 +12,5 @@ export const checkoutApi = {
   confirmDollar: async ({ refId, shippingAddress, shippingAddressZipCode, cartItemIds }) => unwrap(await request('/user/checkout/dollar', { method: 'POST', authenticated: true, body: { refId, shippingAddress, shippingAddressZipCode, ...(cartItemIds?.length ? { cartItemIds } : {}) } })),
   orders: async signal => unwrap(await request('/user/orders', { authenticated: true, signal })),
   orderItems: async (orderId, signal) => unwrap(await request('/user/order/items', { authenticated: true, params: { orderId }, signal })),
+  updateOrderStatus: async (orderItemId, status, deliveryCode = '') => unwrap(await request('/user/order/item/update/status', { method: 'POST', authenticated: true, body: { orderItemId, status, ...(deliveryCode ? { deliveryCode } : {}) } })),
 };
