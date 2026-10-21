@@ -10,7 +10,7 @@ import useAppState from '../../../hooks/appState';
 import { useDispatch } from 'react-redux';
 import { setKuduUser } from '../../../reducers/userSlice';
 import { useModal } from '../../../hooks/modal';
-import { Clock3 } from 'lucide-react';
+import { Clock3, X } from 'lucide-react';
 
 const isApprovedKycValue = (value) => value === true || value === 1 || value === "1";
 
@@ -44,7 +44,15 @@ export default function UpdatedKYC() {
     openModal({
       size: "sm",
       content: (
-        <div className="px-3 py-4 text-center">
+        <div className="relative px-3 py-4 text-center">
+          <button
+            type="button"
+            onClick={closeModal}
+            aria-label="Close KYC confirmation"
+            className="absolute -right-1 -top-1 flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+          >
+            <X size={20} />
+          </button>
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-50 text-primary">
             <Clock3 size={28} />
           </div>
