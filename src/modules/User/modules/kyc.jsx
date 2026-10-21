@@ -75,7 +75,11 @@ export default function UpdatedKYC() {
       .then((response) => {
         const savedKYC = response.data || { ...kycData, ...payload };
         setKYCData(savedKYC);
-        dispatch(setKuduUser({ ...user, isVerified: Boolean(savedKYC.isVerified) }));
+        dispatch(setKuduUser({
+          ...user,
+          phoneNumber: savedKYC.phoneNumber || savedKYC.contactPhoneNumber || user.phoneNumber,
+          isVerified: Boolean(savedKYC.isVerified),
+        }));
         toast.success(response.message || "KYC updated successfully");
       }).catch((error) => {
         toast.error(error?.data?.message || "Unable to update KYC. Please try again.");
