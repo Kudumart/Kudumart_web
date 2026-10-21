@@ -13,6 +13,12 @@ import { useModal } from '../../../hooks/modal';
 import { Clock3, X } from 'lucide-react';
 
 const isApprovedKycValue = (value) => value === true || value === 1 || value === "1";
+const toNigerianNationalNumber = (value = "") => {
+  const digits = String(value).replace(/\D/g, "");
+  if (digits.startsWith("234")) return digits.slice(3);
+  if (digits.startsWith("0")) return digits.slice(1);
+  return digits;
+};
 
 export default function UpdatedKYC() {
   const [isLoading, setIsLoading] = useState(false);
@@ -110,6 +116,9 @@ export default function UpdatedKYC() {
 
     const payload = {
       ...rest,
+      contactPhoneNumber: rest.contactPhoneNumber
+        ? `+234${toNigerianNationalNumber(rest.contactPhoneNumber)}`
+        : (kycData.contactPhoneNumber || ""),
       idVerification: {
         name: name ?? kycData.idVerification?.name,
         number: number ?? kycData.idVerification?.number,
@@ -189,7 +198,7 @@ export default function UpdatedKYC() {
 
     setValue("businessName", kycData.businessName || "");
     setValue("contactEmail", kycData.contactEmail || "");
-    setValue("contactPhoneNumber", kycData.contactPhoneNumber || "");
+    setValue("contactPhoneNumber", toNigerianNationalNumber(kycData.contactPhoneNumber));
     setValue("businessDescription", kycData.businessDescription || "");
     setValue("businessLink", kycData.businessLink || "");
     setValue("businessAddress", kycData.businessAddress || "");
@@ -270,15 +279,24 @@ export default function UpdatedKYC() {
 
             <div>
               <label className="block text-sm font-medium mb-3">Contact Phone Number</label>
-              <input
-                type="text"
-                name="contactPhoneNumber"
-                className="border rounded-sm p-2 w-full"
-                style={{ outline: "none", }}
-                {...register("contactPhoneNumber", { required: "Contact Phone Number is required" })}
-                disabled={!canEditField("contactPhoneNumber", true)}
-                required
-              />
+              <div className="flex overflow-hidden rounded-sm border focus-within:border-kudu-orange">
+                <span className="flex items-center border-r bg-gray-50 px-3 text-sm font-semibold text-gray-700">+234</span>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  name="contactPhoneNumber"
+                  placeholder="8012345678"
+                  className="min-w-0 flex-1 p-2"
+                  style={{ outline: "none" }}
+                  {...register("contactPhoneNumber", {
+                    required: "Contact Phone Number is required",
+                    pattern: { value: /^\d{10}$/, message: "Enter the 10 digits after +234" },
+                    setValueAs: toNigerianNationalNumber,
+                  })}
+                  disabled={!canEditField("contactPhoneNumber", true)}
+                  required
+                />
+              </div>
               <Reason field="contactPhoneNumber" />
             </div>
 
