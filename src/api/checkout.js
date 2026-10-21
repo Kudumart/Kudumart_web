@@ -13,4 +13,6 @@ export const checkoutApi = {
   orders: async signal => unwrap(await request('/user/orders', { authenticated: true, signal })),
   orderItems: async (orderId, signal) => unwrap(await request('/user/order/items', { authenticated: true, params: { orderId }, signal })),
   updateOrderStatus: async (orderItemId, status, deliveryCode = '') => unwrap(await request('/user/order/item/update/status', { method: 'POST', authenticated: true, body: { orderItemId, status, ...(deliveryCode ? { deliveryCode } : {}) } })),
+  reviews: async signal => unwrap(await request('/user/get/review', { authenticated: true, signal })),
+  addReview: async ({ orderId, productId, rating, comment }) => unwrap(await request('/user/add/review', { method: 'POST', authenticated: true, body: { orderId, productId, rating, comment } })),
 };

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, Clock3, MapPin, Package, Truck, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, Clock3, MapPin, Package, Star, Truck, XCircle } from 'lucide-react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { checkoutApi } from '../api/checkout';
 import { Button, ConfirmModal, EmptyState, Modal, Skeleton } from '../components/ui';
@@ -27,11 +27,15 @@ function OrderDetail({ id, user }) {
   const [revision, setRevision] = useState(0);
   const [action, setAction] = useState(null);
   const [deliveryCode, setDeliveryCode] = useState('');
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
   const resource = useResource(signal => checkoutApi.orderItems(id, signal), [user?.id, id, revision]);
+  const reviewsResource = useResource(signal => checkoutApi.reviews(signal), [user?.id, revision]);
   const items = Array.isArray(resource.data) ? resource.data : resource.data?.data || [];
   const first = items[0];
   const order = first?.order || {};
+  const reviews = Array.isArray(reviewsResource.data) ? reviewsResource.data : reviewsResource.data?.data || [];
 
   const update = async (item, status, code = '') => {
     setBusy(true);
@@ -39,6 +43,17 @@ function OrderDetail({ id, user }) {
       await checkoutApi.updateOrderStatus(item.id, status, code.trim());
       notify(status === 'cancelled' ? 'Order item cancelled.' : 'Delivery confirmed.', 'success');
       setAction(null); setDeliveryCode(''); setRevision(value => value + 1);
+    } catch (error) { notify(error.message, 'error'); }
+    finally { setBusy(false); }
+  };
+
+  const submitReview = async item => {
+    if (!rating) return;
+    setBusy(true);
+    try {
+      await checkoutApi.addReview({ orderId: id, productId: item.product?.id, rating, comment: comment.trim() });
+      notify('Thanks for reviewing your purchase.', 'success');
+      setAction(null); setRating(0); setComment(''); setRevision(value => value + 1);
     } catch (error) { notify(error.message, 'error'); }
     finally { setBusy(false); }
   };
@@ -56,10 +71,11 @@ function OrderDetail({ id, user }) {
     <div className="order-detail-items">{items.map(item => <article className="order-detail-item" key={item.id}>
       <div className="order-detail-item__top"><div className="order-card__image">{imageFor(item.product) && <img src={imageFor(item.product)} alt=""/>}</div><div className="order-card__main"><strong>{item.product?.name || 'Product'}</strong><span>Quantity {item.quantity || 1}</span><span>{money(Number(item.price || 0) * Number(item.quantity || 1), item.product?.store?.currency?.symbol || symbol)}</span></div><span className={`order-status order-status--${item.status}`}>{title(item.status)}</span></div>
       <StatusJourney status={item.status}/>
-      {(item.status === 'pending' || item.status === 'shipped') && <div className="order-detail-item__actions">{item.status === 'pending' && <Button variant="ghost" onClick={() => setAction({ type: 'cancel', item })}>Cancel item</Button>}{item.status === 'shipped' && <Button onClick={() => setAction({ type: 'delivery', item })}>Confirm delivery</Button>}</div>}
+      {(item.status === 'pending' || item.status === 'shipped' || item.status === 'delivered') && <div className="order-detail-item__actions">{item.status === 'pending' && <Button variant="ghost" onClick={() => setAction({ type: 'cancel', item })}>Cancel item</Button>}{item.status === 'shipped' && <Button onClick={() => setAction({ type: 'delivery', item })}>Confirm delivery</Button>}{item.status === 'delivered' && (reviews.some(review => review.productId === item.product?.id) ? <span className="order-reviewed"><CheckCircle2 size={16}/> Reviewed</span> : <Button variant="outline" icon={Star} onClick={() => setAction({ type: 'review', item })}>Write a review</Button>)}</div>}
     </article>)}</div>
     {action?.type === 'cancel' && <ConfirmModal title="Cancel this item?" description="The seller will stop processing this item. This action cannot be reversed." confirmLabel="Cancel item" loading={busy} onClose={() => setAction(null)} onConfirm={() => update(action.item, 'cancelled')}/>} 
     {action?.type === 'delivery' && <Modal title="Confirm your delivery" icon={<CheckCircle2 size={20}/>} onClose={busy ? () => {} : () => { setAction(null); setDeliveryCode(''); }} footer={<><Button variant="ghost" disabled={busy} onClick={() => { setAction(null); setDeliveryCode(''); }}>Back</Button><Button loading={busy} disabled={!deliveryCode.trim()} onClick={() => update(action.item, 'delivered', deliveryCode)}>Confirm delivery</Button></>}><p>Enter the delivery code sent when your order was shipped. Confirm only after you have received the item.</p><label className="field"><span className="field__label">Delivery code</span><input className="field__input" autoFocus value={deliveryCode} onChange={event => setDeliveryCode(event.target.value.toUpperCase())} placeholder="Enter delivery code"/></label></Modal>}
+    {action?.type === 'review' && <Modal title="Review your purchase" icon={<Star size={20}/>} onClose={busy ? () => {} : () => { setAction(null); setRating(0); setComment(''); }} footer={<><Button variant="ghost" disabled={busy} onClick={() => { setAction(null); setRating(0); setComment(''); }}>Cancel</Button><Button loading={busy} disabled={!rating} onClick={() => submitReview(action.item)}>Submit review</Button></>}><p>How was your experience with <strong>{action.item.product?.name || 'this product'}</strong>?</p><div className="order-rating" role="radiogroup" aria-label="Rating">{[1,2,3,4,5].map(value => <button type="button" role="radio" aria-checked={rating === value} aria-label={`${value} star${value === 1 ? '' : 's'}`} className={value <= rating ? 'active' : ''} onClick={() => setRating(value)} key={value}><Star size={25} fill={value <= rating ? 'currentColor' : 'none'}/></button>)}</div><label className="field"><span className="field__label">Your review (optional)</span><textarea className="field__input order-review-comment" rows="4" maxLength="1000" value={comment} onChange={event => setComment(event.target.value)} placeholder="Tell other customers about your purchase"/></label></Modal>}
   </>;
 }
 
