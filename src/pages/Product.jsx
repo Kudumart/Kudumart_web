@@ -16,6 +16,7 @@ export default function Product() {
   const { id } = useParams(); const navigate = useNavigate(); const [searchParams, setSearchParams] = useSearchParams(); const { user, notify, setCartCount } = useApp();
   const [quantity, setQuantity] = useState(1); const [busy, setBusy] = useState(false); const [activeImage, setActiveImage] = useState('');
   const [offerPrice, setOfferPrice] = useState(''); const [offerMessage, setOfferMessage] = useState(''); const [offer, setOffer] = useState(null);
+  const [contactMessage, setContactMessage] = useState('');
   const [selectedVariant, setSelectedVariant] = useState('');
   useEffect(() => { window.scrollTo(0, 0); setActiveImage(''); setSelectedVariant(''); }, [id]);
   const { data: product, loading, error } = useResource(signal => catalogApi.product(id, signal), [id]);
@@ -53,6 +54,17 @@ export default function Product() {
     try { const result = await accountApi.submitOffer(id, amount, offerMessage); setOffer(result?.offer || result || { status: 'pending', offeredPrice: amount }); notify('Your offer has been sent to the seller.', 'success'); closeDialog(); }
     catch (error) { notify(error.message, 'error'); } finally { setBusy(false); }
   };
+  const contactSeller = async event => {
+    event.preventDefault();
+    if (!vendorId || !contactMessage.trim()) return;
+    setBusy(true);
+    try {
+      await accountApi.sendMessage({ productId: id, receiverId: vendorId, content: contactMessage.trim() });
+      notify('Your message has been sent to the seller.', 'success');
+      navigate('/account/messages');
+    } catch (error) { notify(error.message, 'error'); }
+    finally { setBusy(false); }
+  };
   if (loading) return <div className="container product-page"><Skeleton className="product-detail-skeleton"/></div>;
   if (error || !product) return <div className="container page-space"><EmptyState title="Product unavailable" description={error?.message || 'This product could not be found.'} action={<Link to="/catalog"><Button variant="outline">Back to products</Button></Link>}/></div>;
   const variants = product.variants || [];
@@ -76,7 +88,7 @@ export default function Product() {
       {moreFromStore.length > 0 && <section className="product-related__section" aria-labelledby="more-from-store"><div className="product-related__heading"><div><span className="eyebrow">FROM THE SAME SELLER</span><h2 id="more-from-store">More from {product.store?.name || 'this store'}</h2><p>More finds from the seller behind this item.</p></div>{vendorId && <Link className="section-link" to={`/catalog?vendor=${encodeURIComponent(vendorId)}&store=${encodeURIComponent(product.store?.name || 'This store')}`}>View all products →</Link>}</div><div className="product-grid product-related__grid">{moreFromStore.map(item => <ProductCard key={item.id} product={item}/>)}</div></section>}
       {similarProducts.length > 0 && <section className="product-related__section" aria-labelledby="similar-products"><div className="product-related__heading"><div><span className="eyebrow">KEEP EXPLORING</span><h2 id="similar-products">Similar products</h2><p>Other products you might like.</p></div></div><div className="product-grid product-related__grid">{similarProducts.map(item => <ProductCard key={item.id} product={item}/>)}</div></section>}
     </div>
-    {user && dialog === 'contact' && <Modal title="Contact seller" onClose={closeDialog}><p>Contact the seller directly about <strong>{product.name}</strong>.</p>{product.vendor?.phoneNumber ? <a className="seller-phone" href={`tel:${product.vendor.phoneNumber}`}>{product.vendor.phoneNumber}</a> : <p>The seller has not provided a phone number for this listing.</p>}</Modal>}
+    {user && dialog === 'contact' && <Modal title="Contact seller" onClose={closeDialog}><form className="offer-form" onSubmit={contactSeller}><p>Ask the seller about <strong>{product.name}</strong>. Their reply will appear in your messages.</p><label className="field" htmlFor="contactMessage"><span className="field__label">Message</span><textarea id="contactMessage" className="field__input" rows="4" maxLength="2000" required value={contactMessage} onChange={event => setContactMessage(event.target.value)} placeholder="What would you like to know?"/></label><Button type="submit" loading={busy} disabled={!contactMessage.trim()}>Send message</Button></form></Modal>}
     {user && dialog === 'offer' && <Modal title={offer ? 'Your offer' : 'Request an offer'} onClose={closeDialog}>{offer ? <div className="offer-status"><p>You have already made an offer for this product.</p><p><strong>Status:</strong> {offer.status || 'Pending seller response'}</p>{offer.offeredPrice && <p><strong>Your price:</strong> {money(offer.offeredPrice, symbol)}</p>}<Link className="button button--primary button--md" to="/account/offers">Manage my offers</Link></div> : <form className="offer-form" onSubmit={submitOffer}><p>Send your proposed price to the seller for <strong>{product.name}</strong>.</p><TextField label={`Your offer (${symbol})`} name="offeredPrice" type="number" min="1" step="0.01" required value={offerPrice} onChange={event => setOfferPrice(event.target.value)}/><label className="field" htmlFor="offerMessage"><span className="field__label">Message (optional)</span><textarea id="offerMessage" className="field__input" rows="3" value={offerMessage} onChange={event => setOfferMessage(event.target.value)} placeholder="Add a note for the seller"/></label><Button type="submit" loading={busy}>Send offer</Button></form>}</Modal>}
   </div>;
 }
