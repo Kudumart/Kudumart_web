@@ -67,7 +67,8 @@ const AccountProfile = () => {
       headers: true,
       hideToast: true,
       onSuccess: (res) => {
-        setProductsCount(res.data?.data?.length || 0);
+        const products = Array.isArray(res.data?.data) ? res.data.data : [];
+        setProductsCount(products.filter((product) => product.status === "active").length);
       },
     });
 
