@@ -12,10 +12,13 @@ import { useDebounce } from "../hooks/useDebounce";
 import DeleteModal from "./DeleteModal";
 import { useModal } from "../hooks/modal";
 import ReviewTable from "./ReviewTable";
+import useApiMutation from "../api/hooks/useApiMutation";
+import ConfirmModal from "./ConfirmModal";
 
 const SubscriptionTable = ({ data, refetch, loading }) => {
   const navigate = useNavigate();
   const { openModal } = useModal();
+  const { mutate } = useApiMutation();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -73,6 +76,30 @@ const SubscriptionTable = ({ data, refetch, loading }) => {
     setSearchQuery(value);
   };
 
+  const handleGlobalWaiver = (plan) => {
+    const waived = !plan.isFeeWaived;
+    openModal({
+      size: "sm",
+      content: (
+        <ConfirmModal
+          title={waived ? "Waive this plan fee for everyone?" : "Restore this plan fee?"}
+          message={waived
+            ? `Every vendor will be able to activate ${plan.name} without payment until the waiver is removed. The normal price will be preserved.`
+            : `Vendors will pay the normal ${plan.name} price again. Existing subscriptions will remain active.`}
+          confirmText={waived ? "Waive Fee" : "Restore Fee"}
+          confirmColor={waived ? "orange" : "green"}
+          onConfirm={() => mutate({
+            url: `/admin/subscription/plans/${plan.id}/fee-waiver`,
+            method: "PATCH",
+            headers: true,
+            data: { waived },
+            onSuccess: refetch,
+          })}
+        />
+      ),
+    });
+  };
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
@@ -95,10 +122,12 @@ const SubscriptionTable = ({ data, refetch, loading }) => {
 
     userType: <span className="text-sm text-gray-600">Vendors</span>,
     price: (
-      <span className="text-sm text-gray-900">
-        {item.currency ? item.currency.symbol : "₦"}{" "}
-        {formatNumberWithCommas(item.price)}
-      </span>
+      <div>
+        <span className={`text-sm text-gray-900 ${item.isFeeWaived ? "line-through text-gray-400" : ""}`}>
+          {item.currency ? item.currency.symbol : "₦"}{" "}{formatNumberWithCommas(item.price)}
+        </span>
+        {item.isFeeWaived && <span className="ml-2 rounded-full bg-orange-100 px-2 py-1 text-xs font-semibold text-orange-700">Waived for everyone</span>}
+      </div>
     ),
     allowsServiceAds: <span className="text-sm text-gray-600">"ues"</span>,
     duration: (
@@ -145,6 +174,10 @@ const SubscriptionTable = ({ data, refetch, loading }) => {
         onAdd={() => navigate("create")}
         addButtonText="Add New Subscription"
         actions={[
+          {
+            label: (row) => row.isFeeWaived ? "Restore Fee for Everyone" : "Waive Fee for Everyone",
+            onClick: handleGlobalWaiver,
+          },
           {
             label: (row) => {
               return "Edit";

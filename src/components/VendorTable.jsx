@@ -11,6 +11,7 @@ import { useModal } from "../hooks/modal";
 import useApiMutation from "../api/hooks/useApiMutation";
 import Table from "./ReviewTable";
 import ConfirmModal from "./ConfirmModal";
+import VendorSubscriptionOfferModal from "./VendorSubscriptionOfferModal";
 
 const VendorTable = ({ data, totalData, refetch }) => {
   const [kycData, setKYCData] = useState([]);
@@ -179,6 +180,13 @@ const VendorTable = ({ data, totalData, refetch }) => {
     });
   };
 
+  const manageSubscriptionOffer = (vendor) => {
+    openModal({
+      size: "md",
+      content: <VendorSubscriptionOfferModal vendor={vendor} onSaved={() => refetch(data.meta.currentPage)} />,
+    });
+  };
+
   return (
     <>
       <div className="rounded-md pb-2 w-full gap-5">
@@ -247,6 +255,10 @@ const VendorTable = ({ data, totalData, refetch }) => {
             exportData
             hasNumber
             actions={[
+              {
+                label: () => "Marketing Subscription Offer",
+                onClick: (row) => manageSubscriptionOffer(row),
+              },
               {
                 label: () => "View KYC",
                 onClick: (row) => routeKYC(row.id),

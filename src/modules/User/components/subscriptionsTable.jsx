@@ -55,6 +55,17 @@ const SubscriptionTable = ({ data, refetch }) => {
     const handleSubscribeModal = (plan) => {
         const planObj = { ...plan, amount: parseFloat(plan.price) };
 
+        const activateWaivedPlan = () => {
+            mutate({
+                url: "/vendor/subscribe",
+                method: "POST",
+                data: { subscriptionPlanId: planObj.id, isWallet: false },
+                headers: true,
+                onSuccess: () => { closeModal(); refetch(); },
+                onError: () => { closeModal(); refetch(); },
+            });
+        };
+
         // Create success handler with the current plan ID
         const handlePaymentSuccess = (reference) => {
             const payload = {
@@ -90,7 +101,9 @@ const SubscriptionTable = ({ data, refetch }) => {
                         </p>
                     </div>
                     <div className="flex justify-center mt-5 gap-4">
-                        {ipInfo.currency_name === 'Naira' ?
+                        {planObj.amount === 0 ?
+                            <Button onClick={activateWaivedPlan}>Activate free offer</Button>
+                            : ipInfo.currency_name === 'Naira' ?
                             <PaymentButton
                                 config={{
                                     reference: new Date().getTime().toString(),
@@ -260,7 +273,15 @@ const SubscriptionTable = ({ data, refetch }) => {
                                             <td className="py-6 px-4 text-left">{index + 1}</td>
                                             <td className="py-6 px-4 text-left">{plan.name}</td>
                                             <td className="py-6 px-4 text-left">Vendors</td>
-                                            <td className="py-6 px-4 text-left">{plan.currency?.symbol} {formatNumberWithCommas(plan.price)}</td>
+                                            <td className="py-6 px-4 text-left">
+                                                {plan.hasMarketingOffer && (
+                                                    <div className="text-xs text-gray-400 line-through">{plan.currency?.symbol} {formatNumberWithCommas(plan.originalPrice)}</div>
+                                                )}
+                                                <div className={plan.hasMarketingOffer ? "font-semibold text-orange-600" : ""}>
+                                                    {Number(plan.price) === 0 ? "Waived" : `${plan.currency?.symbol || "₦"} ${formatNumberWithCommas(plan.price)}`}
+                                                </div>
+                                                {plan.hasMarketingOffer && <span className="text-xs text-orange-600">Your marketing offer</span>}
+                                            </td>
                                             <td className="py-6 px-4 text-left">{plan.duration} month(s)</td>
                                             <td className="py-6 px-4 text-left">
                                                 <span
@@ -270,7 +291,7 @@ const SubscriptionTable = ({ data, refetch }) => {
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-left">
-                                                {!plan.isActiveForVendor && parseFloat(plan.price) > 0 ?
+                                                {!plan.isActiveForVendor ?
                                                     <Menu placement="left">
                                                         <MenuHandler>
                                                             <button className="text-gray-400 hover:text-gray-600">
