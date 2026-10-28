@@ -3,6 +3,7 @@ const asList = (value) => Array.isArray(value) ? value : Array.isArray(value?.da
 export const catalogApi = {
   products: async ({ country = 'Nigeria', categoryId, vendorId, q, popular, condition, page = 1, limit = 12, signal } = {}) => asList(unwrap(await request('/products', { params: { country, categoryId, vendorId, search: q, popular: popular || undefined, condition, page, limit }, signal }))),
   product: async (id, signal) => { const response = await request('/product', { params: { productId: id }, signal }); const product = unwrap(response); return { ...product, recommendedProducts: response?.recommendedProducts || product?.recommendedProducts || [] }; },
+  vendorProducts: async (vendorId, page = 1, limit = 20, signal) => { const response = await request('/products', { params: { vendorId, page, limit }, signal }); return { items: asList(unwrap(response)), pagination: response?.pagination || {} }; },
   categories: async (signal) => asList(unwrap(await request('/categories', { params: { activeOnly: true }, signal }))),
   searchGrouped: async (q, signal) => asList(unwrap(await request('/products/search-grouped', { params: { q }, signal }))),
   search: async (q, signal) => { const groups = await catalogApi.searchGrouped(q, signal); return groups.flatMap(group => Array.isArray(group.products) ? group.products : Array.isArray(group.items) ? group.items : group.id && group.price ? [group] : []); },
