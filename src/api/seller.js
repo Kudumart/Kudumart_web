@@ -1,4 +1,5 @@
 import { request, unwrap } from './client';
+import { uploadImage } from './upload';
 
 const optionalList = async (path, options = {}) => {
   try { return unwrap(await request(path, { authenticated: true, ...options })); }
@@ -53,16 +54,7 @@ export const sellerApi = {
 };
 
 export async function uploadSellerImage(file) {
-  const url = import.meta.env.VITE_IMAGE_UPLOAD_URL || 'https://api.kudumart.com/api/upload/file';
-  const form = new FormData(); form.append('image', file);
-  let response;
-  try { response = await fetch(url, { method: 'POST', body: form }); }
-  catch { throw new Error('Could not reach the photo upload service. Please try again in a moment.'); }
-  const payload = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(payload?.message || `Photo upload failed (${response.status}). Please try again.`);
-  const image = typeof payload?.data === 'string' ? payload.data : payload?.data?.url || payload?.url || payload?.secure_url || payload?.path;
-  if (!image) throw new Error('The image upload did not return a URL.');
-  return image;
+  return uploadImage(file);
 }
 
 export function sellerList(result) { return Array.isArray(result) ? result : Array.isArray(result?.data) ? result.data : Array.isArray(result?.items) ? result.items : []; }

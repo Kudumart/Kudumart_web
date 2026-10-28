@@ -1,6 +1,7 @@
 import { request, unwrap } from './client';
 export const accountApi = {
   login: async (email, password) => unwrap(await request('/auth/login', { method: 'POST', body: { email, password, platform: 'web' } })),
+  googleAuth: async values => unwrap(await request('/auth/google', { method: 'POST', body: { ...values, platform: 'web' } })),
   register: async (values, accountType) => unwrap(await request(accountType === 'Vendor' ? '/auth/register/vendor' : '/auth/register/customer', { method: 'POST', body: { ...values, platform: 'web' } })),
   forgotPassword: async email => unwrap(await request('/auth/password/forgot', { method: 'POST', body: { email } })),
   resetPassword: async values => unwrap(await request('/auth/password/reset', { method: 'POST', body: values })),
@@ -9,6 +10,7 @@ export const accountApi = {
   resendVerification: async email => unwrap(await request('/auth/resend/verification/email', { method: 'POST', body: { email, platform: 'web' } })),
   profile: async signal => unwrap(await request('/user/profile', { authenticated: true, signal })),
   updateProfile: async values => unwrap(await request('/user/profile/update', { method: 'PUT', authenticated: true, body: values })),
+  updatePhoto: async photo => unwrap(await request('/user/profile/photo/update', { method: 'PATCH', authenticated: true, body: { photo } })),
   updatePhone: async newPhoneNumber => unwrap(await request('/user/profile/update/phone', { method: 'PUT', authenticated: true, body: { newPhoneNumber } })),
   requestEmailUpdate: async newEmail => unwrap(await request('/user/profile/update/email', { method: 'PUT', authenticated: true, body: { newEmail } })),
   confirmEmailUpdate: async (newEmail, otpCode) => unwrap(await request('/user/profile/confirm/email', { method: 'PUT', authenticated: true, body: { newEmail, otpCode } })),
