@@ -48,7 +48,14 @@ export function calculateNairaQuote(items, charges = [], deliveryFee = 0) {
   const total = Math.round((subtotal + chargeTotal + delivery) * 100) / 100;
   return { subtotal, charges: chargeTotal, delivery, total };
 }
-export function paymentMode(location) { return location?.country === 'Nigeria' ? 'NGN' : 'USD'; }
+export function paymentMode({ items = [], country } = {}) {
+  const currency = items[0]?.product?.store?.currency;
+  const currencyName = String(currency?.name || '').toLowerCase();
+  const currencySymbol = currency?.symbol;
+  if (currencyName === 'naira' || currencySymbol === '₦' || currencySymbol === '#') return 'NGN';
+  if (currencyName === 'dollar' || currencySymbol === '$') return 'USD';
+  return country === 'Nigeria' ? 'NGN' : 'USD';
+}
 export function testPaymentsConfigured(mode) {
   if (!import.meta.env.DEV && import.meta.env.VITE_ENABLE_TEST_PAYMENTS !== 'true') return false;
   const key = mode === 'NGN' ? import.meta.env.VITE_PAYSTACK_PUBLIC_KEY : import.meta.env.VITE_STRIPE_PUBLIC_KEY;

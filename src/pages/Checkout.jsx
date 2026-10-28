@@ -34,7 +34,7 @@ export default function Checkout() {
   const items = Array.isArray(cart.data) ? cart.data : cart.data?.data || [];
   const location = parseLocation(user?.location);
   const hasAddress = hasDeliveryAddress(location);
-  const mode = paymentMode({ country: location?.country || country.name });
+  const mode = paymentMode({ items, country: location?.country || country.name });
   const countryCode = location?.country === 'Nigeria' ? 'NG' : location?.country === 'United Kingdom' ? 'UK' : country.code;
   const canPickup = mode === 'NGN' && !items.some(isDropship);
   const needsDelivery = deliveryOption !== 'store' || !canPickup;

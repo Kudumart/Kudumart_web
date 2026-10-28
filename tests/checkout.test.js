@@ -37,6 +37,8 @@ test('saved user addresses parse into a usable checkout address', () => {
   assert.equal(formatAddress({ address: '39 Sawmill Street', city: 'Lagos', state: 'Lagos', country: 'Nigeria' }), '39 Sawmill Street, Lagos, Lagos, Nigeria');
   assert.equal(paymentMode(location), 'NGN');
   assert.equal(paymentMode({ country: 'United States' }), 'USD');
+  assert.equal(paymentMode({ items: [{ product: { store: { currency: { symbol: '$' } } } }], country: 'Nigeria' }), 'USD');
+  assert.equal(paymentMode({ items: [{ product: { store: { currency: { name: 'Naira' } } } }], country: 'United States' }), 'NGN');
   assert.equal(hasDeliveryAddress(location), true);
   assert.equal(hasDeliveryAddress({ country: 'Nigeria', street: '12 Market Road', zipCode: '110001' }), false);
   assert.equal(hasDeliveryAddress(null), false);
