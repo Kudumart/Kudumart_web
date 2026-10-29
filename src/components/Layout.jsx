@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Bell, ChevronDown, Heart, Menu, ShoppingBag, UserRound, X } from 'lucide-react';
 import { accountApi } from '../api/account';
 import { useResource } from '../hooks/useResource';
@@ -9,8 +9,14 @@ import SearchBox from './SearchBox';
 export default function Layout() {
   const { country, countries, changeCountry, cartCount, user, signOut, notify } = useApp();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationRevision, setNotificationRevision] = useState(0);
   const location = useLocation();
-  const unread = useResource(signal => user ? accountApi.notifications(false, signal) : Promise.resolve([]), [user?.id, location.pathname]);
+  useEffect(() => {
+    const refresh = () => setNotificationRevision(value => value + 1);
+    window.addEventListener('kudu:notifications-changed', refresh);
+    return () => window.removeEventListener('kudu:notifications-changed', refresh);
+  }, []);
+  const unread = useResource(signal => user ? accountApi.notifications(false, signal) : Promise.resolve([]), [user?.id, location.pathname, notificationRevision]);
   const unreadCount = Array.isArray(unread.data) ? unread.data.length : 0;
   const catalogParams = new URLSearchParams(location.search);
   const catalogMode = catalogParams.get('condition') === 'brand_new' ? 'brand-new' : catalogParams.get('popular') === 'true' ? 'popular' : 'shop-all';

@@ -26,6 +26,7 @@ export const accountApi = {
   checkoutOffer: async (offerId, refId, shippingAddress) => unwrap(await request(`/user/offers/${offerId}/checkout`, { method: 'POST', authenticated: true, body: { refId, shippingAddress } })),
   notifications: async (isRead, signal) => unwrap(await request('/user/notifications', { authenticated: true, params: { limit: 50, ...(isRead === undefined ? {} : { isRead }) }, signal })),
   markNotificationRead: async notificationId => unwrap(await request('/user/mark/notification/as/read', { method: 'PATCH', authenticated: true, params: { notificationId } })),
+  markAllNotificationsRead: async () => unwrap(await request('/user/mark/notifications/as/read', { method: 'PATCH', authenticated: true })),
   conversations: async signal => unwrap(await request('/user/conversations', { authenticated: true, signal })),
   messages: async (conversationId, signal) => unwrap(await request('/user/messages', { authenticated: true, params: { conversationId }, signal })),
   sendMessage: async ({ productId, receiverId, content }) => unwrap(await request('/user/messages', { method: 'POST', authenticated: true, body: { productId, receiverId, content } })),
