@@ -12,10 +12,12 @@ import { useApp } from '../contexts/AppContext';
 import { useResource } from '../hooks/useResource';
 import { availableStock, calculateNairaQuote, formatAddress, hasDeliveryAddress, isDropship, parseLocation, paymentMode } from '../utils/checkout';
 import { imageFor, money } from '../utils/format';
+import { isVendorAccount } from '../utils/account';
 import './Checkout.css';
 
 export default function Checkout() {
   const { user, country, setCartCount } = useApp();
+  const vendorAccount = isVendorAccount(user);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showAddress, setShowAddress] = useState(false);
@@ -30,7 +32,7 @@ export default function Checkout() {
     catch { return null; }
   });
 
-  const cart = useResource(signal => user ? accountApi.cart(signal) : Promise.resolve([]), [user?.id]);
+  const cart = useResource(signal => user && !vendorAccount ? accountApi.cart(signal) : Promise.resolve([]), [user?.id, vendorAccount]);
   const items = Array.isArray(cart.data) ? cart.data : cart.data?.data || [];
   const location = parseLocation(user?.location);
   const hasAddress = hasDeliveryAddress(location);
@@ -133,6 +135,7 @@ export default function Checkout() {
   };
 
   if (!user) return <Navigate to="/login" replace state={{ from: '/checkout' }}/>;
+  if (vendorAccount) return <div className="container checkout-page"><Link to="/catalog" className="back-link"><ArrowLeft size={16}/> Back to marketplace</Link><EmptyState icon={ShieldCheck} title="Checkout is for customer accounts" description="Seller accounts can browse and message vendors, while purchases are kept separate in customer accounts. Return to your seller workspace to manage your business." action={<Link to="/seller"><Button>Go to seller workspace</Button></Link>}/></div>;
   return <div className="container checkout-page">
     <Link to="/cart" className="back-link"><ArrowLeft size={16}/> Back to cart</Link>
     <div className="page-intro"><span className="eyebrow">THE FINAL DETAILS</span><h1>Checkout, made simple.</h1><p>Review everything before you place your order.</p></div>
