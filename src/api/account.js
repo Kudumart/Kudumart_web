@@ -39,4 +39,8 @@ export const accountApi = {
   completeServiceBooking: async bookingId => unwrap(await request(`/user/service/bookings/${bookingId}/complete`, { method: 'PATCH', authenticated: true })),
   cancelServiceBooking: async bookingId => unwrap(await request(`/user/service/bookings/${bookingId}/cancel`, { method: 'PATCH', authenticated: true })),
   reviewService: async values => unwrap(await request('/user/service/review', { method: 'POST', authenticated: true, body: values })),
+  initiateAuctionInterestPayment: async auctionProductId => unwrap(await request('/user/auction/interest/initialize-payment', { method: 'POST', authenticated: true, body: { auctionProductId } })),
+  registerAuctionInterest: async (auctionProductId, refId) => unwrap(await request('/user/auction/interest', { method: 'POST', authenticated: true, body: { auctionProductId, amountPaid: 0, ...(refId ? { refId } : {}) } })),
+  auctionBidState: async (auctionProductId, signal) => unwrap(await request('/user/auction/product/bidders', { authenticated: true, params: { auctionproductId: auctionProductId }, signal })),
+  placeAuctionBid: async (auctionProductId, bidAmount) => unwrap(await request('/user/place/bid', { method: 'POST', authenticated: true, body: { auctionProductId, bidAmount } })),
 };
