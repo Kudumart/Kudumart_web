@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { internationalPhone, nationalPhoneInput } from '../src/utils/phone.js';
+import { internationalPhone, nationalPhoneInput, phoneCountryFor } from '../src/utils/phone.js';
 
 test('adds the selected country code without requiring it in the field', () => {
   assert.equal(internationalPhone('0803 123 4567', 'NG'), '+2348031234567');
@@ -13,4 +13,10 @@ test('pasted international numbers do not duplicate the country code', () => {
   assert.equal(internationalPhone('+2348031234567', 'NG'), '+2348031234567');
   assert.equal(internationalPhone('2348031234567', 'NG'), '+2348031234567');
   assert.equal(internationalPhone('123', 'NG'), null);
+});
+
+test('recognizes the country stored in an international phone number', () => {
+  assert.equal(phoneCountryFor('+447700900123'), 'GB');
+  assert.equal(phoneCountryFor('+12025550123'), 'US');
+  assert.equal(phoneCountryFor('08031234567'), 'NG');
 });

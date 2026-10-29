@@ -21,3 +21,13 @@ export function internationalPhone(value, countryCode) {
   if (digits.length < 7 || digits.length > 12) return null;
   return `+${country.dialCode}${digits}`;
 }
+
+export function phoneCountryFor(value, fallback = 'NG') {
+  const raw = String(value || '').trim();
+  const digits = raw.replace(/\D/g, '');
+  if (!raw.startsWith('+') && !raw.startsWith('00')) return fallback;
+  const internationalDigits = raw.startsWith('00') ? digits.slice(2) : digits;
+  return [...PHONE_COUNTRIES]
+    .sort((a, b) => b.dialCode.length - a.dialCode.length)
+    .find(country => internationalDigits.startsWith(country.dialCode))?.code || fallback;
+}

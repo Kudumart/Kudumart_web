@@ -5,6 +5,7 @@ import { Skeleton } from '../components/ui';
 import { Link, Navigate } from 'react-router-dom';
 import { Button } from '../components/ui';
 import { useApp } from '../contexts/AppContext';
+import { isKycRecord, kycStatus } from '../utils/kyc';
 function VendorOnboarding({ user }) {
   const progress = useResource(async signal => {
     const [kyc, stores, products, banks] = await Promise.allSettled([sellerApi.kyc(signal), sellerApi.stores(signal), sellerApi.products(signal), sellerApi.banks(signal)]);
@@ -18,15 +19,16 @@ function VendorOnboarding({ user }) {
   }, [user.id]);
   if (progress.loading) return <Skeleton className="vendor-onboarding-skeleton"/>;
   const data = progress.data || {};
-  const approved = Boolean(user.isVerified || data.kyc?.isVerified || String(data.kyc?.status || '').toLowerCase() === 'approved');
-  const submitted = Boolean(data.kyc?.id || data.kyc?.kycId || (data.kyc?.businessName && data.kyc?.idVerification?.number));
-  const rejected = String(data.kyc?.status || '').toLowerCase() === 'rejected' || Boolean(data.kyc?.adminNote && !data.kyc?.isVerified);
+  const verificationStatus = kycStatus(data.kyc);
+  const approved = Boolean(user.isVerified || verificationStatus === 'approved');
+  const submitted = isKycRecord(data.kyc);
+  const changesRequested = verificationStatus === 'changes_requested';
   const hasStore = Boolean(data.stores?.length);
   const hasProduct = Boolean(data.products?.length);
   const hasBank = Boolean(data.banks?.length);
   if (approved && hasStore && hasProduct && hasBank) return null;
   const steps = [
-    { title: 'Verify your business', description: rejected ? 'Review your details and submit them again.' : approved ? 'Your seller identity has been approved.' : submitted ? 'Your details are being reviewed.' : data.kycError ? 'Check your verification status.' : 'Submit your business and identity details.', state: approved ? 'Done' : rejected ? 'Needs attention' : submitted ? 'Under review' : 'To do', icon: ShieldCheck, to: '/seller/verification', action: approved ? 'View' : submitted && !rejected ? 'Check status' : 'Start verification' },
+    { title: 'Verify your business', description: changesRequested ? 'Correct the details highlighted by the review team.' : approved ? 'Your seller identity has been approved.' : submitted ? 'Your details are being reviewed.' : data.kycError ? 'Check your verification status.' : 'Submit your business and identity details.', state: approved ? 'Done' : changesRequested ? 'Changes requested' : submitted ? 'Under review' : 'To do', icon: ShieldCheck, to: '/seller/verification', action: approved ? 'View' : changesRequested ? 'Review changes' : submitted ? 'Check status' : 'Start verification' },
     { title: 'Create a store', description: 'Set up your storefront, hours, and delivery options.', state: data.stores === null ? 'Check status' : hasStore ? 'Done' : 'To do', icon: Store, to: hasStore ? '/seller/stores' : '/seller/stores/new', action: hasStore ? 'View stores' : 'Create store' },
     { title: 'List a product', description: 'Add your first item for buyers to discover.', state: data.products === null ? 'Check status' : hasProduct ? 'Done' : 'To do', icon: Box, to: hasProduct ? '/seller/products' : '/seller/products/new', action: hasProduct ? 'View products' : 'Add product' },
     { title: 'Link payout account', description: approved ? 'Add the bank account used for withdrawals.' : 'Available after your verification is approved.', state: data.banks === null ? 'Check status' : hasBank ? 'Done' : approved ? 'To do' : 'Locked', icon: Landmark, to: approved ? '/seller/finance' : '/seller/verification', action: hasBank ? 'View account' : approved ? 'Add account' : 'Complete verification' },
