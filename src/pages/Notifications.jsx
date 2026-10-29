@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BadgeCheck, Bell, BriefcaseBusiness, Check, CreditCard, Package, Settings, Tag, WalletCards } from 'lucide-react';
+import { BadgeCheck, Bell, BriefcaseBusiness, Check, CreditCard, MessageCircle, Package, Settings, Tag, WalletCards } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { accountApi } from '../api/account';
 import { Button, EmptyState, Skeleton } from '../components/ui';
@@ -17,6 +17,7 @@ const notificationMeta = (notification, user) => {
   if (type.includes('kyc')) return { to: '/seller/verification', Icon: BadgeCheck };
   if (type.includes('subscription')) return { to: '/seller/subscriptions', Icon: CreditCard };
   if (type.includes('withdrawal')) return { to: '/seller/finance', Icon: WalletCards };
+  if (type.includes('message')) return { to: '/account/messages', Icon: MessageCircle };
   if (type.includes('email') || type.includes('phone') || type.includes('password')) return { to: '/account/settings', Icon: Settings };
   if (type === 'vendor') return { to: '/seller', Icon: BriefcaseBusiness };
   if (type === 'welcome') return { to: '/account', Icon: Bell };
