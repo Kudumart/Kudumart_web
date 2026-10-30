@@ -43,7 +43,11 @@ export const adminApi = {
   publishProduct: productId => adminRequest('/admin/general/product/publish', { method: 'PUT', params: { productId } }),
   unpublishProduct: productId => adminRequest('/admin/general/product/unpublished', { method: 'PUT', params: { productId } }),
   deleteProduct: productId => adminRequest('/admin/general/product/delete', { method: 'DELETE', params: { productId } }),
-  orders: (page = 1, signal) => adminRequest('/admin/general/orders', { params: { page }, signal }),
+  orders: (page = 1, signal, filters = {}) => adminRequest('/admin/general/orders', { params: { page, ...filters }, signal }),
+  orderItems: (orderId, signal) => adminRequest('/admin/general/order/items', { params: { orderId, limit: 100 }, signal }),
+  orderDetails: (orderId, signal) => adminRequest('/admin/order/item/details', { params: { orderId }, signal }),
+  orderPayments: (orderId, signal) => adminRequest('/admin/general/order/payment', { params: { orderId, limit: 100 }, signal }),
+  updateOrderStatus: (orderItemId, status, deliveryCode) => adminRequest('/admin/order/item/update/status', { method: 'POST', body: { orderItemId, status, ...(deliveryCode ? { deliveryCode } : {}) } }),
   kyc: signal => adminRequest('/admin/kyc', { signal }),
   reviewKyc: (kycId, fieldReviews) => adminRequest('/admin/kyc/approve-reject', {
     method: 'POST',
