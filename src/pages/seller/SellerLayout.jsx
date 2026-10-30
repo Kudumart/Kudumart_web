@@ -1,4 +1,4 @@
-import { ArrowLeft, BarChart3, Box, BriefcaseBusiness, CreditCard, Handshake, Landmark, Megaphone, Menu, Package, PanelLeftClose, PanelLeftOpen, ShieldCheck, Store, X } from 'lucide-react';
+import { ArrowLeft, BarChart3, Box, BriefcaseBusiness, CreditCard, Gavel, Handshake, Landmark, Megaphone, Menu, Package, PanelLeftClose, PanelLeftOpen, ShieldCheck, Store, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Navigate, Outlet } from 'react-router-dom';
 import { useApp } from '../../contexts/AppContext';
@@ -7,6 +7,7 @@ import './SellerLayout.css';
 const links = [
   { to: '/seller', label: 'Overview', icon: BarChart3, end: true },
   { to: '/seller/products', label: 'Products', icon: Box },
+  { to: '/seller/auctions', label: 'Auctions', icon: Gavel },
   { to: '/seller/orders', label: 'Orders', icon: Package },
   { to: '/seller/offers', label: 'Offers', icon: Handshake },
   { to: '/seller/stores', label: 'Stores', icon: Store },

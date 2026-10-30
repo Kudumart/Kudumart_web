@@ -33,6 +33,7 @@ import SellerFinance from './pages/seller/SellerFinance';
 import SellerSubscriptions from './pages/seller/SellerSubscriptions';
 import { SellerServices, SellerServiceForm } from './pages/seller/SellerServices';
 import { SellerAdverts, SellerAdvertForm } from './pages/seller/SellerAdverts';
+import { SellerAuctions, SellerAuctionForm, SellerAuctionBids } from './pages/seller/SellerAuctions';
 import { AdminLayout, AdminLogin, AdminOverview, AdminList, AdminVerification } from './pages/admin/Admin';
 import './styles/index.css';
 
@@ -72,6 +73,10 @@ function App() {
       <Route path="products" element={<SellerProducts/>}/>
       <Route path="products/new" element={<SellerProductForm/>}/>
       <Route path="products/:id" element={<SellerProductForm/>}/>
+      <Route path="auctions" element={<SellerAuctions/>}/>
+      <Route path="auctions/new" element={<SellerAuctionForm/>}/>
+      <Route path="auctions/:id/edit" element={<SellerAuctionForm/>}/>
+      <Route path="auctions/:id/bids" element={<SellerAuctionBids/>}/>
       <Route path="orders" element={<SellerOrders/>}/>
       <Route path="orders/:id" element={<SellerOrderDetail/>}/>
       <Route path="offers" element={<SellerOffers/>}/>
