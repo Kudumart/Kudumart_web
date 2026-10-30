@@ -122,3 +122,22 @@
 .storefront-page{min-height:70vh;padding-bottom:90px}.storefront-back{padding-top:34px;padding-bottom:24px}.storefront-hero{background:linear-gradient(135deg,#172642 0%,#223a5b 72%,#f36b31 180%);color:#fff}.storefront-hero__inner{min-height:250px;display:flex;align-items:center;gap:28px;padding-top:42px;padding-bottom:42px}.storefront-logo{width:104px;height:104px;flex:none;border-radius:24px;background:#fff;color:var(--orange);display:grid;place-items:center;overflow:hidden;border:5px solid #ffffff24;box-shadow:0 18px 45px #0712224d}.storefront-logo img{width:100%;height:100%;object-fit:cover}.storefront-identity .eyebrow{color:#ffb98c}.storefront-identity h1{font-size:clamp(34px,5vw,58px);margin:11px 0 17px}.storefront-meta{display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px;color:#c4cfdd;font-size:12px}.storefront-meta span{display:inline-flex;align-items:center;gap:6px}.storefront-meta .storefront-verified{color:#98e3bd;font-weight:800}.storefront-meta .storefront-unverified{padding:5px 8px;border-radius:99px;background:#ffffff19;color:#d8e0e9;font-weight:800}.storefront-products{padding-top:58px}.storefront-products__head{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:28px}.storefront-products__head h2{font-size:32px;margin:10px 0 5px}.storefront-products__head p{color:var(--muted);font-size:12px;margin:0}.storefront-search{width:min(100%,310px);height:45px;border:1px solid var(--line);background:#fff;border-radius:9px;display:flex;align-items:center;gap:9px;padding:0 13px;color:#7e8a99}.storefront-search input{min-width:0;flex:1;border:0;outline:0;background:transparent;font-size:12px;color:var(--ink)}.storefront-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.storefront-hero-skeleton{height:250px;margin-bottom:58px}
 @media(max-width:800px){.storefront-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.storefront-products__head{align-items:start;flex-direction:column}.storefront-search{width:100%}}
 @media(max-width:560px){.storefront-back{padding-top:22px}.storefront-hero__inner{min-height:220px;align-items:flex-start;gap:17px}.storefront-logo{width:76px;height:76px;border-radius:18px}.storefront-identity h1{font-size:31px}.storefront-meta{align-items:flex-start;flex-direction:column}.storefront-products{padding-top:40px}.storefront-products__head h2{font-size:26px}.storefront-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.admin-finance-filters { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:24px; }
+.admin-finance-filters--compact { grid-template-columns:repeat(2,minmax(180px,260px)); }
+.admin-finance-filters input,.admin-finance-filters select { width:100%; min-height:44px; border:1px solid var(--border); border-radius:10px; background:#fff; padding:0 13px; color:var(--ink); font:inherit; }
+.admin-payout-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:22px; }
+.admin-payout-stats .admin-stat { min-height:150px; }
+.admin-withdrawal-actions { display:flex; align-items:center; gap:12px; white-space:nowrap; }
+.admin-bank-details { display:grid; gap:0; margin:0; }
+.admin-bank-details div { display:grid; grid-template-columns:minmax(120px,.7fr) 1.3fr; gap:20px; padding:13px 0; border-bottom:1px solid var(--border); }
+.admin-bank-details div:last-child { border-bottom:0; }
+.admin-bank-details dt { color:var(--muted); text-transform:capitalize; }
+.admin-bank-details dd { margin:0; font-weight:700; overflow-wrap:anywhere; }
+.admin-withdrawal-modal { display:grid; gap:18px; }
+.admin-withdrawal-modal p { margin:0; }
+.admin-withdrawal-modal label { display:grid; gap:9px; font-weight:700; }
+.admin-withdrawal-modal input[type="file"],.admin-withdrawal-modal textarea { width:100%; border:1px solid var(--border); border-radius:10px; padding:12px; font:inherit; background:#fff; }
+.admin-withdrawal-modal textarea { min-height:110px; resize:vertical; }
+.admin-withdrawal-modal small { color:var(--muted); font-weight:400; }
+@media (max-width: 980px) { .admin-payout-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .admin-finance-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 600px) { .admin-payout-stats,.admin-finance-filters,.admin-finance-filters--compact { grid-template-columns:1fr; } .admin-bank-details div { grid-template-columns:1fr; gap:4px; } }

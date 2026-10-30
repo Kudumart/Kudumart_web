@@ -48,6 +48,13 @@ export const adminApi = {
   orderDetails: (orderId, signal) => adminRequest('/admin/order/item/details', { params: { orderId }, signal }),
   orderPayments: (orderId, signal) => adminRequest('/admin/general/order/payment', { params: { orderId, limit: 100 }, signal }),
   updateOrderStatus: (orderItemId, status, deliveryCode) => adminRequest('/admin/order/item/update/status', { method: 'POST', body: { orderItemId, status, ...(deliveryCode ? { deliveryCode } : {}) } }),
+  transactions: (page = 1, signal, filters = {}) => adminRequest('/admin/transactions', { params: { page, ...filters }, signal }),
+  withdrawals: (signal, filters = {}) => adminRequest('/admin/payout/reports', { params: filters, signal }),
+  payoutStats: signal => adminRequest('/admin/payout/stats', { signal }),
+  updateWithdrawal: (id, status, details = {}) => adminRequest('/admin/withdrawal/update/status', {
+    method: 'POST',
+    body: { id, status, ...details },
+  }),
   kyc: signal => adminRequest('/admin/kyc', { signal }),
   reviewKyc: (kycId, fieldReviews) => adminRequest('/admin/kyc/approve-reject', {
     method: 'POST',
