@@ -1,4 +1,4 @@
-import { ArrowLeft, BarChart3, Box, BriefcaseBusiness, CreditCard, Gavel, Handshake, Landmark, Megaphone, Menu, Package, PanelLeftClose, PanelLeftOpen, ShieldCheck, Store, X } from 'lucide-react';
+import { ArrowLeft, BarChart3, Bell, Box, BriefcaseBusiness, CreditCard, Gavel, Handshake, Landmark, Megaphone, Menu, MessageCircle, Package, PanelLeftClose, PanelLeftOpen, ShieldCheck, Store, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink, Navigate, Outlet } from 'react-router-dom';
 import { useApp } from '../../contexts/AppContext';
@@ -16,6 +16,8 @@ const links = [
   { to: '/seller/finance', label: 'Finance', icon: Landmark },
   { to: '/seller/subscriptions', label: 'Subscriptions', icon: CreditCard },
   { to: '/seller/verification', label: 'Verification', icon: ShieldCheck },
+  { to: '/account/messages', label: 'Messages', icon: MessageCircle },
+  { to: '/account/notifications', label: 'Notifications', icon: Bell },
 ];
 
 export default function SellerLayout() {

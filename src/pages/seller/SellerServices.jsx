@@ -37,6 +37,7 @@ function ServiceBookings() {
 
 export function SellerServices() {
   const { user, notify } = useApp();
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [revision, setRevision] = useState(0);
   const [busyId, setBusyId] = useState('');
