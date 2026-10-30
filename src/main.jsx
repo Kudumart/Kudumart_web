@@ -32,6 +32,7 @@ import SellerVerification from './pages/seller/SellerVerification';
 import SellerFinance from './pages/seller/SellerFinance';
 import SellerSubscriptions from './pages/seller/SellerSubscriptions';
 import { SellerServices, SellerServiceForm } from './pages/seller/SellerServices';
+import { SellerAdverts, SellerAdvertForm } from './pages/seller/SellerAdverts';
 import { AdminLayout, AdminLogin, AdminOverview, AdminList, AdminVerification } from './pages/admin/Admin';
 import './styles/index.css';
 
@@ -80,6 +81,9 @@ function App() {
       <Route path="services" element={<SellerServices/>}/>
       <Route path="services/new" element={<SellerServiceForm/>}/>
       <Route path="services/:id" element={<SellerServiceForm/>}/>
+      <Route path="adverts" element={<SellerAdverts/>}/>
+      <Route path="adverts/new" element={<SellerAdvertForm/>}/>
+      <Route path="adverts/:id" element={<SellerAdvertForm/>}/>
       <Route path="verification" element={<SellerVerification/>}/>
       <Route path="finance" element={<SellerFinance/>}/>
       <Route path="subscriptions" element={<SellerSubscriptions/>}/>
