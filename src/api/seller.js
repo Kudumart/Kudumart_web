@@ -14,6 +14,7 @@ export const sellerApi = {
   auctionProducts: signal => optionalList('/vendor/auction/products', { signal }),
   stores: signal => optionalList('/vendor/store', { signal }),
   orders: signal => optionalList('/vendor/order/items', { signal }),
+  order: async (orderId, signal) => unwrap(await request('/vendor/order/item/details', { authenticated: true, params: { orderId }, signal })),
   updateOrderStatus: async (orderItemId, status, deliveryCode = '') => unwrap(await request('/user/order/item/update/status', { method: 'POST', authenticated: true, body: { orderItemId, status, ...(deliveryCode ? { deliveryCode } : {}) } })),
   wallet: async signal => unwrap(await request('/vendor/wallet/stats', { authenticated: true, signal })),
   transactions: (page = 1, signal) => request('/vendor/wallet/transactions', { authenticated: true, params: { page, limit: 10 }, signal }),
