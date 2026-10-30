@@ -34,4 +34,8 @@ export const adminApi = {
   products: (page = 1, signal) => adminRequest('/admin/general/products', { params: { page }, signal }),
   orders: (page = 1, signal) => adminRequest('/admin/general/orders', { params: { page }, signal }),
   kyc: signal => adminRequest('/admin/kyc', { signal }),
+  reviewKyc: (kycId, fieldReviews) => adminRequest('/admin/kyc/approve-reject', {
+    method: 'POST',
+    body: { kycId, fieldReviews },
+  }),
 };
