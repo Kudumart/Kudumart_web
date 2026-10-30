@@ -38,7 +38,11 @@ export const adminApi = {
   saveVendorOffer: (vendorId, body) => adminRequest(`/admin/vendors/${vendorId}/subscription-offers`, { method: 'POST', body }),
   revokeVendorOffer: offerId => adminRequest(`/admin/subscription-offers/${offerId}/revoke`, { method: 'PATCH' }),
   setPlanWaiver: (planId, waived) => adminRequest(`/admin/subscription/plans/${planId}/fee-waiver`, { method: 'PATCH', body: { waived } }),
-  products: (page = 1, signal) => adminRequest('/admin/general/products', { params: { page }, signal }),
+  products: (page = 1, signal, filters = {}) => adminRequest('/admin/general/products', { params: { page, ...filters }, signal }),
+  product: (productId, signal) => adminRequest('/admin/general/product/view', { params: { productId }, signal }),
+  publishProduct: productId => adminRequest('/admin/general/product/publish', { method: 'PUT', params: { productId } }),
+  unpublishProduct: productId => adminRequest('/admin/general/product/unpublished', { method: 'PUT', params: { productId } }),
+  deleteProduct: productId => adminRequest('/admin/general/product/delete', { method: 'DELETE', params: { productId } }),
   orders: (page = 1, signal) => adminRequest('/admin/general/orders', { params: { page }, signal }),
   kyc: signal => adminRequest('/admin/kyc', { signal }),
   reviewKyc: (kycId, fieldReviews) => adminRequest('/admin/kyc/approve-reject', {

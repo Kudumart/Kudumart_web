@@ -34,7 +34,7 @@ import SellerSubscriptions from './pages/seller/SellerSubscriptions';
 import { SellerServices, SellerServiceForm } from './pages/seller/SellerServices';
 import { SellerAdverts, SellerAdvertForm } from './pages/seller/SellerAdverts';
 import { SellerAuctions, SellerAuctionForm, SellerAuctionBids } from './pages/seller/SellerAuctions';
-import { AdminLayout, AdminLogin, AdminOverview, AdminList, AdminSubscriptions, AdminVendorDetail, AdminVerification } from './pages/admin/Admin';
+import { AdminLayout, AdminLogin, AdminOverview, AdminList, AdminProductDetail, AdminProducts, AdminSubscriptions, AdminVendorDetail, AdminVerification } from './pages/admin/Admin';
 import './styles/index.css';
 
 function App() {
@@ -101,7 +101,8 @@ function App() {
       <Route path="vendors/:vendorId" element={<AdminVendorDetail/>}/>
       <Route path="subscriptions" element={<AdminSubscriptions/>}/>
       <Route path="customers" element={<AdminList kind="customers"/>}/>
-      <Route path="products" element={<AdminList kind="products"/>}/>
+      <Route path="products" element={<AdminProducts/>}/>
+      <Route path="products/:productId" element={<AdminProductDetail/>}/>
       <Route path="orders" element={<AdminList kind="orders"/>}/>
       <Route path="verification" element={<AdminVerification/>}/>
     </Route>
