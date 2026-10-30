@@ -8,7 +8,9 @@ import { money } from '../../utils/format';
 import { SellerHeading } from './SellerPages';
 
 const transactionList = value => sellerList(value?.data || value);
+const titleCase = value => String(value || 'pending').replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
 const emptyBank = { bankCode: '', accountNumber: '', accountHolderName: '' };
+const emptyWithdrawal = { bankInformationId: '', amount: '', currency: 'NGN' };
 
 export default function SellerFinance() {
   const { user, notify } = useApp();
@@ -19,17 +21,21 @@ export default function SellerFinance() {
   const [values, setValues] = useState(emptyBank);
   const [bankToDelete, setBankToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [withdrawal, setWithdrawal] = useState(emptyWithdrawal);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawalError, setWithdrawalError] = useState('');
   const supportedBanks = useResource(signal => sellerApi.supportedBanks(signal), []);
   const finance = useResource(async signal => {
-    const [wallet, savedBanks, transactions, plans] = await Promise.allSettled([
-      sellerApi.wallet(signal), sellerApi.banks(signal), sellerApi.transactions(1, signal), sellerApi.subscriptionPlans(signal),
+    const [wallet, savedBanks, transactions, plans, withdrawals] = await Promise.allSettled([
+      sellerApi.wallet(signal), sellerApi.banks(signal), sellerApi.transactions(1, signal), sellerApi.subscriptionPlans(signal), sellerApi.withdrawals(signal),
     ]);
     return {
       wallet: wallet.status === 'fulfilled' ? wallet.value : null,
       banks: savedBanks.status === 'fulfilled' ? sellerList(savedBanks.value) : [],
       transactions: transactions.status === 'fulfilled' ? transactionList(transactions.value) : [],
       plans: plans.status === 'fulfilled' ? sellerList(plans.value) : [],
-      error: [wallet, savedBanks, transactions, plans].some(result => (
+      withdrawals: withdrawals.status === 'fulfilled' ? sellerList(withdrawals.value) : [],
+      error: [wallet, savedBanks, transactions, plans, withdrawals].some(result => (
         result.status === 'rejected'
         && result.reason?.name !== 'AbortError'
         && result.reason?.status !== 404
@@ -85,6 +91,21 @@ export default function SellerFinance() {
     } catch (failure) { notify(failure.message || 'The payout account could not be deleted.', 'error'); }
     finally { setDeleting(false); }
   };
+  const requestWithdrawal = async event => {
+    event.preventDefault(); setWithdrawing(true); setWithdrawalError('');
+    try {
+      const amount = Number(withdrawal.amount);
+      const available = withdrawal.currency === 'USD' ? Number(stats.availableUSD || stats.balance?.USD || 0) : Number(stats.availableNGN || stats.balance?.NGN || 0);
+      if (!withdrawal.bankInformationId) throw new Error('Choose a payout account.');
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error('Enter a withdrawal amount greater than zero.');
+      if (amount > available) throw new Error('The withdrawal amount is higher than your available balance.');
+      await sellerApi.requestWithdrawal({ ...withdrawal, amount });
+      notify('Withdrawal request submitted for review.', 'success');
+      setWithdrawal(emptyWithdrawal);
+      setRefresh(value => value + 1);
+    } catch (failure) { setWithdrawalError(failure.message || 'The withdrawal request could not be submitted.'); }
+    finally { setWithdrawing(false); }
+  };
 
   return <>
     <SellerHeading eyebrow="MONEY" title="Finance" description="See pending sales, available funds, payout accounts, and transaction history."/>
@@ -128,6 +149,26 @@ export default function SellerFinance() {
           <p className="seller-muted">Funds become available after an order is confirmed as delivered. Withdrawal requests are reviewed before transfer.</p>
         </section>
       </div>
+      <section className="seller-panel">
+        <div className="seller-panel__head"><div><span className="eyebrow">WITHDRAWALS</span><h2>Request a payout</h2><p>Only delivered-order funds in your available balance can be withdrawn.</p></div></div>
+        {user?.isVerified && data.banks?.length ? <form className="seller-form" onSubmit={requestWithdrawal}>
+          <div className="seller-form-grid seller-form-grid--three">
+            <SelectField label="Currency" value={withdrawal.currency} onChange={event => setWithdrawal(current => ({ ...current, currency: event.target.value, amount: '' }))}>
+              <option value="NGN">NGN — Nigerian naira</option>
+              <option value="USD">USD — US dollar</option>
+            </SelectField>
+            <SelectField label="Payout account" required value={withdrawal.bankInformationId} onChange={event => setWithdrawal(current => ({ ...current, bankInformationId: event.target.value }))}>
+              <option value="">Choose an account</option>
+              {data.banks.map(bank => <option key={bank.id} value={bank.id}>{bank.bankName || bank.bankInfo?.bankName} · •••• {String(bank.accountNumber || bank.bankInfo?.accountNumber || '').slice(-4)}</option>)}
+            </SelectField>
+            <TextField label="Amount" type="number" min="0.01" step="0.01" required value={withdrawal.amount} onChange={event => setWithdrawal(current => ({ ...current, amount: event.target.value }))}/>
+          </div>
+          <p className="seller-muted">Available: {money(withdrawal.currency === 'USD' ? stats.availableUSD || stats.balance?.USD || 0 : stats.availableNGN || stats.balance?.NGN || 0, withdrawal.currency === 'USD' ? '$' : '₦')}</p>
+          {withdrawalError && <div className="form-alert">{withdrawalError}</div>}
+          <Button type="submit" loading={withdrawing}>Submit withdrawal request</Button>
+        </form> : <EmptyState icon={Landmark} title={user?.isVerified ? 'Add a payout account first' : 'KYC approval required'} description={user?.isVerified ? 'Save and verify a bank account before requesting a withdrawal.' : 'Your identity must be approved before withdrawals can be requested.'}/>}
+        {data.withdrawals?.length > 0 && <div className="seller-simple-list">{data.withdrawals.slice(0, 5).map(item => <div className="seller-order-line" key={item.id}><Landmark size={19}/><span><strong>{item.currency} withdrawal</strong><small>{titleCase(item.status)} · {new Date(item.createdAt).toLocaleDateString()}</small></span><b>{money(item.amount, item.currency === 'USD' ? '$' : '₦')}</b></div>)}</div>}
+      </section>
     </>}
     {bankToDelete && <ConfirmModal title="Delete payout account?" description={<>Remove <strong>{bankToDelete.bankName || bankToDelete.bankInfo?.bankName}</strong> ending in <strong>{String(bankToDelete.accountNumber || bankToDelete.bankInfo?.accountNumber || '').slice(-4)}</strong>? It will no longer be available for withdrawals.</>} confirmLabel="Delete account" loading={deleting} onClose={() => setBankToDelete(null)} onConfirm={deleteBank}/>}
   </>;
