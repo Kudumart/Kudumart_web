@@ -49,6 +49,21 @@ const PostProducts = ({ data, paginate, totalData, loading, refetch }) => {
     });
   };
 
+  const handleTrendingModal = (product) => {
+    openModal({
+      size: "sm",
+      content: (
+        <Modal
+          title={`${product.isTrending ? "Remove" : "Add"} “${product.name}” ${product.isTrending ? "from" : "to"} trending products?`}
+          redirect={handleRedirect}
+          api="/admin/general/product/trending"
+          method="PATCH"
+          body={{ productId: product.id, isTrending: !product.isTrending }}
+        />
+      ),
+    });
+  };
+
   return (
     <div className="All">
       <div className="rounded-md pb-2 w-full gap-5">
@@ -85,6 +100,11 @@ const PostProducts = ({ data, paginate, totalData, loading, refetch }) => {
                   </span>
                 ),
               },
+              {
+                key: "isTrending",
+                label: "Trending",
+                render: (value) => <span className={`py-1 px-3 rounded-full text-sm ${value ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-600"}`}>{value ? "Trending" : "Standard"}</span>,
+              },
               { key: "vendor", label: "Vendor" },
             ]}
             exportData
@@ -113,6 +133,10 @@ const PostProducts = ({ data, paginate, totalData, loading, refetch }) => {
               {
                 label: () => "Delete",
                 onClick: (row) => handleDeleteModal(row),
+              },
+              {
+                label: (row) => row.isTrending ? "Remove from trending" : "Make trending",
+                onClick: (row) => handleTrendingModal(row),
               },
             ]}
             currentPage={paginate.page}

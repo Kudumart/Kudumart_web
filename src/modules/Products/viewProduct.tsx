@@ -401,7 +401,7 @@ export default function ViewProduct() {
 
   const isNonCartCategory = () => (product as any)?.purchaseType === "offer";
 
-  const shareUrl = `${window.location.origin}/product/${id}`;
+  const shareUrl = `${String(import.meta.env.VITE_BASE_URL || "https://api.kudumart.com/api").replace(/\/$/, "")}/products/${id}/share`;
   const sharePrice = (product as Product)?.price ? `₦${Number((product as Product).price).toLocaleString()}` : "";
   const shareTitle = (product as Product)?.name
     ? `Check out ${(product as Product).name} ${sharePrice ? `(${sharePrice})` : ""} on Kudumart`
