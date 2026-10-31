@@ -738,6 +738,7 @@ export function AdminOrderDetail() {
   const [deliveryCode, setDeliveryCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [dropshipItem, setDropshipItem] = useState(null);
   const order = orderResource.data?.data;
   const items = rowsFrom(itemsResource.data);
   const payments = rowsFrom(paymentsResource.data);
@@ -826,6 +827,7 @@ export function AdminOrderDetail() {
                       </strong>
                     </span>
                   </div>
+                  {(item.dropshipProductId || product.type === 'dropship') && <div className="admin-dropship-bar"><span><strong>Dropship fulfilment</strong><small>Supplier order and tracking data are available.</small></span><Button variant="outline" onClick={() => setDropshipItem(item)}>Monitor shipment</Button></div>}
                   {!final && (
                     <div className="admin-order-item__actions">
                       <Button variant="danger" onClick={() => setAction({ type: 'cancel', item })}>
@@ -916,8 +918,18 @@ export function AdminOrderDetail() {
           </div>
         </Modal>
       )}
+      {dropshipItem && (
+        <DropshipMonitor item={dropshipItem} onClose={() => setDropshipItem(null)}/>
+      )}
     </>
   );
+}
+
+function DropshipMonitor({ item, onClose }) {
+  const details = useResource(signal => adminApi.dropshipOrderDetails(item.id, signal), [item.id]);
+  const tracking = useResource(signal => adminApi.dropshipTracking(item.id, signal), [item.id]);
+  const detailRows = rowsFrom(details.data); const trackingRows = rowsFrom(tracking.data);
+  return <Modal title="Dropship shipment monitor" onClose={onClose}><div className="admin-dropship-monitor"><p>Supplier fulfilment and tracking for this order item.</p>{details.loading || tracking.loading ? <Skeleton className="admin-payment-loading"/> : details.error || tracking.error ? <div className="admin-error">{details.error?.message || tracking.error?.message}</div> : <><section><h3>Supplier orders</h3>{detailRows.length ? detailRows.map((row, index) => <pre key={row.id || index}>{JSON.stringify(row, null, 2)}</pre>) : <p>No supplier order details returned.</p>}</section><section><h3>Tracking</h3>{trackingRows.length ? trackingRows.map((row, index) => <pre key={row.id || index}>{JSON.stringify(row, null, 2)}</pre>) : <p>No tracking events returned yet.</p>}</section></>}</div></Modal>;
 }
 
 export function AdminProducts() {

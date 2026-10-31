@@ -40,6 +40,7 @@ import './styles/index.css';
 
 const AdminStores = lazy(() => import('./pages/admin/AdminOperations').then(module => ({ default: module.AdminStores })));
 const AdminAuctions = lazy(() => import('./pages/admin/AdminOperations').then(module => ({ default: module.AdminAuctions })));
+const AdminAuctionMonitor = lazy(() => import('./pages/admin/AdminOperations').then(module => ({ default: module.AdminAuctionMonitor })));
 const AdminAdverts = lazy(() => import('./pages/admin/AdminOperations').then(module => ({ default: module.AdminAdverts })));
 const AdminServices = lazy(() => import('./pages/admin/AdminOperations').then(module => ({ default: module.AdminServices })));
 const AdminServiceTaxonomy = lazy(() => import('./pages/admin/AdminGovernance').then(module => ({ default: module.AdminServiceTaxonomy })));
@@ -132,6 +133,7 @@ function App() {
       <Route path="categories" element={<AdminCategories/>}/>
       <Route path="stores" element={deferred(<AdminStores/>)}/>
       <Route path="auctions" element={deferred(<AdminAuctions/>)}/>
+      <Route path="auctions/:auctionId" element={deferred(<AdminAuctionMonitor/>)}/>
       <Route path="adverts" element={deferred(<AdminAdverts/>)}/>
       <Route path="services" element={deferred(<AdminServices/>)}/>
       <Route path="service-taxonomy" element={deferred(<AdminServiceTaxonomy/>)}/>
