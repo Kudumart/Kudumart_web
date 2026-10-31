@@ -98,6 +98,9 @@ export const adminApi = {
   transactions: (page = 1, signal, filters = {}) => adminRequest('/admin/transactions', { params: { page, ...filters }, signal }),
   withdrawals: (signal, filters = {}) => adminRequest('/admin/payout/reports', { params: filters, signal }),
   payoutStats: signal => adminRequest('/admin/payout/stats', { signal }),
+  earningsReports: (signal, filters = {}) => adminRequest('/admin/earnings/reports', { params: filters, signal }),
+  notifications: (page = 1, signal) => adminRequest('/admin/notifications', { params: { page, limit: 20 }, signal }),
+  markNotificationRead: id => adminRequest(`/admin/notifications/${id}/read`, { method: 'PATCH' }),
   updateWithdrawal: (id, status, details = {}) => adminRequest('/admin/withdrawal/update/status', {
     method: 'POST',
     body: { id, status, ...details },

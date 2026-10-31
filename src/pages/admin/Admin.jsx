@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowUpRight, BarChart3, Box, ClipboardCheck, CreditCard, Gavel, KeyRound, Landmark, LogOut, Megaphone, Menu, Package, Store, Tags, Users, Wallet, Wrench, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, BarChart3, Bell, Box, ClipboardCheck, CreditCard, Gavel, KeyRound, Landmark, LogOut, Megaphone, Menu, Package, ReceiptText, Store, Tags, Users, Wallet, Wrench, X } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
 import { adminApi, adminSession } from '../../api/admin';
 import { uploadImage } from '../../api/upload';
@@ -23,6 +23,8 @@ const links = [
   { to: '/admin/withdrawals', label: 'Withdrawals', icon: Wallet },
   { to: '/admin/verification', label: 'Verification', icon: ClipboardCheck },
   { to: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { to: '/admin/reports', label: 'Reports', icon: ReceiptText },
+  { to: '/admin/notifications', label: 'Notifications', icon: Bell },
   { to: '/admin/access', label: 'Team & permissions', icon: KeyRound }
 ];
 const rowsFrom = payload => (Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []);
@@ -120,7 +122,7 @@ export function AdminLayout() {
           >
             <LogOut size={18} /> Sign out
           </button>
-          <Link to="/">View marketplace ↗</Link>
+          <div className="admin-topbar__actions"><Link aria-label="Admin notifications" to="/admin/notifications"><Bell size={18}/></Link><Link to="/">View marketplace ↗</Link></div>
         </div>
       </aside>
       <div className="admin-main">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
@@ -35,9 +35,17 @@ import { SellerServices, SellerServiceForm } from './pages/seller/SellerServices
 import { SellerAdverts, SellerAdvertForm } from './pages/seller/SellerAdverts';
 import { SellerAuctions, SellerAuctionForm, SellerAuctionBids } from './pages/seller/SellerAuctions';
 import { AdminCategories, AdminLayout, AdminLogin, AdminOrderDetail, AdminOrders, AdminOverview, AdminList, AdminProductDetail, AdminProducts, AdminSubscriptions, AdminTransactions, AdminVendorDetail, AdminVerification, AdminWithdrawals } from './pages/admin/Admin';
-import { AdminAdverts, AdminAuctions, AdminServices, AdminStores } from './pages/admin/AdminOperations';
-import { AdminAccess, AdminServiceTaxonomy } from './pages/admin/AdminGovernance';
 import './styles/index.css';
+
+const AdminStores = lazy(() => import('./pages/admin/AdminOperations').then(module => ({ default: module.AdminStores })));
+const AdminAuctions = lazy(() => import('./pages/admin/AdminOperations').then(module => ({ default: module.AdminAuctions })));
+const AdminAdverts = lazy(() => import('./pages/admin/AdminOperations').then(module => ({ default: module.AdminAdverts })));
+const AdminServices = lazy(() => import('./pages/admin/AdminOperations').then(module => ({ default: module.AdminServices })));
+const AdminServiceTaxonomy = lazy(() => import('./pages/admin/AdminGovernance').then(module => ({ default: module.AdminServiceTaxonomy })));
+const AdminAccess = lazy(() => import('./pages/admin/AdminGovernance').then(module => ({ default: module.AdminAccess })));
+const AdminReports = lazy(() => import('./pages/admin/AdminInsights').then(module => ({ default: module.AdminReports })));
+const AdminNotifications = lazy(() => import('./pages/admin/AdminInsights').then(module => ({ default: module.AdminNotifications })));
+const deferred = element => <Suspense fallback={<div className="admin-route-loading" aria-label="Loading page"><span className="spinner"/></div>}>{element}</Suspense>;
 
 function App() {
   return <AppProvider><BrowserRouter><Routes>
@@ -105,12 +113,14 @@ function App() {
       <Route path="customers" element={<AdminList kind="customers"/>}/>
       <Route path="products" element={<AdminProducts/>}/>
       <Route path="categories" element={<AdminCategories/>}/>
-      <Route path="stores" element={<AdminStores/>}/>
-      <Route path="auctions" element={<AdminAuctions/>}/>
-      <Route path="adverts" element={<AdminAdverts/>}/>
-      <Route path="services" element={<AdminServices/>}/>
-      <Route path="service-taxonomy" element={<AdminServiceTaxonomy/>}/>
-      <Route path="access" element={<AdminAccess/>}/>
+      <Route path="stores" element={deferred(<AdminStores/>)}/>
+      <Route path="auctions" element={deferred(<AdminAuctions/>)}/>
+      <Route path="adverts" element={deferred(<AdminAdverts/>)}/>
+      <Route path="services" element={deferred(<AdminServices/>)}/>
+      <Route path="service-taxonomy" element={deferred(<AdminServiceTaxonomy/>)}/>
+      <Route path="access" element={deferred(<AdminAccess/>)}/>
+      <Route path="reports" element={deferred(<AdminReports/>)}/>
+      <Route path="notifications" element={deferred(<AdminNotifications/>)}/>
       <Route path="products/:productId" element={<AdminProductDetail/>}/>
       <Route path="orders" element={<AdminOrders/>}/>
       <Route path="orders/:orderId" element={<AdminOrderDetail/>}/>
