@@ -37,6 +37,10 @@ function Table({
 
   // Use external search if provided, otherwise use internal search
   const searchTerm = disableInternalSearch ? searchQuery : internalSearchTerm;
+  const clearSearch = () => {
+    if (disableInternalSearch && onSearchChange) onSearchChange("");
+    else setInternalSearchTerm("");
+  };
 
   // Debounce search term to avoid excessive filtering
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -70,10 +74,10 @@ function Table({
 
   // Reset pagination when searching
   useEffect(() => {
-    if (debouncedSearchTerm && onPageChange && currentPage !== 1) {
+    if (!disableInternalSearch && debouncedSearchTerm && onPageChange && currentPage !== 1) {
       onPageChange(1);
     }
-  }, [debouncedSearchTerm, onPageChange]);
+  }, [debouncedSearchTerm, onPageChange, currentPage, disableInternalSearch]);
 
   // 3️⃣ Export should use filtered data
   const handleExport = () => {
@@ -121,7 +125,7 @@ function Table({
             </svg>
             {searchTerm && (
               <button
-                onClick={() => setSearchTerm("")}
+                onClick={clearSearch}
                 className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <svg
@@ -321,8 +325,7 @@ function Table({
       {totalPages > 1 && onPageChange && (
         <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4 border-t pt-4">
           <div className="text-sm text-gray-600">
-            {(debouncedSearchTerm && !disableInternalSearch) ||
-            (disableInternalSearch && searchQuery) ? (
+            {debouncedSearchTerm && !disableInternalSearch ? (
               <span>
                 Showing {filteredData.length} filtered result
                 {filteredData.length !== 1 ? "s" : ""}
@@ -342,8 +345,7 @@ function Table({
               onClick={() => onPageChange(currentPage - 1)}
               disabled={
                 currentPage === 1 ||
-                (debouncedSearchTerm && !disableInternalSearch) ||
-                (disableInternalSearch && searchQuery)
+                debouncedSearchTerm && !disableInternalSearch
               }
               className="px-4 py-2 rounded-sm bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors"
             >
@@ -351,8 +353,7 @@ function Table({
             </button>
 
             {!(
-              (debouncedSearchTerm && !disableInternalSearch) ||
-              (disableInternalSearch && searchQuery)
+              debouncedSearchTerm && !disableInternalSearch
             ) && (
               <span className="px-2 text-sm">
                 Page {currentPage} of {totalPages}
@@ -363,8 +364,7 @@ function Table({
               onClick={() => onPageChange(currentPage + 1)}
               disabled={
                 currentPage === totalPages ||
-                (debouncedSearchTerm && !disableInternalSearch) ||
-                (disableInternalSearch && searchQuery)
+                debouncedSearchTerm && !disableInternalSearch
               }
               className="px-4 py-2 rounded-sm bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors"
             >
@@ -373,7 +373,7 @@ function Table({
 
             {debouncedSearchTerm && (
               <button
-                onClick={() => setSearchTerm("")}
+                onClick={clearSearch}
                 className="px-4 py-2 rounded-sm bg-blue-500 text-white hover:bg-blue-600 transition-colors"
               >
                 Clear Search
