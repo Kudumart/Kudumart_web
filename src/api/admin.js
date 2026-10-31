@@ -21,6 +21,15 @@ async function adminRequest(path, { method = 'GET', body, params, signal, authen
   return payload;
 }
 
+async function adminPageRequest(path, options) {
+  try {
+    return await adminRequest(path, options);
+  } catch (error) {
+    if (error.status === 404) return { data: [], pagination: { total: 0, page: 1, pages: 0 } };
+    throw error;
+  }
+}
+
 export const adminApi = {
   login: async credentials => {
     const response = await adminRequest('/auth/admin/login', { method: 'POST', body: credentials, authenticated: false });
@@ -44,6 +53,22 @@ export const adminApi = {
   deleteCategory: categoryId => adminRequest('/admin/categories', { method: 'DELETE', params: { categoryId } }),
   saveSubcategory: body => adminRequest('/admin/sub/categories', { method: body.subCategoryId ? 'PUT' : 'POST', body }),
   deleteSubcategory: subCategoryId => adminRequest('/admin/sub/categories', { method: 'DELETE', params: { subCategoryId } }),
+  stores: (page = 1, signal, filters = {}) => adminPageRequest('/admin/general/stores', { params: { page, limit: 20, ...filters }, signal }),
+  store: (storeId, signal) => adminRequest('/admin/general/store/view', { params: { storeId }, signal }),
+  auctions: (page = 1, signal, filters = {}) => adminPageRequest('/admin/general/auction/products', { params: { page, limit: 20, ...filters }, signal }),
+  auction: (auctionProductId, signal) => adminRequest('/admin/general/auction/product/view', { params: { auctionProductId }, signal }),
+  auctionBidders: (auctionProductId, signal) => adminRequest('/admin/general/auction/product/bidders', { params: { auctionProductId }, signal }),
+  setAuctionStatus: (auctionProductId, status) => adminRequest('/admin/general/auction/product/status', { method: 'PUT', params: { auctionProductId, status } }),
+  deleteAuction: auctionProductId => adminRequest('/admin/general/auction/product/delete', { method: 'DELETE', params: { auctionProductId } }),
+  adverts: (page = 1, signal, filters = {}) => adminPageRequest('/admin/general/adverts', { params: { page, limit: 20, ...filters }, signal }),
+  advert: (advertId, signal) => adminRequest('/admin/general/advert/view', { params: { advertId }, signal }),
+  reviewAdvert: (advertId, status, adminNote = '') => adminRequest('/admin/approved-reject/advert', { method: 'POST', body: { advertId, status, ...(adminNote ? { adminNote } : {}) } }),
+  deleteAdvert: advertId => adminRequest('/admin/adverts', { method: 'DELETE', params: { advertId } }),
+  services: (page = 1, signal, filters = {}) => adminRequest('/admin/services', { params: { page, limit: 20, ...filters }, signal }),
+  service: (serviceId, signal) => adminRequest(`/admin/services/${serviceId}`, { signal }),
+  setServiceStatus: (serviceId, active) => adminRequest(`/admin/service/${serviceId}/${active ? 'activate' : 'suspend'}`, { method: 'POST' }),
+  serviceCategories: signal => adminRequest('/admin/service/categories', { signal }),
+  serviceSubcategories: (categoryId, signal) => adminRequest(`/admin/service/subcategories/${categoryId}`, { signal }),
   products: (page = 1, signal, filters = {}) => adminRequest('/admin/general/products', { params: { page, ...filters }, signal }),
   product: (productId, signal) => adminRequest('/admin/general/product/view', { params: { productId }, signal }),
   publishProduct: productId => adminRequest('/admin/general/product/publish', { method: 'PUT', params: { productId } }),

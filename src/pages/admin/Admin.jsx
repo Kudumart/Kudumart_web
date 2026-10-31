@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowUpRight, BarChart3, Box, ClipboardCheck, CreditCard, Landmark, LogOut, Menu, Package, Store, Users, Wallet, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, BarChart3, Box, ClipboardCheck, CreditCard, Gavel, Landmark, LogOut, Megaphone, Menu, Package, Store, Users, Wallet, Wrench, X } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
 import { adminApi, adminSession } from '../../api/admin';
 import { uploadImage } from '../../api/upload';
@@ -13,6 +13,10 @@ const links = [
   { to: '/admin/customers', label: 'Customers', icon: Users },
   { to: '/admin/products', label: 'Products', icon: Box },
   { to: '/admin/categories', label: 'Categories', icon: ClipboardCheck },
+  { to: '/admin/stores', label: 'Stores', icon: Store },
+  { to: '/admin/auctions', label: 'Auctions', icon: Gavel },
+  { to: '/admin/adverts', label: 'Adverts', icon: Megaphone },
+  { to: '/admin/services', label: 'Services', icon: Wrench },
   { to: '/admin/orders', label: 'Orders', icon: Package },
   { to: '/admin/transactions', label: 'Transactions', icon: ArrowUpRight },
   { to: '/admin/withdrawals', label: 'Withdrawals', icon: Wallet },
