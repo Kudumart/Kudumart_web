@@ -25,6 +25,7 @@ import Discovery from './pages/Discovery';
 import DiscoveryDetail from './pages/DiscoveryDetail';
 import PasswordRecovery from './pages/PasswordRecovery';
 import EmailVerification from './pages/EmailVerification';
+import { Careers, Contact, ContentPage, DownloadApp, Faqs, JobDetail, NotFound, Testimonials } from './pages/PublicPages';
 import SellerLayout from './pages/seller/SellerLayout';
 import { SellerOverview, SellerProducts, SellerOrders, SellerOrderDetail, SellerOffers, SellerStores } from './pages/seller/SellerPages';
 import { SellerProductForm, SellerStoreForm } from './pages/seller/SellerForms';
@@ -76,7 +77,21 @@ function App() {
       <Route path="services" element={<Discovery type="services"/>}/>
       <Route path="auction/product/:id" element={<DiscoveryDetail type="auction"/>}/>
       <Route path="services/:id" element={<DiscoveryDetail type="service"/>}/>
-      <Route path="*" element={<Catalog/>}/>
+      <Route path="about" element={<ContentPage kind="about"/>}/>
+      <Route path="contact" element={<Contact/>}/>
+      <Route path="faqs" element={<Faqs/>}/>
+      <Route path="privacy" element={<ContentPage kind="privacy"/>}/>
+      <Route path="terms-condition" element={<ContentPage kind="terms"/>}/>
+      <Route path="cookie-policy" element={<ContentPage kind="cookies"/>}/>
+      <Route path="return-policy" element={<ContentPage kind="returns"/>}/>
+      <Route path="testimonials" element={<Testimonials/>}/>
+      <Route path="download-app" element={<DownloadApp/>}/>
+      <Route path="careers" element={<Careers/>}/>
+      <Route path="careers/:jobId" element={<JobDetail/>}/>
+      <Route path="career" element={<Navigate to="/careers" replace/>}/>
+      <Route path="jobs-details/:jobId" element={<JobDetail/>}/>
+      <Route path="testimonial" element={<Navigate to="/testimonials" replace/>}/>
+      <Route path="*" element={<NotFound/>}/>
     </Route>
     <Route path="seller" element={<SellerLayout/>}>
       <Route index element={<SellerOverview/>}/>
