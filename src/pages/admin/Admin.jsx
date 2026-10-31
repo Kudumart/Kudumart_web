@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowUpRight, BarChart3, Bell, Box, ClipboardCheck, CreditCard, Gavel, KeyRound, Landmark, LogOut, Megaphone, Menu, Package, ReceiptText, Store, Tags, Users, Wallet, Wrench, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, BarChart3, Bell, Box, ClipboardCheck, CreditCard, FileText, Gavel, KeyRound, Landmark, LogOut, Megaphone, Menu, Package, ReceiptText, SlidersHorizontal, Store, Tags, Users, Wallet, Wrench, X } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
 import { adminApi, adminSession } from '../../api/admin';
 import { uploadImage } from '../../api/upload';
@@ -25,6 +25,8 @@ const links = [
   { to: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard },
   { to: '/admin/reports', label: 'Reports', icon: ReceiptText },
   { to: '/admin/notifications', label: 'Notifications', icon: Bell },
+  { to: '/admin/content', label: 'Content', icon: FileText },
+  { to: '/admin/configuration', label: 'Charges & attributes', icon: SlidersHorizontal },
   { to: '/admin/access', label: 'Team & permissions', icon: KeyRound }
 ];
 const rowsFrom = payload => (Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []);

@@ -46,6 +46,8 @@ const AdminServiceTaxonomy = lazy(() => import('./pages/admin/AdminGovernance').
 const AdminAccess = lazy(() => import('./pages/admin/AdminGovernance').then(module => ({ default: module.AdminAccess })));
 const AdminReports = lazy(() => import('./pages/admin/AdminInsights').then(module => ({ default: module.AdminReports })));
 const AdminNotifications = lazy(() => import('./pages/admin/AdminInsights').then(module => ({ default: module.AdminNotifications })));
+const AdminContent = lazy(() => import('./pages/admin/AdminContent').then(module => ({ default: module.AdminContent })));
+const AdminConfiguration = lazy(() => import('./pages/admin/AdminContent').then(module => ({ default: module.AdminConfiguration })));
 const deferred = element => <Suspense fallback={<div className="admin-route-loading" aria-label="Loading page"><span className="spinner"/></div>}>{element}</Suspense>;
 
 function App() {
@@ -136,6 +138,8 @@ function App() {
       <Route path="access" element={deferred(<AdminAccess/>)}/>
       <Route path="reports" element={deferred(<AdminReports/>)}/>
       <Route path="notifications" element={deferred(<AdminNotifications/>)}/>
+      <Route path="content" element={deferred(<AdminContent/>)}/>
+      <Route path="configuration" element={deferred(<AdminConfiguration/>)}/>
       <Route path="products/:productId" element={<AdminProductDetail/>}/>
       <Route path="orders" element={<AdminOrders/>}/>
       <Route path="orders/:orderId" element={<AdminOrderDetail/>}/>
