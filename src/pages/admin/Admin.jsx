@@ -4,6 +4,7 @@ import { Link, Navigate, NavLink, Outlet, useNavigate, useParams } from 'react-r
 import { adminApi, adminSession } from '../../api/admin';
 import { uploadImage } from '../../api/upload';
 import { Button, ConfirmModal, EmptyState, Modal, Skeleton, TextField } from '../../components/ui';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { useResource } from '../../hooks/useResource';
 
 const links = [
@@ -912,9 +913,20 @@ export function AdminProducts() {
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
-  const resource = useResource(signal => adminApi.products(page, signal, { name: query.trim(), status }), [page, query, status]);
+  const [categoryId, setCategoryId] = useState('');
+  const debouncedQuery = useDebouncedValue(query.trim(), 350);
+  const categoriesResource = useResource(signal => adminApi.categories(signal), []);
+  const categories = [...rowsFrom(categoriesResource.data)].sort((a, b) => a.name.localeCompare(b.name));
+  const resource = useResource(signal => adminApi.products(page, signal, { name: debouncedQuery, status, categoryId, limit: 20 }), [page, debouncedQuery, status, categoryId]);
   const rows = rowsFrom(resource.data);
   const pagination = resource.data?.pagination || {};
+  const hasFilters = Boolean(query || status || categoryId);
+  const clearFilters = () => {
+    setQuery('');
+    setStatus('');
+    setCategoryId('');
+    setPage(1);
+  };
   return (
     <>
       <div className="admin-page-head">
@@ -948,13 +960,26 @@ export function AdminProducts() {
             <option value="active">Published</option>
             <option value="draft">Draft</option>
           </select>
+          <select
+            aria-label="Filter product category"
+            value={categoryId}
+            disabled={categoriesResource.loading || Boolean(categoriesResource.error)}
+            onChange={event => {
+              setCategoryId(event.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">All categories</option>
+            {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+          </select>
+          {hasFilters && <button className="admin-filter-clear" type="button" onClick={clearFilters}>Clear filters</button>}
         </div>
         {resource.loading ? (
           <Skeleton className="admin-table-skeleton" />
         ) : resource.error ? (
           <div className="admin-error">{resource.error.message}</div>
         ) : !rows.length ? (
-          <EmptyState title="No matching products" description="Try a different name or status." />
+          <EmptyState title="No matching products" description="Try a different name, status, or category." action={hasFilters ? <Button variant="outline" onClick={clearFilters}>Clear filters</Button> : null} />
         ) : (
           <div className="admin-product-list">
             {rows.map(product => (
