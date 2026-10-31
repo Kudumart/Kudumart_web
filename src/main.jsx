@@ -36,6 +36,7 @@ import { SellerAdverts, SellerAdvertForm } from './pages/seller/SellerAdverts';
 import { SellerAuctions, SellerAuctionForm, SellerAuctionBids } from './pages/seller/SellerAuctions';
 import { AdminCategories, AdminLayout, AdminLogin, AdminOrderDetail, AdminOrders, AdminOverview, AdminList, AdminProductDetail, AdminProducts, AdminSubscriptions, AdminTransactions, AdminVendorDetail, AdminVerification, AdminWithdrawals } from './pages/admin/Admin';
 import { AdminAdverts, AdminAuctions, AdminServices, AdminStores } from './pages/admin/AdminOperations';
+import { AdminAccess, AdminServiceTaxonomy } from './pages/admin/AdminGovernance';
 import './styles/index.css';
 
 function App() {
@@ -108,6 +109,8 @@ function App() {
       <Route path="auctions" element={<AdminAuctions/>}/>
       <Route path="adverts" element={<AdminAdverts/>}/>
       <Route path="services" element={<AdminServices/>}/>
+      <Route path="service-taxonomy" element={<AdminServiceTaxonomy/>}/>
+      <Route path="access" element={<AdminAccess/>}/>
       <Route path="products/:productId" element={<AdminProductDetail/>}/>
       <Route path="orders" element={<AdminOrders/>}/>
       <Route path="orders/:orderId" element={<AdminOrderDetail/>}/>

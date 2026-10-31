@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowUpRight, BarChart3, Box, ClipboardCheck, CreditCard, Gavel, Landmark, LogOut, Megaphone, Menu, Package, Store, Users, Wallet, Wrench, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, BarChart3, Box, ClipboardCheck, CreditCard, Gavel, KeyRound, Landmark, LogOut, Megaphone, Menu, Package, Store, Tags, Users, Wallet, Wrench, X } from 'lucide-react';
 import { Link, Navigate, NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
 import { adminApi, adminSession } from '../../api/admin';
 import { uploadImage } from '../../api/upload';
@@ -17,11 +17,13 @@ const links = [
   { to: '/admin/auctions', label: 'Auctions', icon: Gavel },
   { to: '/admin/adverts', label: 'Adverts', icon: Megaphone },
   { to: '/admin/services', label: 'Services', icon: Wrench },
+  { to: '/admin/service-taxonomy', label: 'Service taxonomy', icon: Tags },
   { to: '/admin/orders', label: 'Orders', icon: Package },
   { to: '/admin/transactions', label: 'Transactions', icon: ArrowUpRight },
   { to: '/admin/withdrawals', label: 'Withdrawals', icon: Wallet },
   { to: '/admin/verification', label: 'Verification', icon: ClipboardCheck },
-  { to: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard }
+  { to: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { to: '/admin/access', label: 'Team & permissions', icon: KeyRound }
 ];
 const rowsFrom = payload => (Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []);
 const totalFrom = (payload, name) => payload?.meta?.[name] ?? payload?.pagination?.total ?? rowsFrom(payload).length;
