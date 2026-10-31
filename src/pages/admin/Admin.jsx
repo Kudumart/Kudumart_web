@@ -12,6 +12,7 @@ const links = [
   { to: '/admin/vendors', label: 'Vendors', icon: Store },
   { to: '/admin/customers', label: 'Customers', icon: Users },
   { to: '/admin/products', label: 'Products', icon: Box },
+  { to: '/admin/categories', label: 'Categories', icon: ClipboardCheck },
   { to: '/admin/orders', label: 'Orders', icon: Package },
   { to: '/admin/transactions', label: 'Transactions', icon: ArrowUpRight },
   { to: '/admin/withdrawals', label: 'Withdrawals', icon: Wallet },
@@ -1023,6 +1024,42 @@ export function AdminProducts() {
       </section>
     </>
   );
+}
+
+export function AdminCategories() {
+  const [revision, setRevision] = useState(0);
+  const [editing, setEditing] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const resource = useResource(signal => adminApi.categoryTree(signal), [revision]);
+  const categories = rowsFrom(resource.data);
+  const save = async ({ name, file }) => {
+    setBusy(true); setFeedback(null);
+    try {
+      const image = file ? await uploadImage(file) : editing?.item?.image;
+      if (!image) throw new Error('Please add a category image.');
+      const body = editing.kind === 'category' ? { ...(editing.item?.id ? { categoryId: editing.item.id } : {}), name, image } : { ...(editing.item?.id ? { subCategoryId: editing.item.id } : {}), categoryId: editing.categoryId, name, image };
+      const response = editing.kind === 'category' ? await adminApi.saveCategory(body) : await adminApi.saveSubcategory(body);
+      setFeedback({ message: response.message }); setEditing(null); setRevision(value => value + 1);
+    } catch (cause) { setFeedback({ error: true, message: cause.message }); } finally { setBusy(false); }
+  };
+  const remove = async () => {
+    setBusy(true); setFeedback(null);
+    try {
+      const response = deleting.kind === 'category' ? await adminApi.deleteCategory(deleting.item.id) : await adminApi.deleteSubcategory(deleting.item.id);
+      setFeedback({ message: response.message }); setDeleting(null); setRevision(value => value + 1);
+    } catch (cause) { setFeedback({ error: true, message: cause.message }); setDeleting(null); } finally { setBusy(false); }
+  };
+  return <><div className="admin-page-head"><div><span className="eyebrow">CATALOGUE STRUCTURE</span><h1>Categories</h1><p>Organise products into clear customer-facing groups.</p></div><Button onClick={() => setEditing({ kind: 'category', item: null })}>Add category</Button></div>
+    {feedback && <div className={feedback.error ? 'admin-error admin-vendor-feedback' : 'admin-success admin-vendor-feedback'}>{feedback.message}</div>}
+    {resource.loading ? <Skeleton className="admin-table-skeleton"/> : resource.error ? <div className="admin-error">{resource.error.message}</div> : <div className="admin-taxonomy-grid">{categories.map(category => <section className="admin-card admin-taxonomy-card" key={category.id}><header><span className="admin-taxonomy-image">{category.image ? <img src={category.image} alt=""/> : <Box size={22}/>}</span><div><h2>{category.name}</h2><p>{category.subCategories?.length || 0} subcategories</p></div><div className="admin-taxonomy-actions"><button onClick={() => setEditing({ kind: 'category', item: category })}>Edit</button><button onClick={() => setDeleting({ kind: 'category', item: category })}>Delete</button></div></header><div className="admin-subcategory-list">{category.subCategories?.map(item => <div key={item.id}><span className="admin-taxonomy-image admin-taxonomy-image--small">{item.image ? <img src={item.image} alt=""/> : <Box size={15}/>}</span><strong>{item.name}</strong><button onClick={() => setEditing({ kind: 'subcategory', categoryId: category.id, item })}>Edit</button><button onClick={() => setDeleting({ kind: 'subcategory', item })}>Delete</button></div>)}{!category.subCategories?.length && <p>No subcategories yet.</p>}</div><Button variant="outline" onClick={() => setEditing({ kind: 'subcategory', categoryId: category.id, item: null })}>Add subcategory</Button></section>)}</div>}
+    {editing && <TaxonomyModal title={`${editing.item ? 'Edit' : 'Add'} ${editing.kind === 'category' ? 'category' : 'subcategory'}`} item={editing.item} busy={busy} onClose={() => !busy && setEditing(null)} onSave={save}/>} {deleting && <ConfirmModal title={`Delete “${deleting.item.name}”?`} description={deleting.kind === 'category' ? 'Categories with subcategories cannot be deleted.' : 'Subcategories connected to products cannot be deleted.'} confirmLabel="Delete" tone="danger" loading={busy} onClose={() => setDeleting(null)} onConfirm={remove}/>}</>;
+}
+
+function TaxonomyModal({ title, item, busy, onClose, onSave }) {
+  const [name, setName] = useState(item?.name || ''); const [file, setFile] = useState(null);
+  return <Modal title={title} onClose={onClose}><form className="admin-taxonomy-form" onSubmit={event => { event.preventDefault(); onSave({ name: name.trim(), file }); }}><TextField label="Name" name="name" required value={name} onChange={event => setName(event.target.value)}/><label className="seller-upload"><strong>{file || item?.image ? 'Replace image' : 'Add image'}</strong><span>JPG, PNG, or WebP</span><input type="file" accept="image/jpeg,image/png,image/webp" required={!item?.image} onChange={event => setFile(event.target.files?.[0] || null)}/></label>{(file || item?.image) && <img className="admin-taxonomy-preview" src={file ? URL.createObjectURL(file) : item.image} alt="Preview"/>}<div className="admin-form-actions"><Button type="button" variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" loading={busy}>Save</Button></div></form></Modal>;
 }
 
 const productText = value =>
