@@ -42,6 +42,7 @@ export const adminApi = {
   product: (productId, signal) => adminRequest('/admin/general/product/view', { params: { productId }, signal }),
   publishProduct: productId => adminRequest('/admin/general/product/publish', { method: 'PUT', params: { productId } }),
   unpublishProduct: productId => adminRequest('/admin/general/product/unpublished', { method: 'PUT', params: { productId } }),
+  setProductTrending: (productId, isTrending) => adminRequest('/admin/general/product/trending', { method: 'PATCH', body: { productId, isTrending } }),
   deleteProduct: productId => adminRequest('/admin/general/product/delete', { method: 'DELETE', params: { productId } }),
   orders: (page = 1, signal, filters = {}) => adminRequest('/admin/general/orders', { params: { page, ...filters }, signal }),
   orderItems: (orderId, signal) => adminRequest('/admin/general/order/items', { params: { orderId, limit: 100 }, signal }),

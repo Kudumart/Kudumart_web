@@ -139,5 +139,6 @@
 .admin-withdrawal-modal input[type="file"],.admin-withdrawal-modal textarea { width:100%; border:1px solid var(--border); border-radius:10px; padding:12px; font:inherit; background:#fff; }
 .admin-withdrawal-modal textarea { min-height:110px; resize:vertical; }
 .admin-withdrawal-modal small { color:var(--muted); font-weight:400; }
+.admin-trending-label { display:inline-flex; width:max-content; padding:3px 8px; border-radius:999px; background:#fff1e8; color:#e85d04; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
 @media (max-width: 980px) { .admin-payout-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } .admin-finance-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width: 600px) { .admin-payout-stats,.admin-finance-filters,.admin-finance-filters--compact { grid-template-columns:1fr; } .admin-bank-details div { grid-template-columns:1fr; gap:4px; } }

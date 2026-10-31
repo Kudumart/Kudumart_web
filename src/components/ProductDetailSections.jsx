@@ -52,7 +52,7 @@ export function ShareProduct({ product }) {
   const [copied, setCopied] = useState(false);
   const menuRef = useRef(null);
   const triggerRef = useRef(null);
-  const url = `${window.location.origin}/product/${product.id}`;
+  const url = `${String(import.meta.env.VITE_API_BASE_URL || 'https://api.kudumart.com/api').replace(/\/$/, '')}/products/${product.id}/share`;
   const title = `Check out ${product.name} on KuduMart`;
   const encodedUrl = encodeURIComponent(url);
   const options = [
