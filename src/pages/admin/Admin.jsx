@@ -1,51 +1,108 @@
-import { useState } from 'react';
-import { ArrowLeft, ArrowUpRight, BarChart3, Bell, Box, ClipboardCheck, CreditCard, FileText, Gavel, KeyRound, Landmark, LogOut, Megaphone, Menu, Package, ReceiptText, SlidersHorizontal, Store, Tags, Users, Wallet, Wrench, X } from 'lucide-react';
-import { Link, Navigate, NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
-import { adminApi, adminSession } from '../../api/admin';
-import { uploadImage } from '../../api/upload';
-import { Button, ConfirmModal, EmptyState, Modal, Skeleton, TextField } from '../../components/ui';
-import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { useResource } from '../../hooks/useResource';
+import { useState } from "react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  BarChart3,
+  Bell,
+  Box,
+  ClipboardCheck,
+  CreditCard,
+  FileText,
+  Gavel,
+  KeyRound,
+  Landmark,
+  LogOut,
+  Megaphone,
+  Menu,
+  Package,
+  PackageSearch,
+  ReceiptText,
+  SlidersHorizontal,
+  Store,
+  Tags,
+  Users,
+  Wallet,
+  Wrench,
+  X,
+} from "lucide-react";
+import {
+  Link,
+  Navigate,
+  NavLink,
+  Outlet,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+import { adminApi, adminSession } from "../../api/admin";
+import { uploadImage } from "../../api/upload";
+import {
+  Button,
+  ConfirmModal,
+  EmptyState,
+  Modal,
+  Skeleton,
+  TextField,
+} from "../../components/ui";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { useResource } from "../../hooks/useResource";
 
 const links = [
-  { to: '/admin', label: 'Overview', icon: BarChart3, end: true },
-  { to: '/admin/vendors', label: 'Vendors', icon: Store },
-  { to: '/admin/customers', label: 'Customers', icon: Users },
-  { to: '/admin/products', label: 'Products', icon: Box },
-  { to: '/admin/categories', label: 'Categories', icon: ClipboardCheck },
-  { to: '/admin/stores', label: 'Stores', icon: Store },
-  { to: '/admin/auctions', label: 'Auctions', icon: Gavel },
-  { to: '/admin/adverts', label: 'Adverts', icon: Megaphone },
-  { to: '/admin/services', label: 'Services', icon: Wrench },
-  { to: '/admin/service-taxonomy', label: 'Service taxonomy', icon: Tags },
-  { to: '/admin/orders', label: 'Orders', icon: Package },
-  { to: '/admin/transactions', label: 'Transactions', icon: ArrowUpRight },
-  { to: '/admin/withdrawals', label: 'Withdrawals', icon: Wallet },
-  { to: '/admin/verification', label: 'Verification', icon: ClipboardCheck },
-  { to: '/admin/subscriptions', label: 'Subscriptions', icon: CreditCard },
-  { to: '/admin/reports', label: 'Reports', icon: ReceiptText },
-  { to: '/admin/notifications', label: 'Notifications', icon: Bell },
-  { to: '/admin/content', label: 'Content', icon: FileText },
-  { to: '/admin/configuration', label: 'Charges & attributes', icon: SlidersHorizontal },
-  { to: '/admin/access', label: 'Team & permissions', icon: KeyRound }
+  { to: "/admin", label: "Overview", icon: BarChart3, end: true },
+  { to: "/admin/vendors", label: "Vendors", icon: Store },
+  { to: "/admin/customers", label: "Customers", icon: Users },
+  { to: "/admin/products", label: "Products", icon: Box },
+  { to: "/admin/categories", label: "Categories", icon: ClipboardCheck },
+  { to: "/admin/stores", label: "Stores", icon: Store },
+  { to: "/admin/auctions", label: "Auctions", icon: Gavel },
+  { to: "/admin/adverts", label: "Adverts", icon: Megaphone },
+  { to: "/admin/services", label: "Services", icon: Wrench },
+  { to: "/admin/service-taxonomy", label: "Service taxonomy", icon: Tags },
+  { to: "/admin/orders", label: "Orders", icon: Package },
+  { to: "/admin/transactions", label: "Transactions", icon: ArrowUpRight },
+  { to: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
+  { to: "/admin/verification", label: "Verification", icon: ClipboardCheck },
+  { to: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
+  { to: "/admin/reports", label: "Reports", icon: ReceiptText },
+  { to: "/admin/notifications", label: "Notifications", icon: Bell },
+  { to: "/admin/content", label: "Content", icon: FileText },
+  {
+    to: "/admin/configuration",
+    label: "Charges & attributes",
+    icon: SlidersHorizontal,
+  },
+  {
+    to: "/admin/payment-gateways",
+    label: "Payment gateways",
+    icon: CreditCard,
+  },
+  { to: "/admin/dropshipping", label: "Dropshipping", icon: PackageSearch },
+  { to: "/admin/access", label: "Team & permissions", icon: KeyRound },
 ];
-const rowsFrom = payload => (Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : []);
-const totalFrom = (payload, name) => payload?.meta?.[name] ?? payload?.pagination?.total ?? rowsFrom(payload).length;
+const rowsFrom = (payload) =>
+  Array.isArray(payload?.data)
+    ? payload.data
+    : Array.isArray(payload)
+      ? payload
+      : [];
+const totalFrom = (payload, name) =>
+  payload?.meta?.[name] ??
+  payload?.pagination?.total ??
+  rowsFrom(payload).length;
 
 export function AdminLogin() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   if (adminSession.get()) return <Navigate to="/admin" replace />;
-  const submit = async event => {
+  const submit = async (event) => {
     event.preventDefault();
     setBusy(true);
-    setError('');
+    setError("");
     try {
       await adminApi.login({ email, password });
-      navigate('/admin', { replace: true });
+      navigate("/admin", { replace: true });
     } catch (cause) {
       setError(cause.message);
     } finally {
@@ -61,7 +118,9 @@ export function AdminLogin() {
         <div>
           <span className="eyebrow">KUDUMART OPERATIONS</span>
           <h1>One clear view of your marketplace.</h1>
-          <p>Manage the people, products, and orders behind every great find.</p>
+          <p>
+            Manage the people, products, and orders behind every great find.
+          </p>
         </div>
       </div>
       <div className="admin-login__form">
@@ -70,8 +129,24 @@ export function AdminLogin() {
           <h2>Welcome back.</h2>
           <p>Sign in to continue to your workspace.</p>
           <form onSubmit={submit}>
-            <TextField label="Email address" type="email" name="email" value={email} onChange={event => setEmail(event.target.value)} autoComplete="username" required />
-            <TextField label="Password" type="password" name="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required />
+            <TextField
+              label="Email address"
+              type="email"
+              name="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="username"
+              required
+            />
+            <TextField
+              label="Password"
+              type="password"
+              name="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              required
+            />
             {error && (
               <div className="form-alert" role="alert">
                 {error}
@@ -96,7 +171,7 @@ export function AdminLayout() {
   if (!adminSession.get()) return <Navigate to="/auth/admin/login" replace />;
   return (
     <div className="admin-shell">
-      <aside className={`admin-sidebar ${open ? 'admin-sidebar--open' : ''}`}>
+      <aside className={`admin-sidebar ${open ? "admin-sidebar--open" : ""}`}>
         <div className="admin-sidebar__brand">
           <Link to="/admin">
             <img src="/kudumart-logo.png" alt="KuduMart" />
@@ -109,7 +184,15 @@ export function AdminLayout() {
         <p className="admin-sidebar__label">WORKSPACE</p>
         <nav aria-label="Admin workspace">
           {links.map(({ to, label, icon: Icon, end }) => (
-            <NavLink key={to} to={to} end={end} onClick={() => setOpen(false)} className={({ isActive }) => `admin-nav ${isActive ? 'active' : ''}`}>
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `admin-nav ${isActive ? "active" : ""}`
+              }
+            >
               <Icon size={19} />
               {label}
             </NavLink>
@@ -119,17 +202,26 @@ export function AdminLayout() {
           <button
             onClick={() => {
               adminSession.clear();
-              navigate('/auth/admin/login', { replace: true });
+              navigate("/auth/admin/login", { replace: true });
             }}
           >
             <LogOut size={18} /> Sign out
           </button>
-          <div className="admin-topbar__actions"><Link aria-label="Admin notifications" to="/admin/notifications"><Bell size={18}/></Link><Link to="/">View marketplace ↗</Link></div>
+          <div className="admin-topbar__actions">
+            <Link aria-label="Admin notifications" to="/admin/notifications">
+              <Bell size={18} />
+            </Link>
+            <Link to="/">View marketplace ↗</Link>
+          </div>
         </div>
       </aside>
       <div className="admin-main">
         <header className="admin-topbar">
-          <button className="admin-menu" aria-label="Open menu" onClick={() => setOpen(true)}>
+          <button
+            className="admin-menu"
+            aria-label="Open menu"
+            onClick={() => setOpen(true)}
+          >
             <Menu size={22} />
           </button>
           <strong>Admin Studio</strong>
@@ -139,39 +231,84 @@ export function AdminLayout() {
           <Outlet />
         </main>
       </div>
-      {open && <button className="admin-backdrop" aria-label="Close menu" onClick={() => setOpen(false)} />}
+      {open && (
+        <button
+          className="admin-backdrop"
+          aria-label="Close menu"
+          onClick={() => setOpen(false)}
+        />
+      )}
     </div>
   );
 }
 
 function AdminTable({ rows, kind, compact = false }) {
-  if (!rows.length) return <EmptyState title={`No ${kind} to show`} description="New entries will appear here as they arrive." />;
+  if (!rows.length)
+    return (
+      <EmptyState
+        title={`No ${kind} to show`}
+        description="New entries will appear here as they arrive."
+      />
+    );
   return (
     <div className="admin-table-wrap">
       <table className="admin-table">
         <thead>
           <tr>
-            <th>{kind === 'products' ? 'Product' : kind === 'orders' ? 'Order' : 'Name'}</th>
-            <th>{kind === 'products' ? 'Store' : kind === 'orders' ? 'Customer' : 'Email'}</th>
+            <th>
+              {kind === "products"
+                ? "Product"
+                : kind === "orders"
+                  ? "Order"
+                  : "Name"}
+            </th>
+            <th>
+              {kind === "products"
+                ? "Store"
+                : kind === "orders"
+                  ? "Customer"
+                  : "Email"}
+            </th>
             <th>Status</th>
             {!compact && <th>Created</th>}
-            {kind === 'vendors' && !compact && <th />}
+            {kind === "vendors" && !compact && <th />}
           </tr>
         </thead>
         <tbody>
           {rows.map((item, index) => (
             <tr key={item.id || index}>
               <td>
-                <strong>{item.name || [item.firstName, item.lastName].filter(Boolean).join(' ') || item.refId || item.title || 'Untitled'}</strong>
+                <strong>
+                  {item.name ||
+                    [item.firstName, item.lastName].filter(Boolean).join(" ") ||
+                    item.refId ||
+                    item.title ||
+                    "Untitled"}
+                </strong>
               </td>
-              <td>{item.email || item.store?.name || item.user?.email || '—'}</td>
               <td>
-                <span className={`admin-status ${String(item.status || '').toLowerCase() === 'active' || item.isVerified ? 'admin-status--good' : ''}`}>{item.status || (item.isVerified ? 'Verified' : 'Unverified')}</span>
+                {item.email || item.store?.name || item.user?.email || "—"}
               </td>
-              {!compact && <td>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}</td>}
-              {kind === 'vendors' && !compact && (
+              <td>
+                <span
+                  className={`admin-status ${String(item.status || "").toLowerCase() === "active" || item.isVerified ? "admin-status--good" : ""}`}
+                >
+                  {item.status || (item.isVerified ? "Verified" : "Unverified")}
+                </span>
+              </td>
+              {!compact && (
                 <td>
-                  <Link className="admin-row-action" to={`/admin/vendors/${item.id}`}>
+                  {item.createdAt
+                    ? new Date(item.createdAt).toLocaleDateString()
+                    : "—"}
+                </td>
+              )}
+              {kind === "vendors" && !compact && (
+                <td>
+                  <Link
+                    className="admin-row-action"
+                    to={`/admin/vendors/${item.id}`}
+                  >
                     Manage →
                   </Link>
                 </td>
@@ -185,39 +322,39 @@ function AdminTable({ rows, kind, compact = false }) {
 }
 
 export function AdminOverview() {
-  const customers = useResource(signal => adminApi.customers(1, signal), []);
-  const vendors = useResource(signal => adminApi.vendors(1, signal), []);
-  const products = useResource(signal => adminApi.products(1, signal), []);
-  const orders = useResource(signal => adminApi.orders(1, signal), []);
+  const customers = useResource((signal) => adminApi.customers(1, signal), []);
+  const vendors = useResource((signal) => adminApi.vendors(1, signal), []);
+  const products = useResource((signal) => adminApi.products(1, signal), []);
+  const orders = useResource((signal) => adminApi.orders(1, signal), []);
   const cards = [
     {
-      label: 'Customers',
-      value: totalFrom(customers.data, 'totalCustomers'),
-      to: '/admin/customers',
+      label: "Customers",
+      value: totalFrom(customers.data, "totalCustomers"),
+      to: "/admin/customers",
       state: customers,
-      icon: Users
+      icon: Users,
     },
     {
-      label: 'Vendors',
-      value: totalFrom(vendors.data, 'totalVendors'),
-      to: '/admin/vendors',
+      label: "Vendors",
+      value: totalFrom(vendors.data, "totalVendors"),
+      to: "/admin/vendors",
       state: vendors,
-      icon: Store
+      icon: Store,
     },
     {
-      label: 'Products',
+      label: "Products",
       value: totalFrom(products.data),
-      to: '/admin/products',
+      to: "/admin/products",
       state: products,
-      icon: Box
+      icon: Box,
     },
     {
-      label: 'Orders',
+      label: "Orders",
       value: totalFrom(orders.data),
-      to: '/admin/orders',
+      to: "/admin/orders",
       state: orders,
-      icon: Package
-    }
+      icon: Package,
+    },
   ];
   return (
     <>
@@ -238,7 +375,13 @@ export function AdminOverview() {
               <Icon size={22} />
             </span>
             <span>{label}</span>
-            <strong>{state.loading ? '—' : state.error ? 'Unavailable' : Number(value).toLocaleString()}</strong>
+            <strong>
+              {state.loading
+                ? "—"
+                : state.error
+                  ? "Unavailable"
+                  : Number(value).toLocaleString()}
+            </strong>
             <small>View {label.toLowerCase()} ↗</small>
           </Link>
         ))}
@@ -252,12 +395,33 @@ export function AdminOverview() {
             </div>
             <Link to="/admin/vendors">View all ↗</Link>
           </div>
-          {vendors.loading ? <Skeleton className="admin-table-skeleton" /> : vendors.error ? <p className="admin-error">Vendors could not be loaded. {vendors.error.message}</p> : <AdminTable rows={[...rowsFrom(vendors.data)].sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0)).slice(0, 5)} kind="vendors" compact />}
+          {vendors.loading ? (
+            <Skeleton className="admin-table-skeleton" />
+          ) : vendors.error ? (
+            <p className="admin-error">
+              Vendors could not be loaded. {vendors.error.message}
+            </p>
+          ) : (
+            <AdminTable
+              rows={[...rowsFrom(vendors.data)]
+                .sort(
+                  (a, b) =>
+                    new Date(b.updatedAt || b.createdAt || 0) -
+                    new Date(a.updatedAt || a.createdAt || 0),
+                )
+                .slice(0, 5)}
+              kind="vendors"
+              compact
+            />
+          )}
         </section>
         <section className="admin-card admin-quick">
           <span className="eyebrow">NEXT UP</span>
           <h2>Keep the marketplace moving.</h2>
-          <p>Review seller verification, products, and incoming orders from one workspace.</p>
+          <p>
+            Review seller verification, products, and incoming orders from one
+            workspace.
+          </p>
           <Link to="/admin/verification">Review verification ↗</Link>
           <Link to="/admin/orders">See orders ↗</Link>
         </section>
@@ -268,29 +432,57 @@ export function AdminOverview() {
 
 export function AdminList({ kind }) {
   const [page, setPage] = useState(1);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const source = {
     vendors: adminApi.vendors,
     customers: adminApi.customers,
     products: adminApi.products,
-    orders: adminApi.orders
+    orders: adminApi.orders,
   }[kind];
-  const resource = useResource(signal => source(page, signal), [kind, page]);
+  const resource = useResource((signal) => source(page, signal), [kind, page]);
   const rows = rowsFrom(resource.data);
-  const filtered = rows.filter(item => JSON.stringify([item.name, item.firstName, item.lastName, item.email, item.refId, item.title, item.status]).toLowerCase().includes(query.toLowerCase()));
-  const total = totalFrom(resource.data, kind === 'vendors' ? 'totalVendors' : kind === 'customers' ? 'totalCustomers' : undefined);
+  const filtered = rows.filter((item) =>
+    JSON.stringify([
+      item.name,
+      item.firstName,
+      item.lastName,
+      item.email,
+      item.refId,
+      item.title,
+      item.status,
+    ])
+      .toLowerCase()
+      .includes(query.toLowerCase()),
+  );
+  const total = totalFrom(
+    resource.data,
+    kind === "vendors"
+      ? "totalVendors"
+      : kind === "customers"
+        ? "totalCustomers"
+        : undefined,
+  );
   return (
     <>
       <div className="admin-page-head">
         <div>
           <span className="eyebrow">MANAGE {kind.toUpperCase()}</span>
           <h1>{kind[0].toUpperCase() + kind.slice(1)}</h1>
-          <p>{resource.error ? 'The list could not be loaded.' : `${Number(total).toLocaleString()} total`}</p>
+          <p>
+            {resource.error
+              ? "The list could not be loaded."
+              : `${Number(total).toLocaleString()} total`}
+          </p>
         </div>
       </div>
       <section className="admin-card">
         <div className="admin-list-toolbar">
-          <input aria-label={`Search ${kind} on this page`} placeholder={`Search ${kind} on this page`} value={query} onChange={event => setQuery(event.target.value)} />
+          <input
+            aria-label={`Search ${kind} on this page`}
+            placeholder={`Search ${kind} on this page`}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
           <span>Page {page}</span>
         </div>
         {resource.loading ? (
@@ -303,10 +495,24 @@ export function AdminList({ kind }) {
           <AdminTable rows={filtered} kind={kind} />
         )}
         <div className="admin-pagination">
-          <Button variant="outline" disabled={page === 1 || resource.loading} onClick={() => setPage(current => current - 1)}>
+          <Button
+            variant="outline"
+            disabled={page === 1 || resource.loading}
+            onClick={() => setPage((current) => current - 1)}
+          >
             Previous
           </Button>
-          <Button variant="outline" disabled={resource.loading || !rows.length || (resource.data?.pagination?.pages ? page >= resource.data.pagination.pages : false)} onClick={() => setPage(current => current + 1)}>
+          <Button
+            variant="outline"
+            disabled={
+              resource.loading ||
+              !rows.length ||
+              (resource.data?.pagination?.pages
+                ? page >= resource.data.pagination.pages
+                : false)
+            }
+            onClick={() => setPage((current) => current + 1)}
+          >
             Next
           </Button>
         </div>
@@ -318,50 +524,72 @@ export function AdminList({ kind }) {
 export function AdminVendorDetail() {
   const { vendorId } = useParams();
   const [refresh, setRefresh] = useState(0);
-  const vendorResource = useResource(signal => adminApi.vendor(vendorId, signal), [vendorId, refresh]);
-  const plansResource = useResource(signal => adminApi.subscriptionPlans(signal), []);
-  const offersResource = useResource(signal => adminApi.vendorOffers(vendorId, signal), [vendorId, refresh]);
+  const vendorResource = useResource(
+    (signal) => adminApi.vendor(vendorId, signal),
+    [vendorId, refresh],
+  );
+  const plansResource = useResource(
+    (signal) => adminApi.subscriptionPlans(signal),
+    [],
+  );
+  const offersResource = useResource(
+    (signal) => adminApi.vendorOffers(vendorId, signal),
+    [vendorId, refresh],
+  );
   const [form, setForm] = useState({
-    subscriptionPlanId: '',
-    specialPrice: '0',
-    reason: '',
-    expiresAt: ''
+    subscriptionPlanId: "",
+    specialPrice: "0",
+    reason: "",
+    expiresAt: "",
   });
-  const [busy, setBusy] = useState('');
+  const [busy, setBusy] = useState("");
   const [feedback, setFeedback] = useState(null);
   const vendor = vendorResource.data?.data;
   const plans = rowsFrom(plansResource.data);
   const offers = offersResource.data?.data?.offers || [];
-  const activeSubscription = [...(vendor?.subscriptions || [])].sort((a, b) => Number(b.isActive) - Number(a.isActive) || new Date(b.createdAt) - new Date(a.createdAt)).find(item => item.isActive);
+  const activeSubscription = [...(vendor?.subscriptions || [])]
+    .sort(
+      (a, b) =>
+        Number(b.isActive) - Number(a.isActive) ||
+        new Date(b.createdAt) - new Date(a.createdAt),
+    )
+    .find((item) => item.isActive);
   const run = async (key, action) => {
     setBusy(key);
     setFeedback(null);
     try {
       const response = await action();
       setFeedback({ message: response.message });
-      setRefresh(value => value + 1);
+      setRefresh((value) => value + 1);
     } catch (cause) {
       setFeedback({ error: true, message: cause.message });
     } finally {
-      setBusy('');
+      setBusy("");
     }
   };
-  const submitOffer = event => {
+  const submitOffer = (event) => {
     event.preventDefault();
-    run('offer', () => adminApi.saveVendorOffer(vendorId, form));
+    run("offer", () => adminApi.saveVendorOffer(vendorId, form));
   };
-  if (vendorResource.loading) return <Skeleton className="admin-vendor-loading" />;
+  if (vendorResource.loading)
+    return <Skeleton className="admin-vendor-loading" />;
   if (vendorResource.error || !vendor)
     return (
       <>
         <Link className="admin-review-back" to="/admin/vendors">
           <ArrowLeft size={18} /> Back to vendors
         </Link>
-        <div className="admin-error">{vendorResource.error?.message || 'Vendor could not be found.'}</div>
+        <div className="admin-error">
+          {vendorResource.error?.message || "Vendor could not be found."}
+        </div>
       </>
     );
-  const fullName = [vendor.firstName, vendor.lastName].filter(Boolean).join(' ') || 'Unnamed vendor';
-  const reviewStatus = vendor.kyc?.reviewStatus || (vendor.kyc?.isVerified ? 'approved' : 'pending');
+  const fullName =
+    [vendor.firstName, vendor.lastName].filter(Boolean).join(" ") ||
+    "Unnamed vendor";
+  const reviewStatus =
+    vendor.kyc?.reviewStatus ||
+    (vendor.kyc?.isVerified ? "approved" : "pending");
   return (
     <>
       <Link className="admin-review-back" to="/admin/vendors">
@@ -372,18 +600,40 @@ export function AdminVendorDetail() {
           <span className="eyebrow">VENDOR MANAGEMENT</span>
           <h1>{fullName}</h1>
           <p>
-            {vendor.email} · Joined {vendor.createdAt ? new Date(vendor.createdAt).toLocaleDateString() : '—'}
+            {vendor.email} · Joined{" "}
+            {vendor.createdAt
+              ? new Date(vendor.createdAt).toLocaleDateString()
+              : "—"}
           </p>
         </div>
         <div className="admin-vendor-head__actions">
-          <span className={`admin-status ${vendor.status === 'active' ? 'admin-status--good' : 'admin-status--changes_requested'}`}>{vendor.status || 'inactive'}</span>
-          <Button variant={vendor.status === 'active' ? 'danger' : 'primary'} loading={busy === 'status'} onClick={() => run('status', () => adminApi.toggleUserStatus(vendorId))}>
-            {vendor.status === 'active' ? 'Suspend account' : 'Activate account'}
+          <span
+            className={`admin-status ${vendor.status === "active" ? "admin-status--good" : "admin-status--changes_requested"}`}
+          >
+            {vendor.status || "inactive"}
+          </span>
+          <Button
+            variant={vendor.status === "active" ? "danger" : "primary"}
+            loading={busy === "status"}
+            onClick={() =>
+              run("status", () => adminApi.toggleUserStatus(vendorId))
+            }
+          >
+            {vendor.status === "active"
+              ? "Suspend account"
+              : "Activate account"}
           </Button>
         </div>
       </div>
       {feedback && (
-        <div className={feedback.error ? 'admin-error admin-vendor-feedback' : 'admin-success admin-vendor-feedback'} role="status">
+        <div
+          className={
+            feedback.error
+              ? "admin-error admin-vendor-feedback"
+              : "admin-success admin-vendor-feedback"
+          }
+          role="status"
+        >
           {feedback.message}
         </div>
       )}
@@ -398,12 +648,18 @@ export function AdminVendorDetail() {
           <dl>
             <div>
               <dt>Phone</dt>
-              <dd>{vendor.phoneNumber || '—'}</dd>
+              <dd>{vendor.phoneNumber || "—"}</dd>
             </div>
             <div>
               <dt>KYC status</dt>
               <dd>
-                <span className={`admin-status admin-status--${reviewStatus}`}>{reviewStatus === 'approved' ? 'Verified' : reviewStatus === 'changes_requested' ? 'Changes requested' : 'Under review'}</span>
+                <span className={`admin-status admin-status--${reviewStatus}`}>
+                  {reviewStatus === "approved"
+                    ? "Verified"
+                    : reviewStatus === "changes_requested"
+                      ? "Changes requested"
+                      : "Under review"}
+                </span>
               </dd>
             </div>
             <div>
@@ -412,7 +668,7 @@ export function AdminVendorDetail() {
             </div>
             <div>
               <dt>Tracking ID</dt>
-              <dd>{vendor.trackingId || '—'}</dd>
+              <dd>{vendor.trackingId || "—"}</dd>
             </div>
           </dl>
           {vendor.kyc && (
@@ -432,10 +688,17 @@ export function AdminVendorDetail() {
             <div className="admin-current-plan">
               <div>
                 <span>Current plan</span>
-                <strong>{activeSubscription.subscriptionPlans?.name || 'Subscription plan'}</strong>
+                <strong>
+                  {activeSubscription.subscriptionPlans?.name ||
+                    "Subscription plan"}
+                </strong>
               </div>
               <span className="admin-status admin-status--good">Active</span>
-              <small>{activeSubscription.endDate ? `Expires ${new Date(activeSubscription.endDate).toLocaleDateString()}` : ''}</small>
+              <small>
+                {activeSubscription.endDate
+                  ? `Expires ${new Date(activeSubscription.endDate).toLocaleDateString()}`
+                  : ""}
+              </small>
             </div>
           ) : (
             <div className="admin-empty-inline">
@@ -443,26 +706,31 @@ export function AdminVendorDetail() {
               <span>The vendor is currently using default access.</span>
             </div>
           )}
-          <p className="admin-helper">Set a free waiver or discounted price for this vendor. They will be notified and can claim it from Subscriptions.</p>
+          <p className="admin-helper">
+            Set a free waiver or discounted price for this vendor. They will be
+            notified and can claim it from Subscriptions.
+          </p>
           <form className="admin-offer-form" onSubmit={submitOffer}>
             <label>
               Plan
               <select
                 value={form.subscriptionPlanId}
-                onChange={event => {
-                  const plan = plans.find(item => item.id === event.target.value);
-                  setForm(current => ({
+                onChange={(event) => {
+                  const plan = plans.find(
+                    (item) => item.id === event.target.value,
+                  );
+                  setForm((current) => ({
                     ...current,
                     subscriptionPlanId: event.target.value,
-                    specialPrice: plan ? String(plan.price) : '0'
+                    specialPrice: plan ? String(plan.price) : "0",
                   }));
                 }}
                 required
               >
                 <option value="">Choose a plan</option>
-                {plans.map(plan => (
+                {plans.map((plan) => (
                   <option key={plan.id} value={plan.id}>
-                    {plan.name} — {plan.currency?.symbol || '₦'}
+                    {plan.name} — {plan.currency?.symbol || "₦"}
                     {Number(plan.price).toLocaleString()}
                   </option>
                 ))}
@@ -476,10 +744,10 @@ export function AdminVendorDetail() {
                   min="0"
                   step="0.01"
                   value={form.specialPrice}
-                  onChange={event =>
-                    setForm(current => ({
+                  onChange={(event) =>
+                    setForm((current) => ({
                       ...current,
-                      specialPrice: event.target.value
+                      specialPrice: event.target.value,
                     }))
                   }
                   required
@@ -490,10 +758,10 @@ export function AdminVendorDetail() {
                 <input
                   type="datetime-local"
                   value={form.expiresAt}
-                  onChange={event =>
-                    setForm(current => ({
+                  onChange={(event) =>
+                    setForm((current) => ({
                       ...current,
-                      expiresAt: event.target.value
+                      expiresAt: event.target.value,
                     }))
                   }
                 />
@@ -503,10 +771,10 @@ export function AdminVendorDetail() {
               Campaign reason
               <input
                 value={form.reason}
-                onChange={event =>
-                  setForm(current => ({
+                onChange={(event) =>
+                  setForm((current) => ({
                     ...current,
-                    reason: event.target.value
+                    reason: event.target.value,
                   }))
                 }
                 placeholder="e.g. Launch partner promotion"
@@ -514,7 +782,11 @@ export function AdminVendorDetail() {
                 required
               />
             </label>
-            <Button type="submit" loading={busy === 'offer'} disabled={plansResource.loading}>
+            <Button
+              type="submit"
+              loading={busy === "offer"}
+              disabled={plansResource.loading}
+            >
               Save vendor offer
             </Button>
           </form>
@@ -530,7 +802,10 @@ export function AdminVendorDetail() {
         {offersResource.loading ? (
           <Skeleton className="admin-table-skeleton" />
         ) : !offers.length ? (
-          <EmptyState title="No subscription offers" description="Individual waivers and discounts will appear here." />
+          <EmptyState
+            title="No subscription offers"
+            description="Individual waivers and discounts will appear here."
+          />
         ) : (
           <div className="admin-table-wrap">
             <table className="admin-table">
@@ -545,25 +820,51 @@ export function AdminVendorDetail() {
                 </tr>
               </thead>
               <tbody>
-                {offers.map(offer => {
-                  const usable = offer.isActive && !offer.redeemedAt && (!offer.expiresAt || new Date(offer.expiresAt) > new Date());
+                {offers.map((offer) => {
+                  const usable =
+                    offer.isActive &&
+                    !offer.redeemedAt &&
+                    (!offer.expiresAt ||
+                      new Date(offer.expiresAt) > new Date());
                   return (
                     <tr key={offer.id}>
                       <td>
-                        <strong>{offer.subscriptionPlan?.name || 'Plan'}</strong>
+                        <strong>
+                          {offer.subscriptionPlan?.name || "Plan"}
+                        </strong>
                       </td>
                       <td>
-                        {offer.subscriptionPlan?.currency?.symbol || '₦'}
+                        {offer.subscriptionPlan?.currency?.symbol || "₦"}
                         {Number(offer.specialPrice).toLocaleString()}
                       </td>
                       <td>{offer.reason}</td>
                       <td>
-                        <span className={`admin-status ${usable ? 'admin-status--good' : ''}`}>{offer.redeemedAt ? 'Redeemed' : usable ? 'Available' : 'Inactive'}</span>
+                        <span
+                          className={`admin-status ${usable ? "admin-status--good" : ""}`}
+                        >
+                          {offer.redeemedAt
+                            ? "Redeemed"
+                            : usable
+                              ? "Available"
+                              : "Inactive"}
+                        </span>
                       </td>
-                      <td>{offer.expiresAt ? new Date(offer.expiresAt).toLocaleDateString() : 'No expiry'}</td>
+                      <td>
+                        {offer.expiresAt
+                          ? new Date(offer.expiresAt).toLocaleDateString()
+                          : "No expiry"}
+                      </td>
                       <td>
                         {usable && (
-                          <button className="admin-row-action admin-row-action--danger" disabled={busy === offer.id} onClick={() => run(offer.id, () => adminApi.revokeVendorOffer(offer.id))}>
+                          <button
+                            className="admin-row-action admin-row-action--danger"
+                            disabled={busy === offer.id}
+                            onClick={() =>
+                              run(offer.id, () =>
+                                adminApi.revokeVendorOffer(offer.id),
+                              )
+                            }
+                          >
                             Revoke
                           </button>
                         )}
@@ -582,21 +883,24 @@ export function AdminVendorDetail() {
 
 export function AdminSubscriptions() {
   const [refresh, setRefresh] = useState(0);
-  const resource = useResource(signal => adminApi.subscriptionPlans(signal), [refresh]);
-  const [busy, setBusy] = useState('');
+  const resource = useResource(
+    (signal) => adminApi.subscriptionPlans(signal),
+    [refresh],
+  );
+  const [busy, setBusy] = useState("");
   const [feedback, setFeedback] = useState(null);
   const plans = rowsFrom(resource.data);
-  const toggle = async plan => {
+  const toggle = async (plan) => {
     setBusy(plan.id);
     setFeedback(null);
     try {
       const response = await adminApi.setPlanWaiver(plan.id, !plan.isFeeWaived);
       setFeedback({ message: response.message });
-      setRefresh(value => value + 1);
+      setRefresh((value) => value + 1);
     } catch (cause) {
       setFeedback({ error: true, message: cause.message });
     } finally {
-      setBusy('');
+      setBusy("");
     }
   };
   return (
@@ -605,14 +909,29 @@ export function AdminSubscriptions() {
         <div>
           <span className="eyebrow">REVENUE CONTROLS</span>
           <h1>Subscriptions</h1>
-          <p>Manage plan-wide fee waivers for campaigns and marketplace growth.</p>
+          <p>
+            Manage plan-wide fee waivers for campaigns and marketplace growth.
+          </p>
         </div>
       </div>
-      {feedback && <div className={feedback.error ? 'admin-error admin-vendor-feedback' : 'admin-success admin-vendor-feedback'}>{feedback.message}</div>}
+      {feedback && (
+        <div
+          className={
+            feedback.error
+              ? "admin-error admin-vendor-feedback"
+              : "admin-success admin-vendor-feedback"
+          }
+        >
+          {feedback.message}
+        </div>
+      )}
       <section className="admin-card">
         <div className="admin-waiver-note">
           <strong>Plan-wide waivers affect every vendor.</strong>
-          <span>Use a vendor’s profile when a waiver or discount should apply to one business only.</span>
+          <span>
+            Use a vendor’s profile when a waiver or discount should apply to one
+            business only.
+          </span>
         </div>
         {resource.loading ? (
           <Skeleton className="admin-table-skeleton" />
@@ -620,25 +939,44 @@ export function AdminSubscriptions() {
           <div className="admin-error">{resource.error.message}</div>
         ) : (
           <div className="admin-plan-grid">
-            {plans.map(plan => (
-              <article className={`admin-plan-card ${plan.isFeeWaived ? 'admin-plan-card--waived' : ''}`} key={plan.id}>
+            {plans.map((plan) => (
+              <article
+                className={`admin-plan-card ${plan.isFeeWaived ? "admin-plan-card--waived" : ""}`}
+                key={plan.id}
+              >
                 <div>
                   <span className="eyebrow">{plan.duration} DAYS</span>
                   <h2>{plan.name}</h2>
                   <p>
-                    {plan.currency?.symbol || '₦'}
+                    {plan.currency?.symbol || "₦"}
                     {Number(plan.price).toLocaleString()}
                   </p>
                 </div>
                 <ul>
                   <li>{plan.productLimit} products</li>
-                  <li>{plan.allowsAuction ? `${plan.auctionProductLimit || 0} auction listings` : 'No auction listings'}</li>
+                  <li>
+                    {plan.allowsAuction
+                      ? `${plan.auctionProductLimit || 0} auction listings`
+                      : "No auction listings"}
+                  </li>
                   <li>{plan.maxAds || 0} adverts</li>
                 </ul>
                 <div className="admin-plan-card__footer">
-                  <span className={`admin-status ${plan.isFeeWaived ? 'admin-status--good' : ''}`}>{plan.isFeeWaived ? 'Fees waived globally' : 'Normal pricing'}</span>
-                  <Button variant={plan.isFeeWaived ? 'outline' : 'primary'} loading={busy === plan.id} onClick={() => toggle(plan)}>
-                    {plan.isFeeWaived ? 'Restore normal fee' : 'Waive for all vendors'}
+                  <span
+                    className={`admin-status ${plan.isFeeWaived ? "admin-status--good" : ""}`}
+                  >
+                    {plan.isFeeWaived
+                      ? "Fees waived globally"
+                      : "Normal pricing"}
+                  </span>
+                  <Button
+                    variant={plan.isFeeWaived ? "outline" : "primary"}
+                    loading={busy === plan.id}
+                    onClick={() => toggle(plan)}
+                  >
+                    {plan.isFeeWaived
+                      ? "Restore normal fee"
+                      : "Waive for all vendors"}
                   </Button>
                 </div>
               </article>
@@ -651,11 +989,18 @@ export function AdminSubscriptions() {
 }
 
 export function AdminOrders() {
-  const [query, setQuery] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState('');
-  const resource = useResource(signal => adminApi.orders(1, signal, { trackingNumber: query.trim() }), [query]);
+  const [query, setQuery] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("");
+  const resource = useResource(
+    (signal) => adminApi.orders(1, signal, { trackingNumber: query.trim() }),
+    [query],
+  );
   const rows = rowsFrom(resource.data);
-  const filtered = rows.filter(order => !paymentStatus || String(order.payment?.status || 'unpaid').toLowerCase() === paymentStatus);
+  const filtered = rows.filter(
+    (order) =>
+      !paymentStatus ||
+      String(order.payment?.status || "unpaid").toLowerCase() === paymentStatus,
+  );
   return (
     <>
       <div className="admin-page-head">
@@ -667,8 +1012,17 @@ export function AdminOrders() {
       </div>
       <section className="admin-card">
         <div className="admin-product-toolbar">
-          <input aria-label="Search order tracking number" placeholder="Search tracking number" value={query} onChange={event => setQuery(event.target.value)} />
-          <select aria-label="Filter payment status" value={paymentStatus} onChange={event => setPaymentStatus(event.target.value)}>
+          <input
+            aria-label="Search order tracking number"
+            placeholder="Search tracking number"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <select
+            aria-label="Filter payment status"
+            value={paymentStatus}
+            onChange={(event) => setPaymentStatus(event.target.value)}
+          >
             <option value="">All payment states</option>
             <option value="success">Paid</option>
             <option value="pending">Pending</option>
@@ -681,20 +1035,31 @@ export function AdminOrders() {
         ) : resource.error ? (
           <div className="admin-error">{resource.error.message}</div>
         ) : !filtered.length ? (
-          <EmptyState title="No matching orders" description="Try a different tracking number or payment status." />
+          <EmptyState
+            title="No matching orders"
+            description="Try a different tracking number or payment status."
+          />
         ) : (
           <div className="admin-order-list">
-            {filtered.map(order => (
+            {filtered.map((order) => (
               <article className="admin-order-row" key={order.id}>
                 <div>
                   <span className="admin-product-label">Order reference</span>
                   <strong>{order.refId}</strong>
-                  <small>{order.trackingNumber || 'Tracking not assigned'}</small>
+                  <small>
+                    {order.trackingNumber || "Tracking not assigned"}
+                  </small>
                 </div>
                 <div>
                   <span className="admin-product-label">Customer</span>
-                  <strong>{order.user ? [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') : 'Customer'}</strong>
-                  <small>{order.user?.email || '—'}</small>
+                  <strong>
+                    {order.user
+                      ? [order.user.firstName, order.user.lastName]
+                          .filter(Boolean)
+                          .join(" ")
+                      : "Customer"}
+                  </strong>
+                  <small>{order.user?.email || "—"}</small>
                 </div>
                 <div>
                   <span className="admin-product-label">Items</span>
@@ -703,19 +1068,30 @@ export function AdminOrders() {
                 <div>
                   <span className="admin-product-label">Total</span>
                   <strong>
-                    {order.payment?.currency || '₦'}
+                    {order.payment?.currency || "₦"}
                     {Number(order.totalAmount).toLocaleString()}
                   </strong>
                 </div>
                 <div>
                   <span className="admin-product-label">Payment</span>
-                  <span className={`admin-status ${String(order.payment?.status).toLowerCase() === 'success' ? 'admin-status--good' : String(order.payment?.status).toLowerCase() === 'failed' ? 'admin-status--changes_requested' : ''}`}>{order.payment?.status || 'No record'}</span>
+                  <span
+                    className={`admin-status ${String(order.payment?.status).toLowerCase() === "success" ? "admin-status--good" : String(order.payment?.status).toLowerCase() === "failed" ? "admin-status--changes_requested" : ""}`}
+                  >
+                    {order.payment?.status || "No record"}
+                  </span>
                 </div>
                 <div>
                   <span className="admin-product-label">Created</span>
-                  <strong>{order.createdAt ? new Date(order.createdAt).toLocaleDateString() : '—'}</strong>
+                  <strong>
+                    {order.createdAt
+                      ? new Date(order.createdAt).toLocaleDateString()
+                      : "—"}
+                  </strong>
                 </div>
-                <Link className="admin-row-action" to={`/admin/orders/${order.id}`}>
+                <Link
+                  className="admin-row-action"
+                  to={`/admin/orders/${order.id}`}
+                >
                   Open →
                 </Link>
               </article>
@@ -727,15 +1103,24 @@ export function AdminOrders() {
   );
 }
 
-const orderStatuses = ['pending', 'processing', 'shipped', 'delivered'];
+const orderStatuses = ["pending", "processing", "shipped", "delivered"];
 export function AdminOrderDetail() {
   const { orderId } = useParams();
   const [refresh, setRefresh] = useState(0);
-  const orderResource = useResource(signal => adminApi.orderDetails(orderId, signal), [orderId, refresh]);
-  const itemsResource = useResource(signal => adminApi.orderItems(orderId, signal), [orderId, refresh]);
-  const paymentsResource = useResource(signal => adminApi.orderPayments(orderId, signal), [orderId, refresh]);
+  const orderResource = useResource(
+    (signal) => adminApi.orderDetails(orderId, signal),
+    [orderId, refresh],
+  );
+  const itemsResource = useResource(
+    (signal) => adminApi.orderItems(orderId, signal),
+    [orderId, refresh],
+  );
+  const paymentsResource = useResource(
+    (signal) => adminApi.orderPayments(orderId, signal),
+    [orderId, refresh],
+  );
   const [action, setAction] = useState(null);
-  const [deliveryCode, setDeliveryCode] = useState('');
+  const [deliveryCode, setDeliveryCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [dropshipItem, setDropshipItem] = useState(null);
@@ -749,22 +1134,25 @@ export function AdminOrderDetail() {
       const response = await adminApi.updateOrderStatus(item.id, status, code);
       setFeedback({ message: response.message });
       setAction(null);
-      setDeliveryCode('');
-      setRefresh(value => value + 1);
+      setDeliveryCode("");
+      setRefresh((value) => value + 1);
     } catch (cause) {
       setFeedback({ error: true, message: cause.message });
     } finally {
       setBusy(false);
     }
   };
-  if (orderResource.loading || itemsResource.loading) return <Skeleton className="admin-vendor-loading" />;
+  if (orderResource.loading || itemsResource.loading)
+    return <Skeleton className="admin-vendor-loading" />;
   if (orderResource.error || !order)
     return (
       <>
         <Link className="admin-review-back" to="/admin/orders">
           <ArrowLeft size={18} /> Back to orders
         </Link>
-        <div className="admin-error">{orderResource.error?.message || 'Order could not be found.'}</div>
+        <div className="admin-error">
+          {orderResource.error?.message || "Order could not be found."}
+        </div>
       </>
     );
   return (
@@ -777,39 +1165,74 @@ export function AdminOrderDetail() {
           <span className="eyebrow">ORDER DETAILS</span>
           <h1>{order.refId}</h1>
           <p>
-            {order.trackingNumber || 'Tracking number unavailable'} · Placed {order.createdAt ? new Date(order.createdAt).toLocaleString() : '—'}
+            {order.trackingNumber || "Tracking number unavailable"} · Placed{" "}
+            {order.createdAt ? new Date(order.createdAt).toLocaleString() : "—"}
           </p>
         </div>
-        <strong className="admin-order-total">₦{Number(order.totalAmount).toLocaleString()}</strong>
+        <strong className="admin-order-total">
+          ₦{Number(order.totalAmount).toLocaleString()}
+        </strong>
       </div>
-      {feedback && <div className={feedback.error ? 'admin-error admin-vendor-feedback' : 'admin-success admin-vendor-feedback'}>{feedback.message}</div>}
+      {feedback && (
+        <div
+          className={
+            feedback.error
+              ? "admin-error admin-vendor-feedback"
+              : "admin-success admin-vendor-feedback"
+          }
+        >
+          {feedback.message}
+        </div>
+      )}
       <div className="admin-order-detail-grid">
         <div className="admin-order-items">
           {itemsResource.error ? (
             <div className="admin-error">{itemsResource.error.message}</div>
           ) : (
-            items.map(item => {
-              const product = typeof item.product === 'string' ? JSON.parse(item.product) : item.product || {};
+            items.map((item) => {
+              const product =
+                typeof item.product === "string"
+                  ? JSON.parse(item.product)
+                  : item.product || {};
               const position = orderStatuses.indexOf(item.status);
-              const final = ['delivered', 'cancelled'].includes(item.status);
-              const nextStatus = position >= 0 && position < orderStatuses.length - 1 ? orderStatuses[position + 1] : null;
+              const final = ["delivered", "cancelled"].includes(item.status);
+              const nextStatus =
+                position >= 0 && position < orderStatuses.length - 1
+                  ? orderStatuses[position + 1]
+                  : null;
               return (
                 <section className="admin-card admin-order-item" key={item.id}>
                   <div className="admin-order-item__head">
-                    <div className="admin-order-item__image">{product.image_url ? <img src={product.image_url} alt="" /> : <Box />}</div>
+                    <div className="admin-order-item__image">
+                      {product.image_url ? (
+                        <img src={product.image_url} alt="" />
+                      ) : (
+                        <Box />
+                      )}
+                    </div>
                     <div>
-                      <span className="eyebrow">{product.sku || 'ORDER ITEM'}</span>
-                      <h2>{product.name || 'Product'}</h2>
+                      <span className="eyebrow">
+                        {product.sku || "ORDER ITEM"}
+                      </span>
+                      <h2>{product.name || "Product"}</h2>
                       <p>
-                        {item.quantity} × {product.store?.currency?.symbol || '₦'}
+                        {item.quantity} ×{" "}
+                        {product.store?.currency?.symbol || "₦"}
                         {Number(item.price).toLocaleString()}
                       </p>
                     </div>
-                    <span className={`admin-status ${item.status === 'delivered' ? 'admin-status--good' : item.status === 'cancelled' ? 'admin-status--changes_requested' : ''}`}>{item.status}</span>
+                    <span
+                      className={`admin-status ${item.status === "delivered" ? "admin-status--good" : item.status === "cancelled" ? "admin-status--changes_requested" : ""}`}
+                    >
+                      {item.status}
+                    </span>
                   </div>
                   <div className="admin-order-progress">
                     {orderStatuses.map((status, index) => (
-                      <div className={`${index <= position ? 'complete' : ''} ${status === item.status ? 'current' : ''}`} key={status}>
+                      <div
+                        className={`${index <= position ? "complete" : ""} ${status === item.status ? "current" : ""}`}
+                        key={status}
+                      >
                         <span />
                         {status}
                       </div>
@@ -817,24 +1240,58 @@ export function AdminOrderDetail() {
                   </div>
                   <div className="admin-order-item__meta">
                     <span>
-                      Vendor <strong>{item.vendor ? [item.vendor.firstName, item.vendor.lastName].filter(Boolean).join(' ') : product.store?.name || 'Administrator'}</strong>
+                      Vendor{" "}
+                      <strong>
+                        {item.vendor
+                          ? [item.vendor.firstName, item.vendor.lastName]
+                              .filter(Boolean)
+                              .join(" ")
+                          : product.store?.name || "Administrator"}
+                      </strong>
                     </span>
                     <span>
-                      Line total{' '}
+                      Line total{" "}
                       <strong>
-                        {product.store?.currency?.symbol || '₦'}
-                        {(Number(item.price) * Number(item.quantity)).toLocaleString()}
+                        {product.store?.currency?.symbol || "₦"}
+                        {(
+                          Number(item.price) * Number(item.quantity)
+                        ).toLocaleString()}
                       </strong>
                     </span>
                   </div>
-                  {(item.dropshipProductId || product.type === 'dropship') && <div className="admin-dropship-bar"><span><strong>Dropship fulfilment</strong><small>Supplier order and tracking data are available.</small></span><Button variant="outline" onClick={() => setDropshipItem(item)}>Monitor shipment</Button></div>}
+                  {(item.dropshipProductId || product.type === "dropship") && (
+                    <div className="admin-dropship-bar">
+                      <span>
+                        <strong>Dropship fulfilment</strong>
+                        <small>
+                          Supplier order and tracking data are available.
+                        </small>
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={() => setDropshipItem(item)}
+                      >
+                        Monitor shipment
+                      </Button>
+                    </div>
+                  )}
                   {!final && (
                     <div className="admin-order-item__actions">
-                      <Button variant="danger" onClick={() => setAction({ type: 'cancel', item })}>
+                      <Button
+                        variant="danger"
+                        onClick={() => setAction({ type: "cancel", item })}
+                      >
                         Cancel item
                       </Button>
                       {nextStatus && (
-                        <Button onClick={() => (nextStatus === 'delivered' ? setAction({ type: 'deliver', item }) : update(item, nextStatus))} loading={busy}>
+                        <Button
+                          onClick={() =>
+                            nextStatus === "delivered"
+                              ? setAction({ type: "deliver", item })
+                              : update(item, nextStatus)
+                          }
+                          loading={busy}
+                        >
                           Mark as {nextStatus}
                         </Button>
                       )}
@@ -851,19 +1308,31 @@ export function AdminOrderDetail() {
             <dl>
               <div>
                 <dt>Customer</dt>
-                <dd>{order.user ? [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') : '—'}</dd>
+                <dd>
+                  {order.user
+                    ? [order.user.firstName, order.user.lastName]
+                        .filter(Boolean)
+                        .join(" ")
+                    : "—"}
+                </dd>
               </div>
               <div>
                 <dt>Email</dt>
-                <dd>{order.user?.email || '—'}</dd>
+                <dd>{order.user?.email || "—"}</dd>
               </div>
               <div>
                 <dt>Phone</dt>
-                <dd>{order.user?.phoneNumber || '—'}</dd>
+                <dd>{order.user?.phoneNumber || "—"}</dd>
               </div>
               <div>
                 <dt>Shipping address</dt>
-                <dd>{typeof order.shippingAddress === 'object' ? Object.values(order.shippingAddress).filter(Boolean).join(', ') : order.shippingAddress}</dd>
+                <dd>
+                  {typeof order.shippingAddress === "object"
+                    ? Object.values(order.shippingAddress)
+                        .filter(Boolean)
+                        .join(", ")
+                    : order.shippingAddress}
+                </dd>
               </div>
             </dl>
           </section>
@@ -874,20 +1343,30 @@ export function AdminOrderDetail() {
             ) : paymentsResource.error || !payments.length ? (
               <div className="admin-empty-inline">
                 <strong>No payment record</strong>
-                <span>Do not fulfil this order until payment is independently verified.</span>
+                <span>
+                  Do not fulfil this order until payment is independently
+                  verified.
+                </span>
               </div>
             ) : (
-              payments.map(payment => (
+              payments.map((payment) => (
                 <div className="admin-payment" key={payment.id}>
                   <div>
                     <strong>{payment.refId}</strong>
                     <span>
-                      {payment.channel || 'Payment gateway'} · {payment.paymentDate ? new Date(payment.paymentDate).toLocaleString() : '—'}
+                      {payment.channel || "Payment gateway"} ·{" "}
+                      {payment.paymentDate
+                        ? new Date(payment.paymentDate).toLocaleString()
+                        : "—"}
                     </span>
                   </div>
-                  <span className={`admin-status ${String(payment.status).toLowerCase() === 'success' ? 'admin-status--good' : 'admin-status--changes_requested'}`}>{payment.status}</span>
+                  <span
+                    className={`admin-status ${String(payment.status).toLowerCase() === "success" ? "admin-status--good" : "admin-status--changes_requested"}`}
+                  >
+                    {payment.status}
+                  </span>
                   <b>
-                    {payment.currency || '₦'}
+                    {payment.currency || "₦"}
                     {Number(payment.amount).toLocaleString()}
                   </b>
                 </div>
@@ -896,58 +1375,151 @@ export function AdminOrderDetail() {
           </section>
         </aside>
       </div>
-      {action?.type === 'cancel' && <ConfirmModal title="Cancel this order item?" description="This stops fulfilment, updates the related transaction, adjusts pending vendor funds, and notifies the customer." confirmLabel="Cancel item" loading={busy} onClose={() => setAction(null)} onConfirm={() => update(action.item, 'cancelled')} />}{' '}
-      {action?.type === 'deliver' && (
+      {action?.type === "cancel" && (
+        <ConfirmModal
+          title="Cancel this order item?"
+          description="This stops fulfilment, updates the related transaction, adjusts pending vendor funds, and notifies the customer."
+          confirmLabel="Cancel item"
+          loading={busy}
+          onClose={() => setAction(null)}
+          onConfirm={() => update(action.item, "cancelled")}
+        />
+      )}{" "}
+      {action?.type === "deliver" && (
         <Modal
           title="Confirm delivery"
           onClose={() => !busy && setAction(null)}
           footer={
             <>
-              <Button variant="ghost" disabled={busy} onClick={() => setAction(null)}>
+              <Button
+                variant="ghost"
+                disabled={busy}
+                onClick={() => setAction(null)}
+              >
                 Back
               </Button>
-              <Button loading={busy} disabled={!deliveryCode.trim()} onClick={() => update(action.item, 'delivered', deliveryCode)}>
+              <Button
+                loading={busy}
+                disabled={!deliveryCode.trim()}
+                onClick={() => update(action.item, "delivered", deliveryCode)}
+              >
                 Confirm delivery
               </Button>
             </>
           }
         >
           <div className="admin-delivery-code">
-            <p>Enter the delivery code sent to the customer when this item was shipped.</p>
-            <TextField label="Delivery confirmation code" name="deliveryCode" value={deliveryCode} onChange={event => setDeliveryCode(event.target.value.toUpperCase())} autoFocus required />
+            <p>
+              Enter the delivery code sent to the customer when this item was
+              shipped.
+            </p>
+            <TextField
+              label="Delivery confirmation code"
+              name="deliveryCode"
+              value={deliveryCode}
+              onChange={(event) =>
+                setDeliveryCode(event.target.value.toUpperCase())
+              }
+              autoFocus
+              required
+            />
           </div>
         </Modal>
       )}
       {dropshipItem && (
-        <DropshipMonitor item={dropshipItem} onClose={() => setDropshipItem(null)}/>
+        <DropshipMonitor
+          item={dropshipItem}
+          onClose={() => setDropshipItem(null)}
+        />
       )}
     </>
   );
 }
 
 function DropshipMonitor({ item, onClose }) {
-  const details = useResource(signal => adminApi.dropshipOrderDetails(item.id, signal), [item.id]);
-  const tracking = useResource(signal => adminApi.dropshipTracking(item.id, signal), [item.id]);
-  const detailRows = rowsFrom(details.data); const trackingRows = rowsFrom(tracking.data);
-  return <Modal title="Dropship shipment monitor" onClose={onClose}><div className="admin-dropship-monitor"><p>Supplier fulfilment and tracking for this order item.</p>{details.loading || tracking.loading ? <Skeleton className="admin-payment-loading"/> : details.error || tracking.error ? <div className="admin-error">{details.error?.message || tracking.error?.message}</div> : <><section><h3>Supplier orders</h3>{detailRows.length ? detailRows.map((row, index) => <pre key={row.id || index}>{JSON.stringify(row, null, 2)}</pre>) : <p>No supplier order details returned.</p>}</section><section><h3>Tracking</h3>{trackingRows.length ? trackingRows.map((row, index) => <pre key={row.id || index}>{JSON.stringify(row, null, 2)}</pre>) : <p>No tracking events returned yet.</p>}</section></>}</div></Modal>;
+  const details = useResource(
+    (signal) => adminApi.dropshipOrderDetails(item.id, signal),
+    [item.id],
+  );
+  const tracking = useResource(
+    (signal) => adminApi.dropshipTracking(item.id, signal),
+    [item.id],
+  );
+  const detailRows = rowsFrom(details.data);
+  const trackingRows = rowsFrom(tracking.data);
+  return (
+    <Modal title="Dropship shipment monitor" onClose={onClose}>
+      <div className="admin-dropship-monitor">
+        <p>Supplier fulfilment and tracking for this order item.</p>
+        {details.loading || tracking.loading ? (
+          <Skeleton className="admin-payment-loading" />
+        ) : details.error || tracking.error ? (
+          <div className="admin-error">
+            {details.error?.message || tracking.error?.message}
+          </div>
+        ) : (
+          <>
+            <section>
+              <h3>Supplier orders</h3>
+              {detailRows.length ? (
+                detailRows.map((row, index) => (
+                  <pre key={row.id || index}>
+                    {JSON.stringify(row, null, 2)}
+                  </pre>
+                ))
+              ) : (
+                <p>No supplier order details returned.</p>
+              )}
+            </section>
+            <section>
+              <h3>Tracking</h3>
+              {trackingRows.length ? (
+                trackingRows.map((row, index) => (
+                  <pre key={row.id || index}>
+                    {JSON.stringify(row, null, 2)}
+                  </pre>
+                ))
+              ) : (
+                <p>No tracking events returned yet.</p>
+              )}
+            </section>
+          </>
+        )}
+      </div>
+    </Modal>
+  );
 }
 
 export function AdminProducts() {
   const [page, setPage] = useState(1);
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("");
+  const [categoryId, setCategoryId] = useState("");
   const debouncedQuery = useDebouncedValue(query.trim(), 350);
-  const categoriesResource = useResource(signal => adminApi.categories(signal), []);
-  const categories = [...rowsFrom(categoriesResource.data)].sort((a, b) => a.name.localeCompare(b.name));
-  const resource = useResource(signal => adminApi.products(page, signal, { name: debouncedQuery, status, categoryId, limit: 20 }), [page, debouncedQuery, status, categoryId]);
+  const categoriesResource = useResource(
+    (signal) => adminApi.categories(signal),
+    [],
+  );
+  const categories = [...rowsFrom(categoriesResource.data)].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+  const resource = useResource(
+    (signal) =>
+      adminApi.products(page, signal, {
+        name: debouncedQuery,
+        status,
+        categoryId,
+        limit: 20,
+      }),
+    [page, debouncedQuery, status, categoryId],
+  );
   const rows = rowsFrom(resource.data);
   const pagination = resource.data?.pagination || {};
   const hasFilters = Boolean(query || status || categoryId);
   const clearFilters = () => {
-    setQuery('');
-    setStatus('');
-    setCategoryId('');
+    setQuery("");
+    setStatus("");
+    setCategoryId("");
     setPage(1);
   };
   return (
@@ -956,7 +1528,11 @@ export function AdminProducts() {
         <div>
           <span className="eyebrow">CATALOGUE CONTROL</span>
           <h1>Products</h1>
-          <p>{resource.error ? 'Products could not be loaded.' : `${Number(pagination.total || rows.length).toLocaleString()} matching products`}</p>
+          <p>
+            {resource.error
+              ? "Products could not be loaded."
+              : `${Number(pagination.total || rows.length).toLocaleString()} matching products`}
+          </p>
         </div>
       </div>
       <section className="admin-card">
@@ -965,7 +1541,7 @@ export function AdminProducts() {
             aria-label="Search products"
             placeholder="Search product name"
             value={query}
-            onChange={event => {
+            onChange={(event) => {
               setQuery(event.target.value);
               setPage(1);
             }}
@@ -973,7 +1549,7 @@ export function AdminProducts() {
           <select
             aria-label="Filter product status"
             value={status}
-            onChange={event => {
+            onChange={(event) => {
               setStatus(event.target.value);
               setPage(1);
             }}
@@ -986,48 +1562,98 @@ export function AdminProducts() {
           <select
             aria-label="Filter product category"
             value={categoryId}
-            disabled={categoriesResource.loading || Boolean(categoriesResource.error)}
-            onChange={event => {
+            disabled={
+              categoriesResource.loading || Boolean(categoriesResource.error)
+            }
+            onChange={(event) => {
               setCategoryId(event.target.value);
               setPage(1);
             }}
           >
             <option value="">All categories</option>
-            {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
           </select>
-          {hasFilters && <button className="admin-filter-clear" type="button" onClick={clearFilters}>Clear filters</button>}
+          {hasFilters && (
+            <button
+              className="admin-filter-clear"
+              type="button"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </button>
+          )}
         </div>
         {resource.loading ? (
           <Skeleton className="admin-table-skeleton" />
         ) : resource.error ? (
           <div className="admin-error">{resource.error.message}</div>
         ) : !rows.length ? (
-          <EmptyState title="No matching products" description="Try a different name, status, or category." action={hasFilters ? <Button variant="outline" onClick={clearFilters}>Clear filters</Button> : null} />
+          <EmptyState
+            title="No matching products"
+            description="Try a different name, status, or category."
+            action={
+              hasFilters ? (
+                <Button variant="outline" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              ) : null
+            }
+          />
         ) : (
           <div className="admin-product-list">
-            {rows.map(product => (
+            {rows.map((product) => (
               <article className="admin-product-row" key={product.id}>
-                <div className="admin-product-row__image">{product.image_url ? <img src={product.image_url} alt="" /> : <Box size={22} />}</div>
+                <div className="admin-product-row__image">
+                  {product.image_url ? (
+                    <img src={product.image_url} alt="" />
+                  ) : (
+                    <Box size={22} />
+                  )}
+                </div>
                 <div className="admin-product-row__name">
                   <strong>{product.name}</strong>
-                  {product.isTrending && <small className="admin-trending-label">Trending</small>}
+                  {product.isTrending && (
+                    <small className="admin-trending-label">Trending</small>
+                  )}
                   <span>
-                    {product.sku || 'No SKU'} · {String(product.condition || '').replaceAll('_', ' ')}
+                    {product.sku || "No SKU"} ·{" "}
+                    {String(product.condition || "").replaceAll("_", " ")}
                   </span>
                 </div>
                 <div>
                   <span className="admin-product-label">Vendor</span>
-                  <strong>{product.vendor ? [product.vendor.firstName, product.vendor.lastName].filter(Boolean).join(' ') : 'Administrator'}</strong>
+                  <strong>
+                    {product.vendor
+                      ? [product.vendor.firstName, product.vendor.lastName]
+                          .filter(Boolean)
+                          .join(" ")
+                      : "Administrator"}
+                  </strong>
                 </div>
                 <div>
                   <span className="admin-product-label">Price</span>
                   <strong>
-                    {product.store?.currency?.symbol || '₦'}
+                    {product.store?.currency?.symbol || "₦"}
                     {Number(product.price).toLocaleString()}
                   </strong>
                 </div>
-                <span className={`admin-status ${product.status === 'active' ? 'admin-status--good' : product.status === 'inactive' ? 'admin-status--changes_requested' : ''}`}>{product.status === 'active' ? 'Published' : product.status === 'inactive' ? 'Unpublished' : 'Draft'}</span>
-                <Link className="admin-row-action" to={`/admin/products/${product.id}`}>
+                <span
+                  className={`admin-status ${product.status === "active" ? "admin-status--good" : product.status === "inactive" ? "admin-status--changes_requested" : ""}`}
+                >
+                  {product.status === "active"
+                    ? "Published"
+                    : product.status === "inactive"
+                      ? "Unpublished"
+                      : "Draft"}
+                </span>
+                <Link
+                  className="admin-row-action"
+                  to={`/admin/products/${product.id}`}
+                >
                   Review →
                 </Link>
               </article>
@@ -1035,11 +1661,21 @@ export function AdminProducts() {
           </div>
         )}
         <div className="admin-pagination">
-          <span>{pagination.total ? `Page ${page} of ${pagination.pages || 1}` : ''}</span>
-          <Button variant="outline" disabled={page === 1 || resource.loading} onClick={() => setPage(value => value - 1)}>
+          <span>
+            {pagination.total ? `Page ${page} of ${pagination.pages || 1}` : ""}
+          </span>
+          <Button
+            variant="outline"
+            disabled={page === 1 || resource.loading}
+            onClick={() => setPage((value) => value - 1)}
+          >
             Previous
           </Button>
-          <Button variant="outline" disabled={resource.loading || page >= (pagination.pages || 1)} onClick={() => setPage(value => value + 1)}>
+          <Button
+            variant="outline"
+            disabled={resource.loading || page >= (pagination.pages || 1)}
+            onClick={() => setPage((value) => value + 1)}
+          >
             Next
           </Button>
         </div>
@@ -1054,59 +1690,279 @@ export function AdminCategories() {
   const [deleting, setDeleting] = useState(null);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const resource = useResource(signal => adminApi.categoryTree(signal), [revision]);
+  const resource = useResource(
+    (signal) => adminApi.categoryTree(signal),
+    [revision],
+  );
   const categories = rowsFrom(resource.data);
   const save = async ({ name, file }) => {
-    setBusy(true); setFeedback(null);
+    setBusy(true);
+    setFeedback(null);
     try {
       const image = file ? await uploadImage(file) : editing?.item?.image;
-      if (!image) throw new Error('Please add a category image.');
-      const body = editing.kind === 'category' ? { ...(editing.item?.id ? { categoryId: editing.item.id } : {}), name, image } : { ...(editing.item?.id ? { subCategoryId: editing.item.id } : {}), categoryId: editing.categoryId, name, image };
-      const response = editing.kind === 'category' ? await adminApi.saveCategory(body) : await adminApi.saveSubcategory(body);
-      setFeedback({ message: response.message }); setEditing(null); setRevision(value => value + 1);
-    } catch (cause) { setFeedback({ error: true, message: cause.message }); } finally { setBusy(false); }
+      if (!image) throw new Error("Please add a category image.");
+      const body =
+        editing.kind === "category"
+          ? {
+              ...(editing.item?.id ? { categoryId: editing.item.id } : {}),
+              name,
+              image,
+            }
+          : {
+              ...(editing.item?.id ? { subCategoryId: editing.item.id } : {}),
+              categoryId: editing.categoryId,
+              name,
+              image,
+            };
+      const response =
+        editing.kind === "category"
+          ? await adminApi.saveCategory(body)
+          : await adminApi.saveSubcategory(body);
+      setFeedback({ message: response.message });
+      setEditing(null);
+      setRevision((value) => value + 1);
+    } catch (cause) {
+      setFeedback({ error: true, message: cause.message });
+    } finally {
+      setBusy(false);
+    }
   };
   const remove = async () => {
-    setBusy(true); setFeedback(null);
+    setBusy(true);
+    setFeedback(null);
     try {
-      const response = deleting.kind === 'category' ? await adminApi.deleteCategory(deleting.item.id) : await adminApi.deleteSubcategory(deleting.item.id);
-      setFeedback({ message: response.message }); setDeleting(null); setRevision(value => value + 1);
-    } catch (cause) { setFeedback({ error: true, message: cause.message }); setDeleting(null); } finally { setBusy(false); }
+      const response =
+        deleting.kind === "category"
+          ? await adminApi.deleteCategory(deleting.item.id)
+          : await adminApi.deleteSubcategory(deleting.item.id);
+      setFeedback({ message: response.message });
+      setDeleting(null);
+      setRevision((value) => value + 1);
+    } catch (cause) {
+      setFeedback({ error: true, message: cause.message });
+      setDeleting(null);
+    } finally {
+      setBusy(false);
+    }
   };
-  return <><div className="admin-page-head"><div><span className="eyebrow">CATALOGUE STRUCTURE</span><h1>Categories</h1><p>Organise products into clear customer-facing groups.</p></div><Button onClick={() => setEditing({ kind: 'category', item: null })}>Add category</Button></div>
-    {feedback && <div className={feedback.error ? 'admin-error admin-vendor-feedback' : 'admin-success admin-vendor-feedback'}>{feedback.message}</div>}
-    {resource.loading ? <Skeleton className="admin-table-skeleton"/> : resource.error ? <div className="admin-error">{resource.error.message}</div> : <div className="admin-taxonomy-grid">{categories.map(category => <section className="admin-card admin-taxonomy-card" key={category.id}><header><span className="admin-taxonomy-image">{category.image ? <img src={category.image} alt=""/> : <Box size={22}/>}</span><div><h2>{category.name}</h2><p>{category.subCategories?.length || 0} subcategories</p></div><div className="admin-taxonomy-actions"><button onClick={() => setEditing({ kind: 'category', item: category })}>Edit</button><button onClick={() => setDeleting({ kind: 'category', item: category })}>Delete</button></div></header><div className="admin-subcategory-list">{category.subCategories?.map(item => <div key={item.id}><span className="admin-taxonomy-image admin-taxonomy-image--small">{item.image ? <img src={item.image} alt=""/> : <Box size={15}/>}</span><strong>{item.name}</strong><button onClick={() => setEditing({ kind: 'subcategory', categoryId: category.id, item })}>Edit</button><button onClick={() => setDeleting({ kind: 'subcategory', item })}>Delete</button></div>)}{!category.subCategories?.length && <p>No subcategories yet.</p>}</div><Button variant="outline" onClick={() => setEditing({ kind: 'subcategory', categoryId: category.id, item: null })}>Add subcategory</Button></section>)}</div>}
-    {editing && <TaxonomyModal title={`${editing.item ? 'Edit' : 'Add'} ${editing.kind === 'category' ? 'category' : 'subcategory'}`} item={editing.item} busy={busy} onClose={() => !busy && setEditing(null)} onSave={save}/>} {deleting && <ConfirmModal title={`Delete “${deleting.item.name}”?`} description={deleting.kind === 'category' ? 'Categories with subcategories cannot be deleted.' : 'Subcategories connected to products cannot be deleted.'} confirmLabel="Delete" tone="danger" loading={busy} onClose={() => setDeleting(null)} onConfirm={remove}/>}</>;
+  return (
+    <>
+      <div className="admin-page-head">
+        <div>
+          <span className="eyebrow">CATALOGUE STRUCTURE</span>
+          <h1>Categories</h1>
+          <p>Organise products into clear customer-facing groups.</p>
+        </div>
+        <Button onClick={() => setEditing({ kind: "category", item: null })}>
+          Add category
+        </Button>
+      </div>
+      {feedback && (
+        <div
+          className={
+            feedback.error
+              ? "admin-error admin-vendor-feedback"
+              : "admin-success admin-vendor-feedback"
+          }
+        >
+          {feedback.message}
+        </div>
+      )}
+      {resource.loading ? (
+        <Skeleton className="admin-table-skeleton" />
+      ) : resource.error ? (
+        <div className="admin-error">{resource.error.message}</div>
+      ) : (
+        <div className="admin-taxonomy-grid">
+          {categories.map((category) => (
+            <section
+              className="admin-card admin-taxonomy-card"
+              key={category.id}
+            >
+              <header>
+                <span className="admin-taxonomy-image">
+                  {category.image ? (
+                    <img src={category.image} alt="" />
+                  ) : (
+                    <Box size={22} />
+                  )}
+                </span>
+                <div>
+                  <h2>{category.name}</h2>
+                  <p>{category.subCategories?.length || 0} subcategories</p>
+                </div>
+                <div className="admin-taxonomy-actions">
+                  <button
+                    onClick={() =>
+                      setEditing({ kind: "category", item: category })
+                    }
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() =>
+                      setDeleting({ kind: "category", item: category })
+                    }
+                  >
+                    Delete
+                  </button>
+                </div>
+              </header>
+              <div className="admin-subcategory-list">
+                {category.subCategories?.map((item) => (
+                  <div key={item.id}>
+                    <span className="admin-taxonomy-image admin-taxonomy-image--small">
+                      {item.image ? (
+                        <img src={item.image} alt="" />
+                      ) : (
+                        <Box size={15} />
+                      )}
+                    </span>
+                    <strong>{item.name}</strong>
+                    <button
+                      onClick={() =>
+                        setEditing({
+                          kind: "subcategory",
+                          categoryId: category.id,
+                          item,
+                        })
+                      }
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleting({ kind: "subcategory", item })}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+                {!category.subCategories?.length && (
+                  <p>No subcategories yet.</p>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setEditing({
+                    kind: "subcategory",
+                    categoryId: category.id,
+                    item: null,
+                  })
+                }
+              >
+                Add subcategory
+              </Button>
+            </section>
+          ))}
+        </div>
+      )}
+      {editing && (
+        <TaxonomyModal
+          title={`${editing.item ? "Edit" : "Add"} ${editing.kind === "category" ? "category" : "subcategory"}`}
+          item={editing.item}
+          busy={busy}
+          onClose={() => !busy && setEditing(null)}
+          onSave={save}
+        />
+      )}{" "}
+      {deleting && (
+        <ConfirmModal
+          title={`Delete “${deleting.item.name}”?`}
+          description={
+            deleting.kind === "category"
+              ? "Categories with subcategories cannot be deleted."
+              : "Subcategories connected to products cannot be deleted."
+          }
+          confirmLabel="Delete"
+          tone="danger"
+          loading={busy}
+          onClose={() => setDeleting(null)}
+          onConfirm={remove}
+        />
+      )}
+    </>
+  );
 }
 
 function TaxonomyModal({ title, item, busy, onClose, onSave }) {
-  const [name, setName] = useState(item?.name || ''); const [file, setFile] = useState(null);
-  return <Modal title={title} onClose={onClose}><form className="admin-taxonomy-form" onSubmit={event => { event.preventDefault(); onSave({ name: name.trim(), file }); }}><TextField label="Name" name="name" required value={name} onChange={event => setName(event.target.value)}/><label className="seller-upload"><strong>{file || item?.image ? 'Replace image' : 'Add image'}</strong><span>JPG, PNG, or WebP</span><input type="file" accept="image/jpeg,image/png,image/webp" required={!item?.image} onChange={event => setFile(event.target.files?.[0] || null)}/></label>{(file || item?.image) && <img className="admin-taxonomy-preview" src={file ? URL.createObjectURL(file) : item.image} alt="Preview"/>}<div className="admin-form-actions"><Button type="button" variant="ghost" onClick={onClose}>Cancel</Button><Button type="submit" loading={busy}>Save</Button></div></form></Modal>;
+  const [name, setName] = useState(item?.name || "");
+  const [file, setFile] = useState(null);
+  return (
+    <Modal title={title} onClose={onClose}>
+      <form
+        className="admin-taxonomy-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSave({ name: name.trim(), file });
+        }}
+      >
+        <TextField
+          label="Name"
+          name="name"
+          required
+          value={name}
+          onChange={(event) => setName(event.target.value)}
+        />
+        <label className="seller-upload">
+          <strong>{file || item?.image ? "Replace image" : "Add image"}</strong>
+          <span>JPG, PNG, or WebP</span>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            required={!item?.image}
+            onChange={(event) => setFile(event.target.files?.[0] || null)}
+          />
+        </label>
+        {(file || item?.image) && (
+          <img
+            className="admin-taxonomy-preview"
+            src={file ? URL.createObjectURL(file) : item.image}
+            alt="Preview"
+          />
+        )}
+        <div className="admin-form-actions">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={busy}>
+            Save
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
 }
 
-const productText = value =>
-  String(value || '')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
+const productText = (value) =>
+  String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 export function AdminProductDetail() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const [refresh, setRefresh] = useState(0);
-  const resource = useResource(signal => adminApi.product(productId, signal), [productId, refresh]);
+  const resource = useResource(
+    (signal) => adminApi.product(productId, signal),
+    [productId, refresh],
+  );
   const [busy, setBusy] = useState(false);
-  const [confirm, setConfirm] = useState('');
+  const [confirm, setConfirm] = useState("");
   const [feedback, setFeedback] = useState(null);
   const product = resource.data?.data;
   const changePublication = async () => {
     setBusy(true);
     setFeedback(null);
     try {
-      const response = product.status === 'active' ? await adminApi.unpublishProduct(product.id) : await adminApi.publishProduct(product.id);
+      const response =
+        product.status === "active"
+          ? await adminApi.unpublishProduct(product.id)
+          : await adminApi.publishProduct(product.id);
       setFeedback({ message: response.message });
-      setConfirm('');
-      setRefresh(value => value + 1);
+      setConfirm("");
+      setRefresh((value) => value + 1);
     } catch (cause) {
       setFeedback({ error: true, message: cause.message });
     } finally {
@@ -1117,10 +1973,13 @@ export function AdminProductDetail() {
     setBusy(true);
     setFeedback(null);
     try {
-      const response = await adminApi.setProductTrending(product.id, !product.isTrending);
+      const response = await adminApi.setProductTrending(
+        product.id,
+        !product.isTrending,
+      );
       setFeedback({ message: response.message });
-      setConfirm('');
-      setRefresh(value => value + 1);
+      setConfirm("");
+      setRefresh((value) => value + 1);
     } catch (cause) {
       setFeedback({ error: true, message: cause.message });
     } finally {
@@ -1132,10 +1991,10 @@ export function AdminProductDetail() {
     setFeedback(null);
     try {
       await adminApi.deleteProduct(product.id);
-      navigate('/admin/products', { replace: true });
+      navigate("/admin/products", { replace: true });
     } catch (cause) {
       setFeedback({ error: true, message: cause.message });
-      setConfirm('');
+      setConfirm("");
     } finally {
       setBusy(false);
     }
@@ -1147,11 +2006,22 @@ export function AdminProductDetail() {
         <Link className="admin-review-back" to="/admin/products">
           <ArrowLeft size={18} /> Back to products
         </Link>
-        <div className="admin-error">{resource.error?.message || 'Product could not be found.'}</div>
+        <div className="admin-error">
+          {resource.error?.message || "Product could not be found."}
+        </div>
       </>
     );
-  const images = [product.image_url, ...(Array.isArray(product.additional_images) ? product.additional_images : [])].filter(Boolean);
-  const vendorName = product.vendor ? [product.vendor.firstName, product.vendor.lastName].filter(Boolean).join(' ') : 'Administrator';
+  const images = [
+    product.image_url,
+    ...(Array.isArray(product.additional_images)
+      ? product.additional_images
+      : []),
+  ].filter(Boolean);
+  const vendorName = product.vendor
+    ? [product.vendor.firstName, product.vendor.lastName]
+        .filter(Boolean)
+        .join(" ")
+    : "Administrator";
   return (
     <>
       <Link className="admin-review-back" to="/admin/products">
@@ -1162,16 +2032,43 @@ export function AdminProductDetail() {
           <span className="eyebrow">PRODUCT REVIEW</span>
           <h1>{product.name}</h1>
           <p>
-            SKU {product.sku || '—'} · Submitted {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : '—'}
+            SKU {product.sku || "—"} · Submitted{" "}
+            {product.createdAt
+              ? new Date(product.createdAt).toLocaleDateString()
+              : "—"}
           </p>
         </div>
-        <span className={`admin-status ${product.status === 'active' ? 'admin-status--good' : 'admin-status--changes_requested'}`}>{product.status === 'active' ? 'Published' : product.status === 'draft' ? 'Draft' : 'Unpublished'}</span>
+        <span
+          className={`admin-status ${product.status === "active" ? "admin-status--good" : "admin-status--changes_requested"}`}
+        >
+          {product.status === "active"
+            ? "Published"
+            : product.status === "draft"
+              ? "Draft"
+              : "Unpublished"}
+        </span>
       </div>
-      {feedback && <div className={feedback.error ? 'admin-error admin-vendor-feedback' : 'admin-success admin-vendor-feedback'}>{feedback.message}</div>}
+      {feedback && (
+        <div
+          className={
+            feedback.error
+              ? "admin-error admin-vendor-feedback"
+              : "admin-success admin-vendor-feedback"
+          }
+        >
+          {feedback.message}
+        </div>
+      )}
       <div className="admin-product-detail">
         <section className="admin-card">
           <div className="admin-product-gallery">
-            <div className="admin-product-gallery__main">{images[0] ? <img src={images[0]} alt={product.name} /> : <Box size={40} />}</div>
+            <div className="admin-product-gallery__main">
+              {images[0] ? (
+                <img src={images[0]} alt={product.name} />
+              ) : (
+                <Box size={40} />
+              )}
+            </div>
             {images.length > 1 && (
               <div className="admin-product-gallery__thumbs">
                 {images.slice(1).map((image, index) => (
@@ -1182,9 +2079,14 @@ export function AdminProductDetail() {
           </div>
           <div className="admin-product-copy">
             <span className="eyebrow">DESCRIPTION</span>
-            <p>{productText(product.description) || 'No description supplied.'}</p>
+            <p>
+              {productText(product.description) || "No description supplied."}
+            </p>
             <span className="eyebrow">SPECIFICATIONS</span>
-            <p>{productText(product.specification) || 'No specifications supplied.'}</p>
+            <p>
+              {productText(product.specification) ||
+                "No specifications supplied."}
+            </p>
           </div>
         </section>
         <aside className="admin-card admin-product-facts">
@@ -1192,80 +2094,162 @@ export function AdminProductDetail() {
           <dl>
             <div>
               <dt>Vendor</dt>
-              <dd>{product.vendor ? <Link to={`/admin/vendors/${product.vendor.id}`}>{vendorName}</Link> : vendorName}</dd>
+              <dd>
+                {product.vendor ? (
+                  <Link to={`/admin/vendors/${product.vendor.id}`}>
+                    {vendorName}
+                  </Link>
+                ) : (
+                  vendorName
+                )}
+              </dd>
             </div>
             <div>
               <dt>Store</dt>
-              <dd>{product.store?.name || '—'}</dd>
+              <dd>{product.store?.name || "—"}</dd>
             </div>
             <div>
               <dt>Subcategory</dt>
-              <dd>{product.sub_category?.name || '—'}</dd>
+              <dd>{product.sub_category?.name || "—"}</dd>
             </div>
             <div>
               <dt>Condition</dt>
-              <dd>{String(product.condition || '—').replaceAll('_', ' ')}</dd>
+              <dd>{String(product.condition || "—").replaceAll("_", " ")}</dd>
             </div>
             <div>
               <dt>Type</dt>
-              <dd>{String(product.type || '—').replaceAll('_', ' ')}</dd>
+              <dd>{String(product.type || "—").replaceAll("_", " ")}</dd>
             </div>
             <div>
               <dt>Price</dt>
               <dd>
-                {product.store?.currency?.symbol || '₦'}
+                {product.store?.currency?.symbol || "₦"}
                 {Number(product.price).toLocaleString()}
               </dd>
             </div>
             <div>
               <dt>Discount price</dt>
-              <dd>{product.discount_price ? `${product.store?.currency?.symbol || '₦'}${Number(product.discount_price).toLocaleString()}` : 'None'}</dd>
+              <dd>
+                {product.discount_price
+                  ? `${product.store?.currency?.symbol || "₦"}${Number(product.discount_price).toLocaleString()}`
+                  : "None"}
+              </dd>
             </div>
             <div>
               <dt>Quantity</dt>
-              <dd>{product.quantity ?? '—'}</dd>
+              <dd>{product.quantity ?? "—"}</dd>
             </div>
             <div>
               <dt>Warranty</dt>
-              <dd>{product.warranty || 'None'}</dd>
+              <dd>{product.warranty || "None"}</dd>
             </div>
             <div>
               <dt>Return policy</dt>
-              <dd>{product.return_policy || 'None'}</dd>
+              <dd>{product.return_policy || "None"}</dd>
             </div>
           </dl>
           <div className="admin-product-actions">
-            <Button onClick={() => setConfirm('publication')}>{product.status === 'active' ? 'Unpublish product' : 'Publish product'}</Button>
-            <Button variant="outline" disabled={product.status !== 'active'} onClick={() => setConfirm('trending')}>
-              {product.isTrending ? 'Remove from trending' : 'Make trending'}
+            <Button onClick={() => setConfirm("publication")}>
+              {product.status === "active"
+                ? "Unpublish product"
+                : "Publish product"}
             </Button>
-            <Button variant="danger" onClick={() => setConfirm('delete')}>
+            <Button
+              variant="outline"
+              disabled={product.status !== "active"}
+              onClick={() => setConfirm("trending")}
+            >
+              {product.isTrending ? "Remove from trending" : "Make trending"}
+            </Button>
+            <Button variant="danger" onClick={() => setConfirm("delete")}>
               Delete product
             </Button>
           </div>
-          <p className="admin-helper">Publishing changes notify the vendor automatically. Unpublishing also removes this product from customer carts.</p>
+          <p className="admin-helper">
+            Publishing changes notify the vendor automatically. Unpublishing
+            also removes this product from customer carts.
+          </p>
         </aside>
       </div>
-      {confirm === 'publication' && <ConfirmModal title={product.status === 'active' ? 'Unpublish this product?' : 'Publish this product?'} description={product.status === 'active' ? 'Customers will no longer see this listing and it will be removed from existing carts.' : 'This listing will become visible to customers immediately.'} confirmLabel={product.status === 'active' ? 'Unpublish' : 'Publish'} loading={busy} onClose={() => setConfirm('')} onConfirm={changePublication} />} {confirm === 'trending' && <ConfirmModal title={product.isTrending ? 'Remove from trending?' : 'Make this product trending?'} description={product.isTrending ? 'The product will leave the curated trending section.' : 'The product will be featured in the curated trending section for customers.'} confirmLabel={product.isTrending ? 'Remove' : 'Make trending'} tone="info" loading={busy} onClose={() => setConfirm('')} onConfirm={changeTrending} />} {confirm === 'delete' && <ConfirmModal title="Delete this product?" description="This permanently removes the listing. The backend will block deletion when related carts, saved products, or reviews exist." confirmLabel="Delete permanently" tone="danger" loading={busy} onClose={() => setConfirm('')} onConfirm={remove} />}
+      {confirm === "publication" && (
+        <ConfirmModal
+          title={
+            product.status === "active"
+              ? "Unpublish this product?"
+              : "Publish this product?"
+          }
+          description={
+            product.status === "active"
+              ? "Customers will no longer see this listing and it will be removed from existing carts."
+              : "This listing will become visible to customers immediately."
+          }
+          confirmLabel={product.status === "active" ? "Unpublish" : "Publish"}
+          loading={busy}
+          onClose={() => setConfirm("")}
+          onConfirm={changePublication}
+        />
+      )}{" "}
+      {confirm === "trending" && (
+        <ConfirmModal
+          title={
+            product.isTrending
+              ? "Remove from trending?"
+              : "Make this product trending?"
+          }
+          description={
+            product.isTrending
+              ? "The product will leave the curated trending section."
+              : "The product will be featured in the curated trending section for customers."
+          }
+          confirmLabel={product.isTrending ? "Remove" : "Make trending"}
+          tone="info"
+          loading={busy}
+          onClose={() => setConfirm("")}
+          onConfirm={changeTrending}
+        />
+      )}{" "}
+      {confirm === "delete" && (
+        <ConfirmModal
+          title="Delete this product?"
+          description="This permanently removes the listing. The backend will block deletion when related carts, saved products, or reviews exist."
+          confirmLabel="Delete permanently"
+          tone="danger"
+          loading={busy}
+          onClose={() => setConfirm("")}
+          onConfirm={remove}
+        />
+      )}
     </>
   );
 }
 
-const money = (amount, currency = 'NGN') => new Intl.NumberFormat('en-NG', { style: 'currency', currency }).format(Number(amount || 0));
+const money = (amount, currency = "NGN") =>
+  new Intl.NumberFormat("en-NG", { style: "currency", currency }).format(
+    Number(amount || 0),
+  );
 
 export function AdminTransactions() {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
-    refId: '',
-    userName: '',
-    status: '',
-    transactionType: ''
+    refId: "",
+    userName: "",
+    status: "",
+    transactionType: "",
   });
-  const resource = useResource(signal => adminApi.transactions(page, signal, filters), [page, filters.refId, filters.userName, filters.status, filters.transactionType]);
+  const resource = useResource(
+    (signal) => adminApi.transactions(page, signal, filters),
+    [
+      page,
+      filters.refId,
+      filters.userName,
+      filters.status,
+      filters.transactionType,
+    ],
+  );
   const rows = rowsFrom(resource.data);
   const pagination = resource.data?.pagination || {};
   const update = (name, value) => {
-    setFilters(current => ({ ...current, [name]: value }));
+    setFilters((current) => ({ ...current, [name]: value }));
     setPage(1);
   };
   return (
@@ -1274,21 +2258,42 @@ export function AdminTransactions() {
         <div>
           <span className="eyebrow">FINANCIAL LEDGER</span>
           <h1>Transactions</h1>
-          <p>Audit marketplace payments, withdrawals, refunds, and subscription charges.</p>
+          <p>
+            Audit marketplace payments, withdrawals, refunds, and subscription
+            charges.
+          </p>
         </div>
       </div>
       <section className="admin-card">
         <div className="admin-finance-filters">
-          <input placeholder="Reference ID" aria-label="Filter by reference ID" value={filters.refId} onChange={event => update('refId', event.target.value)} />
-          <input placeholder="Customer or vendor name" aria-label="Filter by user name" value={filters.userName} onChange={event => update('userName', event.target.value)} />
-          <select aria-label="Transaction type" value={filters.transactionType} onChange={event => update('transactionType', event.target.value)}>
+          <input
+            placeholder="Reference ID"
+            aria-label="Filter by reference ID"
+            value={filters.refId}
+            onChange={(event) => update("refId", event.target.value)}
+          />
+          <input
+            placeholder="Customer or vendor name"
+            aria-label="Filter by user name"
+            value={filters.userName}
+            onChange={(event) => update("userName", event.target.value)}
+          />
+          <select
+            aria-label="Transaction type"
+            value={filters.transactionType}
+            onChange={(event) => update("transactionType", event.target.value)}
+          >
             <option value="">All transaction types</option>
             <option value="payment">Payment</option>
             <option value="withdrawal">Withdrawal</option>
             <option value="refund">Refund</option>
             <option value="subscription">Subscription</option>
           </select>
-          <select aria-label="Transaction status" value={filters.status} onChange={event => update('status', event.target.value)}>
+          <select
+            aria-label="Transaction status"
+            value={filters.status}
+            onChange={(event) => update("status", event.target.value)}
+          >
             <option value="">All statuses</option>
             <option value="pending">Pending</option>
             <option value="completed">Completed</option>
@@ -1300,7 +2305,10 @@ export function AdminTransactions() {
         ) : resource.error ? (
           <div className="admin-error">{resource.error.message}</div>
         ) : !rows.length ? (
-          <EmptyState title="No matching transactions" description="Try clearing one of the filters." />
+          <EmptyState
+            title="No matching transactions"
+            description="Try clearing one of the filters."
+          />
         ) : (
           <div className="admin-table-wrap">
             <table className="admin-table">
@@ -1315,29 +2323,43 @@ export function AdminTransactions() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map(item => (
+                {rows.map((item) => (
                   <tr key={item.id}>
                     <td>
-                      <strong>{item.refId || '—'}</strong>
+                      <strong>{item.refId || "—"}</strong>
                     </td>
                     <td>
                       {item.user ? (
                         <>
-                          {[item.user.firstName, item.user.lastName].filter(Boolean).join(' ') || 'Unnamed account'}
-                          <small className="admin-table-subtitle">{item.user.email}</small>
+                          {[item.user.firstName, item.user.lastName]
+                            .filter(Boolean)
+                            .join(" ") || "Unnamed account"}
+                          <small className="admin-table-subtitle">
+                            {item.user.email}
+                          </small>
                         </>
                       ) : (
-                        '—'
+                        "—"
                       )}
                     </td>
-                    <td>{String(item.transactionType || '—').replaceAll('_', ' ')}</td>
+                    <td>
+                      {String(item.transactionType || "—").replaceAll("_", " ")}
+                    </td>
                     <td>
                       <strong>{money(item.amount, item.currency)}</strong>
                     </td>
                     <td>
-                      <span className={`admin-status ${item.status === 'completed' ? 'admin-status--good' : item.status === 'failed' ? 'admin-status--changes_requested' : ''}`}>{item.status}</span>
+                      <span
+                        className={`admin-status ${item.status === "completed" ? "admin-status--good" : item.status === "failed" ? "admin-status--changes_requested" : ""}`}
+                      >
+                        {item.status}
+                      </span>
                     </td>
-                    <td>{item.createdAt ? new Date(item.createdAt).toLocaleString() : '—'}</td>
+                    <td>
+                      {item.createdAt
+                        ? new Date(item.createdAt).toLocaleString()
+                        : "—"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1345,11 +2367,27 @@ export function AdminTransactions() {
           </div>
         )}
         <div className="admin-pagination">
-          <span>{pagination.total ? `${Number(pagination.total).toLocaleString()} transactions` : `Page ${page}`}</span>
-          <Button variant="outline" disabled={page === 1 || resource.loading} onClick={() => setPage(value => value - 1)}>
+          <span>
+            {pagination.total
+              ? `${Number(pagination.total).toLocaleString()} transactions`
+              : `Page ${page}`}
+          </span>
+          <Button
+            variant="outline"
+            disabled={page === 1 || resource.loading}
+            onClick={() => setPage((value) => value - 1)}
+          >
             Previous
           </Button>
-          <Button variant="outline" disabled={resource.loading || !rows.length || (pagination.pages ? page >= pagination.pages : rows.length < 10)} onClick={() => setPage(value => value + 1)}>
+          <Button
+            variant="outline"
+            disabled={
+              resource.loading ||
+              !rows.length ||
+              (pagination.pages ? page >= pagination.pages : rows.length < 10)
+            }
+            onClick={() => setPage((value) => value + 1)}
+          >
             Next
           </Button>
         </div>
@@ -1359,61 +2397,78 @@ export function AdminTransactions() {
 }
 
 function bankDetailsOf(withdrawal) {
-  const raw = withdrawal?.bankInformation?.bankInfo ?? withdrawal?.bankInformation;
+  const raw =
+    withdrawal?.bankInformation?.bankInfo ?? withdrawal?.bankInformation;
   if (!raw) return {};
-  if (typeof raw === 'object') return raw;
+  if (typeof raw === "object") return raw;
   try {
-    return Object.fromEntries(new URLSearchParams(String(raw).replaceAll('?', '&')));
+    return Object.fromEntries(
+      new URLSearchParams(String(raw).replaceAll("?", "&")),
+    );
   } catch {
     return { details: String(raw) };
   }
 }
 
 export function AdminWithdrawals() {
-  const [filters, setFilters] = useState({ status: '', currency: '' });
+  const [filters, setFilters] = useState({ status: "", currency: "" });
   const [refresh, setRefresh] = useState(0);
   const [selected, setSelected] = useState(null);
-  const [action, setAction] = useState('');
+  const [action, setAction] = useState("");
   const [receipt, setReceipt] = useState(null);
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const requests = useResource(signal => adminApi.withdrawals(signal, filters), [filters.status, filters.currency, refresh]);
-  const stats = useResource(signal => adminApi.payoutStats(signal), [refresh]);
+  const requests = useResource(
+    (signal) => adminApi.withdrawals(signal, filters),
+    [filters.status, filters.currency, refresh],
+  );
+  const stats = useResource(
+    (signal) => adminApi.payoutStats(signal),
+    [refresh],
+  );
   const rows = rowsFrom(requests.data);
   const aggregates = rowsFrom(stats.data);
-  const stat = (currency, status) => aggregates.find(item => item.currency === currency && item.status === status)?.totalAmount || 0;
+  const stat = (currency, status) =>
+    aggregates.find(
+      (item) => item.currency === currency && item.status === status,
+    )?.totalAmount || 0;
   const close = () => {
     if (!busy) {
       setSelected(null);
-      setAction('');
+      setAction("");
       setReceipt(null);
-      setNote('');
+      setNote("");
     }
   };
   const process = async () => {
-    if (action === 'approve' && !receipt) {
+    if (action === "approve" && !receipt) {
       setFeedback({
         error: true,
-        message: 'Attach the payment receipt before approving.'
+        message: "Attach the payment receipt before approving.",
       });
       return;
     }
-    if (action === 'reject' && !note.trim()) {
-      setFeedback({ error: true, message: 'Add a clear rejection reason.' });
+    if (action === "reject" && !note.trim()) {
+      setFeedback({ error: true, message: "Add a clear rejection reason." });
       return;
     }
     setBusy(true);
     setFeedback(null);
     try {
-      const paymentReceipt = action === 'approve' ? await uploadImage(receipt) : undefined;
-      const response = await adminApi.updateWithdrawal(selected.id, action === 'approve' ? 'approved' : 'rejected', action === 'approve' ? { paymentReceipt } : { note: note.trim() });
+      const paymentReceipt =
+        action === "approve" ? await uploadImage(receipt) : undefined;
+      const response = await adminApi.updateWithdrawal(
+        selected.id,
+        action === "approve" ? "approved" : "rejected",
+        action === "approve" ? { paymentReceipt } : { note: note.trim() },
+      );
       setFeedback({ message: response.message });
       setSelected(null);
-      setAction('');
+      setAction("");
       setReceipt(null);
-      setNote('');
-      setRefresh(value => value + 1);
+      setNote("");
+      setRefresh((value) => value + 1);
     } catch (cause) {
       setFeedback({ error: true, message: cause.message });
     } finally {
@@ -1431,29 +2486,43 @@ export function AdminWithdrawals() {
       </div>
       <div className="admin-payout-stats">
         {[
-          ['NGN', 'pending'],
-          ['USD', 'pending'],
-          ['NGN', 'approved'],
-          ['USD', 'approved']
+          ["NGN", "pending"],
+          ["USD", "pending"],
+          ["NGN", "approved"],
+          ["USD", "approved"],
         ].map(([currency, status]) => (
           <article className="admin-stat" key={`${currency}-${status}`}>
             <span>
-              {status === 'pending' ? 'Pending' : 'Approved'} · {currency}
+              {status === "pending" ? "Pending" : "Approved"} · {currency}
             </span>
-            <strong>{stats.loading ? '—' : money(stat(currency, status), currency)}</strong>
-            <small>{status === 'pending' ? 'Awaiting action' : 'Processed total'}</small>
+            <strong>
+              {stats.loading ? "—" : money(stat(currency, status), currency)}
+            </strong>
+            <small>
+              {status === "pending" ? "Awaiting action" : "Processed total"}
+            </small>
           </article>
         ))}
       </div>
-      {feedback && <div className={feedback.error ? 'admin-error admin-vendor-feedback' : 'admin-success admin-vendor-feedback'}>{feedback.message}</div>}
+      {feedback && (
+        <div
+          className={
+            feedback.error
+              ? "admin-error admin-vendor-feedback"
+              : "admin-success admin-vendor-feedback"
+          }
+        >
+          {feedback.message}
+        </div>
+      )}
       <section className="admin-card">
         <div className="admin-finance-filters admin-finance-filters--compact">
           <select
             value={filters.status}
-            onChange={event =>
-              setFilters(current => ({
+            onChange={(event) =>
+              setFilters((current) => ({
                 ...current,
-                status: event.target.value
+                status: event.target.value,
               }))
             }
           >
@@ -1464,10 +2533,10 @@ export function AdminWithdrawals() {
           </select>
           <select
             value={filters.currency}
-            onChange={event =>
-              setFilters(current => ({
+            onChange={(event) =>
+              setFilters((current) => ({
                 ...current,
-                currency: event.target.value
+                currency: event.target.value,
               }))
             }
           >
@@ -1481,7 +2550,11 @@ export function AdminWithdrawals() {
         ) : requests.error ? (
           <div className="admin-error">{requests.error.message}</div>
         ) : !rows.length ? (
-          <EmptyState icon={Landmark} title="No withdrawal requests" description="Requests matching these filters will appear here." />
+          <EmptyState
+            icon={Landmark}
+            title="No withdrawal requests"
+            description="Requests matching these filters will appear here."
+          />
         ) : (
           <div className="admin-table-wrap">
             <table className="admin-table">
@@ -1496,11 +2569,19 @@ export function AdminWithdrawals() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map(item => (
+                {rows.map((item) => (
                   <tr key={item.id}>
                     <td>
-                      <strong>{item.vendor ? [item.vendor.firstName, item.vendor.lastName].filter(Boolean).join(' ') || 'Unnamed vendor' : '—'}</strong>
-                      <small className="admin-table-subtitle">{item.vendor?.email}</small>
+                      <strong>
+                        {item.vendor
+                          ? [item.vendor.firstName, item.vendor.lastName]
+                              .filter(Boolean)
+                              .join(" ") || "Unnamed vendor"
+                          : "—"}
+                      </strong>
+                      <small className="admin-table-subtitle">
+                        {item.vendor?.email}
+                      </small>
                     </td>
                     <td>
                       <strong>{money(item.amount, item.currency)}</strong>
@@ -1510,24 +2591,32 @@ export function AdminWithdrawals() {
                         className="admin-row-action"
                         onClick={() => {
                           setSelected(item);
-                          setAction('details');
+                          setAction("details");
                         }}
                       >
                         View details
                       </button>
                     </td>
                     <td>
-                      <span className={`admin-status ${item.status === 'approved' ? 'admin-status--good' : item.status === 'rejected' ? 'admin-status--changes_requested' : ''}`}>{item.status}</span>
+                      <span
+                        className={`admin-status ${item.status === "approved" ? "admin-status--good" : item.status === "rejected" ? "admin-status--changes_requested" : ""}`}
+                      >
+                        {item.status}
+                      </span>
                     </td>
-                    <td>{item.createdAt ? new Date(item.createdAt).toLocaleString() : '—'}</td>
                     <td>
-                      {item.status === 'pending' ? (
+                      {item.createdAt
+                        ? new Date(item.createdAt).toLocaleString()
+                        : "—"}
+                    </td>
+                    <td>
+                      {item.status === "pending" ? (
                         <div className="admin-withdrawal-actions">
                           <button
                             className="admin-row-action"
                             onClick={() => {
                               setSelected(item);
-                              setAction('approve');
+                              setAction("approve");
                             }}
                           >
                             Approve
@@ -1536,18 +2625,23 @@ export function AdminWithdrawals() {
                             className="admin-row-action admin-row-action--danger"
                             onClick={() => {
                               setSelected(item);
-                              setAction('reject');
+                              setAction("reject");
                             }}
                           >
                             Reject
                           </button>
                         </div>
                       ) : item.paymentReceipt ? (
-                        <a className="admin-row-action" href={item.paymentReceipt} target="_blank" rel="noreferrer">
+                        <a
+                          className="admin-row-action"
+                          href={item.paymentReceipt}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
                           Receipt ↗
                         </a>
                       ) : (
-                        item.note || '—'
+                        item.note || "—"
                       )}
                     </td>
                   </tr>
@@ -1557,48 +2651,78 @@ export function AdminWithdrawals() {
           </div>
         )}
       </section>
-      {selected && action === 'details' && (
-        <Modal title="Payout bank details" onClose={close} footer={<Button onClick={close}>Close</Button>}>
+      {selected && action === "details" && (
+        <Modal
+          title="Payout bank details"
+          onClose={close}
+          footer={<Button onClick={close}>Close</Button>}
+        >
           <dl className="admin-bank-details">
             {Object.entries(bankDetailsOf(selected)).map(([key, value]) => (
               <div key={key}>
-                <dt>{key.replaceAll('_', ' ')}</dt>
+                <dt>{key.replaceAll("_", " ")}</dt>
                 <dd>{String(value)}</dd>
               </div>
             ))}
           </dl>
         </Modal>
       )}
-      {selected && ['approve', 'reject'].includes(action) && (
+      {selected && ["approve", "reject"].includes(action) && (
         <Modal
-          title={action === 'approve' ? 'Approve withdrawal' : 'Reject withdrawal'}
+          title={
+            action === "approve" ? "Approve withdrawal" : "Reject withdrawal"
+          }
           onClose={close}
           footer={
             <>
               <Button variant="ghost" disabled={busy} onClick={close}>
                 Cancel
               </Button>
-              <Button variant={action === 'reject' ? 'danger' : 'primary'} loading={busy} onClick={process}>
-                {action === 'approve' ? 'Approve payout' : 'Reject and refund'}
+              <Button
+                variant={action === "reject" ? "danger" : "primary"}
+                loading={busy}
+                onClick={process}
+              >
+                {action === "approve" ? "Approve payout" : "Reject and refund"}
               </Button>
             </>
           }
         >
           <div className="admin-withdrawal-modal">
             <p>
-              <strong>{money(selected.amount, selected.currency)}</strong> for {selected.vendor ? [selected.vendor.firstName, selected.vendor.lastName].filter(Boolean).join(' ') : 'this vendor'}.
+              <strong>{money(selected.amount, selected.currency)}</strong> for{" "}
+              {selected.vendor
+                ? [selected.vendor.firstName, selected.vendor.lastName]
+                    .filter(Boolean)
+                    .join(" ")
+                : "this vendor"}
+              .
             </p>
-            {action === 'approve' ? (
+            {action === "approve" ? (
               <label>
                 Payment receipt
-                <input type="file" accept="image/*,.pdf" onChange={event => setReceipt(event.target.files?.[0] || null)} />
-                <small>Required. This becomes the permanent proof of payout.</small>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={(event) =>
+                    setReceipt(event.target.files?.[0] || null)
+                  }
+                />
+                <small>
+                  Required. This becomes the permanent proof of payout.
+                </small>
               </label>
             ) : (
               <label>
                 Reason for rejection
-                <textarea value={note} onChange={event => setNote(event.target.value)} placeholder="Explain why the payout cannot be completed" />
-                <small>The amount will be returned to the vendor’s wallet.</small>
+                <textarea
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="Explain why the payout cannot be completed"
+                />
+                <small>
+                  The amount will be returned to the vendor’s wallet.
+                </small>
               </label>
             )}
           </div>
@@ -1609,67 +2733,119 @@ export function AdminWithdrawals() {
 }
 
 export function AdminVerification() {
-  const resource = useResource(signal => adminApi.kyc(signal), []);
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('pending');
+  const resource = useResource((signal) => adminApi.kyc(signal), []);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState("pending");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const [reviews, setReviews] = useState({});
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [updates, setUpdates] = useState({});
-  const rows = rowsFrom(resource.data).map(item => (updates[item.id] ? { ...item, ...updates[item.id] } : item));
-  const statusOf = item => item.reviewStatus || (item.isVerified ? 'approved' : 'pending');
-  const pendingCount = rows.filter(item => statusOf(item) === 'pending').length;
-  const changesCount = rows.filter(item => statusOf(item) === 'changes_requested').length;
-  const filtered = rows.filter(item => (filter === 'all' || statusOf(item) === filter) && `${item.businessName || ''} ${item.vendorId || ''} ${item.user?.email || ''}`.toLowerCase().includes(query.toLowerCase()));
+  const rows = rowsFrom(resource.data).map((item) =>
+    updates[item.id] ? { ...item, ...updates[item.id] } : item,
+  );
+  const statusOf = (item) =>
+    item.reviewStatus || (item.isVerified ? "approved" : "pending");
+  const pendingCount = rows.filter(
+    (item) => statusOf(item) === "pending",
+  ).length;
+  const changesCount = rows.filter(
+    (item) => statusOf(item) === "changes_requested",
+  ).length;
+  const filtered = rows.filter(
+    (item) =>
+      (filter === "all" || statusOf(item) === filter) &&
+      `${item.businessName || ""} ${item.vendorId || ""} ${item.user?.email || ""}`
+        .toLowerCase()
+        .includes(query.toLowerCase()),
+  );
   const pageSize = 20;
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const visible = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const chooseFilter = next => {
+  const chooseFilter = (next) => {
     setFilter(next);
     setPage(1);
   };
   const fields = selected
     ? [
-        ['businessName', 'Business name', selected.businessName, true],
-        ['contactEmail', 'Contact email', selected.contactEmail, true],
-        ['contactPhoneNumber', 'Contact phone number', selected.contactPhoneNumber, true],
-        ['businessDescription', 'Business description', selected.businessDescription, true],
-        ['businessLink', 'Business website', selected.businessLink],
-        ['businessAddress', 'Business address', selected.businessAddress, true],
-        ['businessRegistrationNumber', 'Registration number', selected.businessRegistrationNumber],
-        ['idVerification.name', 'Identity document type', selected.idVerification?.name, true],
-        ['idVerification.number', 'Identity document number', selected.idVerification?.number, true],
-        ['idVerification.expiryDate', 'Identity document expiry', selected.idVerification?.expiryDate]
+        ["businessName", "Business name", selected.businessName, true],
+        ["contactEmail", "Contact email", selected.contactEmail, true],
+        [
+          "contactPhoneNumber",
+          "Contact phone number",
+          selected.contactPhoneNumber,
+          true,
+        ],
+        [
+          "businessDescription",
+          "Business description",
+          selected.businessDescription,
+          true,
+        ],
+        ["businessLink", "Business website", selected.businessLink],
+        ["businessAddress", "Business address", selected.businessAddress, true],
+        [
+          "businessRegistrationNumber",
+          "Registration number",
+          selected.businessRegistrationNumber,
+        ],
+        [
+          "idVerification.name",
+          "Identity document type",
+          selected.idVerification?.name,
+          true,
+        ],
+        [
+          "idVerification.number",
+          "Identity document number",
+          selected.idVerification?.number,
+          true,
+        ],
+        [
+          "idVerification.expiryDate",
+          "Identity document expiry",
+          selected.idVerification?.expiryDate,
+        ],
       ]
     : [];
-  const openReview = item => {
+  const openReview = (item) => {
     setSelected(item);
     setReviews(item.fieldReviews || {});
     setFeedback(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const setDecision = (field, status) =>
-    setReviews(current => ({
+    setReviews((current) => ({
       ...current,
       [field]: {
         status,
-        ...(status === 'rejected' ? { reason: current[field]?.reason || '' } : {})
-      }
+        ...(status === "rejected"
+          ? { reason: current[field]?.reason || "" }
+          : {}),
+      },
     }));
   const setReason = (field, reason) =>
-    setReviews(current => ({
+    setReviews((current) => ({
       ...current,
-      [field]: { status: 'rejected', reason }
+      [field]: { status: "rejected", reason },
     }));
-  const approveProvided = () => setReviews(Object.fromEntries(fields.filter(([, , value]) => value).map(([field]) => [field, { status: 'approved' }])));
+  const approveProvided = () =>
+    setReviews(
+      Object.fromEntries(
+        fields
+          .filter(([, , value]) => value)
+          .map(([field]) => [field, { status: "approved" }]),
+      ),
+    );
   const submitReview = async () => {
-    const missingReason = Object.entries(reviews).find(([, review]) => review.status === 'rejected' && !review.reason?.trim());
+    const missingReason = Object.entries(reviews).find(
+      ([, review]) => review.status === "rejected" && !review.reason?.trim(),
+    );
     if (missingReason) {
       setFeedback({
         error: true,
-        message: 'Add a reason for every rejected detail.'
+        message: "Add a reason for every rejected detail.",
       });
       return;
     }
@@ -1680,9 +2856,9 @@ export function AdminVerification() {
       const updated = response?.data || { ...selected, fieldReviews: reviews };
       setSelected(updated);
       setReviews(updated.fieldReviews || reviews);
-      setUpdates(current => ({ ...current, [updated.id]: updated }));
+      setUpdates((current) => ({ ...current, [updated.id]: updated }));
       setFeedback({
-        message: response?.message || 'Review saved successfully.'
+        message: response?.message || "Review saved successfully.",
       });
     } catch (cause) {
       setFeedback({ error: true, message: cause.message });
@@ -1690,7 +2866,12 @@ export function AdminVerification() {
       setSaving(false);
     }
   };
-  const labelForStatus = status => (status === 'approved' ? 'Verified' : status === 'changes_requested' ? 'Changes requested' : 'Under review');
+  const labelForStatus = (status) =>
+    status === "approved"
+      ? "Verified"
+      : status === "changes_requested"
+        ? "Changes requested"
+        : "Under review";
   if (selected)
     return (
       <>
@@ -1700,12 +2881,17 @@ export function AdminVerification() {
         <div className="admin-page-head admin-review-head">
           <div>
             <span className="eyebrow">KYC REVIEW</span>
-            <h1>{selected.businessName || 'Vendor verification'}</h1>
+            <h1>{selected.businessName || "Vendor verification"}</h1>
             <p>
-              {selected.user?.email || selected.contactEmail} · Submitted {selected.createdAt ? new Date(selected.createdAt).toLocaleDateString() : '—'}
+              {selected.user?.email || selected.contactEmail} · Submitted{" "}
+              {selected.createdAt
+                ? new Date(selected.createdAt).toLocaleDateString()
+                : "—"}
             </p>
           </div>
-          <span className={`admin-status admin-status--${statusOf(selected)}`}>{labelForStatus(statusOf(selected))}</span>
+          <span className={`admin-status admin-status--${statusOf(selected)}`}>
+            {labelForStatus(statusOf(selected))}
+          </span>
         </div>
         <div className="admin-review-layout">
           <section className="admin-card">
@@ -1722,30 +2908,53 @@ export function AdminVerification() {
               {fields.map(([field, label, value, required]) => {
                 const decision = reviews[field] || {};
                 return (
-                  <article className={`admin-review-field admin-review-field--${decision.status || 'pending'}`} key={field}>
+                  <article
+                    className={`admin-review-field admin-review-field--${decision.status || "pending"}`}
+                    key={field}
+                  >
                     <div className="admin-review-field__copy">
                       <span>
                         {label}
                         {required && <small>Required</small>}
                       </span>
-                      <strong>{value || 'Not provided'}</strong>
+                      <strong>{value || "Not provided"}</strong>
                     </div>
                     {value ? (
                       <div className="admin-review-actions">
-                        <button className={decision.status === 'approved' ? 'active approve' : ''} onClick={() => setDecision(field, 'approved')}>
+                        <button
+                          className={
+                            decision.status === "approved"
+                              ? "active approve"
+                              : ""
+                          }
+                          onClick={() => setDecision(field, "approved")}
+                        >
                           <Check size={16} /> Approve
                         </button>
-                        <button className={decision.status === 'rejected' ? 'active reject' : ''} onClick={() => setDecision(field, 'rejected')}>
+                        <button
+                          className={
+                            decision.status === "rejected"
+                              ? "active reject"
+                              : ""
+                          }
+                          onClick={() => setDecision(field, "rejected")}
+                        >
                           <X size={16} /> Request change
                         </button>
                       </div>
                     ) : (
                       <span className="admin-not-provided">Optional</span>
                     )}
-                    {decision.status === 'rejected' && (
+                    {decision.status === "rejected" && (
                       <label className="admin-review-reason">
                         Reason for the vendor
-                        <textarea value={decision.reason || ''} onChange={event => setReason(field, event.target.value)} placeholder="Explain exactly what needs to be corrected" />
+                        <textarea
+                          value={decision.reason || ""}
+                          onChange={(event) =>
+                            setReason(field, event.target.value)
+                          }
+                          placeholder="Explain exactly what needs to be corrected"
+                        />
                       </label>
                     )}
                   </article>
@@ -1758,19 +2967,46 @@ export function AdminVerification() {
             <h2>Review summary</h2>
             <div>
               <span>Approved</span>
-              <strong>{Object.values(reviews).filter(item => item.status === 'approved').length}</strong>
+              <strong>
+                {
+                  Object.values(reviews).filter(
+                    (item) => item.status === "approved",
+                  ).length
+                }
+              </strong>
             </div>
             <div>
               <span>Changes requested</span>
-              <strong>{Object.values(reviews).filter(item => item.status === 'rejected').length}</strong>
+              <strong>
+                {
+                  Object.values(reviews).filter(
+                    (item) => item.status === "rejected",
+                  ).length
+                }
+              </strong>
             </div>
             <div>
               <span>Awaiting decision</span>
-              <strong>{fields.filter(([, , value]) => value).filter(([field]) => !reviews[field] || reviews[field].status === 'pending').length}</strong>
+              <strong>
+                {
+                  fields
+                    .filter(([, , value]) => value)
+                    .filter(
+                      ([field]) =>
+                        !reviews[field] || reviews[field].status === "pending",
+                    ).length
+                }
+              </strong>
             </div>
-            <p>The vendor will receive an in-app notification and email after you submit.</p>
+            <p>
+              The vendor will receive an in-app notification and email after you
+              submit.
+            </p>
             {feedback && (
-              <div className={feedback.error ? 'admin-error' : 'admin-success'} role="status">
+              <div
+                className={feedback.error ? "admin-error" : "admin-success"}
+                role="status"
+              >
                 {feedback.message}
               </div>
             )}
@@ -1800,14 +3036,22 @@ export function AdminVerification() {
         ) : (
           <>
             <div className="admin-verify-toolbar">
-              <div className="admin-verify-tabs" role="group" aria-label="Verification status">
+              <div
+                className="admin-verify-tabs"
+                role="group"
+                aria-label="Verification status"
+              >
                 {[
-                  ['pending', `Under review (${pendingCount})`],
-                  ['changes_requested', `Changes requested (${changesCount})`],
-                  ['approved', 'Verified'],
-                  ['all', 'All']
+                  ["pending", `Under review (${pendingCount})`],
+                  ["changes_requested", `Changes requested (${changesCount})`],
+                  ["approved", "Verified"],
+                  ["all", "All"],
                 ].map(([value, label]) => (
-                  <button key={value} className={filter === value ? 'active' : ''} onClick={() => chooseFilter(value)}>
+                  <button
+                    key={value}
+                    className={filter === value ? "active" : ""}
+                    onClick={() => chooseFilter(value)}
+                  >
                     {label}
                   </button>
                 ))}
@@ -1816,14 +3060,17 @@ export function AdminVerification() {
                 aria-label="Search verification submissions"
                 placeholder="Search business, email or vendor ID"
                 value={query}
-                onChange={event => {
+                onChange={(event) => {
                   setQuery(event.target.value);
                   setPage(1);
                 }}
               />
             </div>
             {!visible.length ? (
-              <EmptyState title="No matching submissions" description="Try another status or search term." />
+              <EmptyState
+                title="No matching submissions"
+                description="Try another status or search term."
+              />
             ) : (
               <div className="admin-table-wrap">
                 <table className="admin-table">
@@ -1837,23 +3084,43 @@ export function AdminVerification() {
                     </tr>
                   </thead>
                   <tbody>
-                    {visible.map(item => (
+                    {visible.map((item) => (
                       <tr key={item.id}>
                         <td>
-                          <strong>{item.businessName || 'Unnamed business'}</strong>
-                          <small className="admin-table-subtitle">{item.user?.email || item.contactEmail}</small>
+                          <strong>
+                            {item.businessName || "Unnamed business"}
+                          </strong>
+                          <small className="admin-table-subtitle">
+                            {item.user?.email || item.contactEmail}
+                          </small>
                         </td>
                         <td>
-                          <span className={`admin-status admin-status--${statusOf(item)}`}>{labelForStatus(statusOf(item))}</span>
-                        </td>
-                        <td>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}</td>
-                        <td>
-                          <span className="admin-verify-id" title={item.vendorId}>
-                            {item.vendorId ? `${String(item.vendorId).slice(0, 8)}…` : '—'}
+                          <span
+                            className={`admin-status admin-status--${statusOf(item)}`}
+                          >
+                            {labelForStatus(statusOf(item))}
                           </span>
                         </td>
                         <td>
-                          <button className="admin-row-action" onClick={() => openReview(item)}>
+                          {item.createdAt
+                            ? new Date(item.createdAt).toLocaleDateString()
+                            : "—"}
+                        </td>
+                        <td>
+                          <span
+                            className="admin-verify-id"
+                            title={item.vendorId}
+                          >
+                            {item.vendorId
+                              ? `${String(item.vendorId).slice(0, 8)}…`
+                              : "—"}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            className="admin-row-action"
+                            onClick={() => openReview(item)}
+                          >
                             Review →
                           </button>
                         </td>
@@ -1864,11 +3131,23 @@ export function AdminVerification() {
               </div>
             )}
             <div className="admin-pagination">
-              <span>{filtered.length ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filtered.length)} of ${filtered.length}` : '0 results'}</span>
-              <Button variant="outline" disabled={page === 1} onClick={() => setPage(current => current - 1)}>
+              <span>
+                {filtered.length
+                  ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filtered.length)} of ${filtered.length}`
+                  : "0 results"}
+              </span>
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage((current) => current - 1)}
+              >
                 Previous
               </Button>
-              <Button variant="outline" disabled={page >= pageCount} onClick={() => setPage(current => current + 1)}>
+              <Button
+                variant="outline"
+                disabled={page >= pageCount}
+                onClick={() => setPage((current) => current + 1)}
+              >
                 Next
               </Button>
             </div>

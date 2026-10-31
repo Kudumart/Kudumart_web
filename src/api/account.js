@@ -1,46 +1,329 @@
-import { request, unwrap } from './client';
+import { request, unwrap } from "./client";
 export const accountApi = {
-  login: async (email, password) => unwrap(await request('/auth/login', { method: 'POST', body: { email, password, platform: 'web' } })),
-  googleAuth: async values => unwrap(await request('/auth/google', { method: 'POST', body: { ...values, platform: 'web' } })),
-  register: async (values, accountType) => unwrap(await request(accountType === 'Vendor' ? '/auth/register/vendor' : '/auth/register/customer', { method: 'POST', body: { ...values, platform: 'web' } })),
-  forgotPassword: async email => unwrap(await request('/auth/password/forgot', { method: 'POST', body: { email } })),
-  resetPassword: async values => unwrap(await request('/auth/password/reset', { method: 'POST', body: values })),
-  verifyEmail: async (email, otpCode) => unwrap(await request('/auth/verify/email', { method: 'POST', body: { email, otpCode } })),
-  verifyEmailToken: async (email, token) => unwrap(await request('/auth/verify/email-token', { method: 'POST', body: { email, token } })),
-  resendVerification: async email => unwrap(await request('/auth/resend/verification/email', { method: 'POST', body: { email, platform: 'web' } })),
-  profile: async signal => unwrap(await request('/user/profile', { authenticated: true, signal })),
-  updateProfile: async values => unwrap(await request('/user/profile/update', { method: 'PUT', authenticated: true, body: values })),
-  updatePhoto: async photo => unwrap(await request('/user/profile/photo/update', { method: 'PATCH', authenticated: true, body: { photo } })),
-  updatePhone: async newPhoneNumber => unwrap(await request('/user/profile/update/phone', { method: 'PUT', authenticated: true, body: { newPhoneNumber } })),
-  requestEmailUpdate: async newEmail => unwrap(await request('/user/profile/update/email', { method: 'PUT', authenticated: true, body: { newEmail } })),
-  confirmEmailUpdate: async (newEmail, otpCode) => unwrap(await request('/user/profile/confirm/email', { method: 'PUT', authenticated: true, body: { newEmail, otpCode } })),
-  updatePassword: async values => unwrap(await request('/user/profile/update/password', { method: 'PUT', authenticated: true, body: values })),
-  deleteAccount: async () => unwrap(await request('/user/delete/account', { method: 'DELETE', authenticated: true })),
-  savedProducts: async (signal) => unwrap(await request('/user/saved/products', { authenticated: true, signal })),
-  saveProduct: async (productId) => unwrap(await request('/user/save/product', { method: 'POST', authenticated: true, body: { productId } })),
-  removeSavedProduct: async (productId) => unwrap(await request('/user/save/product', { method: 'POST', authenticated: true, body: { productId } })),
-  offers: async (signal) => unwrap(await request('/user/offers', { authenticated: true, params: { limit: 50 }, signal })),
-  submitOffer: async (productId, offeredPrice, message) => unwrap(await request(`/user/products/${productId}/offers`, { method: 'POST', authenticated: true, body: { offeredPrice, ...(message?.trim() ? { message: message.trim() } : {}) } })),
-  respondToOffer: async (offerId, status) => unwrap(await request(`/user/offers/${offerId}/respond`, { method: 'PUT', authenticated: true, body: { status } })),
-  initiateOfferPayment: async offerId => unwrap(await request(`/user/offers/${offerId}/initiate-payment`, { method: 'POST', authenticated: true })),
-  checkoutOffer: async (offerId, refId, shippingAddress) => unwrap(await request(`/user/offers/${offerId}/checkout`, { method: 'POST', authenticated: true, body: { refId, shippingAddress } })),
-  notifications: async (isRead, signal) => unwrap(await request('/user/notifications', { authenticated: true, params: { limit: 50, ...(isRead === undefined ? {} : { isRead }) }, signal })),
-  markNotificationRead: async notificationId => unwrap(await request('/user/mark/notification/as/read', { method: 'PATCH', authenticated: true, params: { notificationId } })),
-  markAllNotificationsRead: async () => unwrap(await request('/user/mark/notifications/as/read', { method: 'PATCH', authenticated: true })),
-  conversations: async signal => unwrap(await request('/user/conversations', { authenticated: true, signal })),
-  messages: async (conversationId, signal) => unwrap(await request('/user/messages', { authenticated: true, params: { conversationId }, signal })),
-  sendMessage: async ({ productId, receiverId, content }) => unwrap(await request('/user/messages', { method: 'POST', authenticated: true, body: { productId, receiverId, content } })),
-  cart: async (signal) => unwrap(await request('/user/cart', { authenticated: true, signal })),
-  addToCart: async (productId, quantity = 1, variant) => unwrap(await request('/user/cart/add', { method: 'POST', authenticated: true, body: { productId, quantity, ...(variant ? { product_id: productId, dropshipProductSkuAttr: variant.sku_attr, dropshipProductSkuId: variant.sku_id } : {}) } })),
-  removeFromCart: async (cartId) => unwrap(await request('/user/cart/remove', { method: 'DELETE', authenticated: true, params: { cartId } })),
-  updateCart: async (cartId, quantity) => unwrap(await request('/user/cart/update', { method: 'PUT', authenticated: true, body: { cartId, quantity } })),
-  bookService: async (serviceId, values) => unwrap(await request(`/user/service/${serviceId}/bookings`, { method: 'POST', authenticated: true, body: values })),
-  serviceBookings: async signal => unwrap(await request('/user/service/bookings', { authenticated: true, signal })),
-  completeServiceBooking: async bookingId => unwrap(await request(`/user/service/bookings/${bookingId}/complete`, { method: 'PATCH', authenticated: true })),
-  cancelServiceBooking: async bookingId => unwrap(await request(`/user/service/bookings/${bookingId}/cancel`, { method: 'PATCH', authenticated: true })),
-  reviewService: async values => unwrap(await request('/user/service/review', { method: 'POST', authenticated: true, body: values })),
-  initiateAuctionInterestPayment: async auctionProductId => unwrap(await request('/user/auction/interest/initialize-payment', { method: 'POST', authenticated: true, body: { auctionProductId } })),
-  registerAuctionInterest: async (auctionProductId, refId) => unwrap(await request('/user/auction/interest', { method: 'POST', authenticated: true, body: { auctionProductId, amountPaid: 0, ...(refId ? { refId } : {}) } })),
-  auctionBidState: async (auctionProductId, signal) => unwrap(await request('/user/auction/product/bidders', { authenticated: true, params: { auctionproductId: auctionProductId }, signal })),
-  placeAuctionBid: async (auctionProductId, bidAmount) => unwrap(await request('/user/place/bid', { method: 'POST', authenticated: true, body: { auctionProductId, bidAmount } })),
+  login: async (email, password) =>
+    unwrap(
+      await request("/auth/login", {
+        method: "POST",
+        body: { email, password, platform: "web" },
+      }),
+    ),
+  googleAuth: async (values) =>
+    unwrap(
+      await request("/auth/google", {
+        method: "POST",
+        body: { ...values, platform: "web" },
+      }),
+    ),
+  register: async (values, accountType) =>
+    unwrap(
+      await request(
+        accountType === "Vendor"
+          ? "/auth/register/vendor"
+          : "/auth/register/customer",
+        { method: "POST", body: { ...values, platform: "web" } },
+      ),
+    ),
+  forgotPassword: async (email) =>
+    unwrap(
+      await request("/auth/password/forgot", {
+        method: "POST",
+        body: { email },
+      }),
+    ),
+  resetPassword: async (values) =>
+    unwrap(
+      await request("/auth/password/reset", { method: "POST", body: values }),
+    ),
+  verifyEmail: async (email, otpCode) =>
+    unwrap(
+      await request("/auth/verify/email", {
+        method: "POST",
+        body: { email, otpCode },
+      }),
+    ),
+  verifyEmailToken: async (email, token) =>
+    unwrap(
+      await request("/auth/verify/email-token", {
+        method: "POST",
+        body: { email, token },
+      }),
+    ),
+  resendVerification: async (email) =>
+    unwrap(
+      await request("/auth/resend/verification/email", {
+        method: "POST",
+        body: { email, platform: "web" },
+      }),
+    ),
+  profile: async (signal) =>
+    unwrap(await request("/user/profile", { authenticated: true, signal })),
+  updateProfile: async (values) =>
+    unwrap(
+      await request("/user/profile/update", {
+        method: "PUT",
+        authenticated: true,
+        body: values,
+      }),
+    ),
+  updatePhoto: async (photo) =>
+    unwrap(
+      await request("/user/profile/photo/update", {
+        method: "PATCH",
+        authenticated: true,
+        body: { photo },
+      }),
+    ),
+  updatePhone: async (newPhoneNumber) =>
+    unwrap(
+      await request("/user/profile/update/phone", {
+        method: "PUT",
+        authenticated: true,
+        body: { newPhoneNumber },
+      }),
+    ),
+  requestEmailUpdate: async (newEmail) =>
+    unwrap(
+      await request("/user/profile/update/email", {
+        method: "PUT",
+        authenticated: true,
+        body: { newEmail },
+      }),
+    ),
+  confirmEmailUpdate: async (newEmail, otpCode) =>
+    unwrap(
+      await request("/user/profile/confirm/email", {
+        method: "PUT",
+        authenticated: true,
+        body: { newEmail, otpCode },
+      }),
+    ),
+  updatePassword: async (values) =>
+    unwrap(
+      await request("/user/profile/update/password", {
+        method: "PUT",
+        authenticated: true,
+        body: values,
+      }),
+    ),
+  deleteAccount: async () =>
+    unwrap(
+      await request("/user/delete/account", {
+        method: "DELETE",
+        authenticated: true,
+      }),
+    ),
+  savedProducts: async (signal) =>
+    unwrap(
+      await request("/user/saved/products", { authenticated: true, signal }),
+    ),
+  saveProduct: async (productId) =>
+    unwrap(
+      await request("/user/save/product", {
+        method: "POST",
+        authenticated: true,
+        body: { productId },
+      }),
+    ),
+  removeSavedProduct: async (productId) =>
+    unwrap(
+      await request("/user/save/product", {
+        method: "POST",
+        authenticated: true,
+        body: { productId },
+      }),
+    ),
+  offers: async (signal) =>
+    unwrap(
+      await request("/user/offers", {
+        authenticated: true,
+        params: { limit: 50 },
+        signal,
+      }),
+    ),
+  submitOffer: async (productId, offeredPrice, message) =>
+    unwrap(
+      await request(`/user/products/${productId}/offers`, {
+        method: "POST",
+        authenticated: true,
+        body: {
+          offeredPrice,
+          ...(message?.trim() ? { message: message.trim() } : {}),
+        },
+      }),
+    ),
+  respondToOffer: async (offerId, status) =>
+    unwrap(
+      await request(`/user/offers/${offerId}/respond`, {
+        method: "PUT",
+        authenticated: true,
+        body: { status },
+      }),
+    ),
+  initiateOfferPayment: async (offerId) =>
+    unwrap(
+      await request(`/user/offers/${offerId}/initiate-payment`, {
+        method: "POST",
+        authenticated: true,
+      }),
+    ),
+  checkoutOffer: async (offerId, refId, shippingAddress) =>
+    unwrap(
+      await request(`/user/offers/${offerId}/checkout`, {
+        method: "POST",
+        authenticated: true,
+        body: { refId, shippingAddress },
+      }),
+    ),
+  notifications: async (isRead, signal) =>
+    unwrap(
+      await request("/user/notifications", {
+        authenticated: true,
+        params: { limit: 50, ...(isRead === undefined ? {} : { isRead }) },
+        signal,
+      }),
+    ),
+  markNotificationRead: async (notificationId) =>
+    unwrap(
+      await request("/user/mark/notification/as/read", {
+        method: "PATCH",
+        authenticated: true,
+        params: { notificationId },
+      }),
+    ),
+  markAllNotificationsRead: async () =>
+    unwrap(
+      await request("/user/mark/notifications/as/read", {
+        method: "PATCH",
+        authenticated: true,
+      }),
+    ),
+  conversations: async (signal) =>
+    unwrap(
+      await request("/user/conversations", { authenticated: true, signal }),
+    ),
+  messages: async (conversationId, signal) =>
+    unwrap(
+      await request("/user/messages", {
+        authenticated: true,
+        params: { conversationId },
+        signal,
+      }),
+    ),
+  sendMessage: async ({ productId, receiverId, content }) =>
+    unwrap(
+      await request("/user/messages", {
+        method: "POST",
+        authenticated: true,
+        body: { productId, receiverId, content },
+      }),
+    ),
+  cart: async (signal) =>
+    unwrap(await request("/user/cart", { authenticated: true, signal })),
+  addToCart: async (productId, quantity = 1, variant) =>
+    unwrap(
+      await request("/user/cart/add", {
+        method: "POST",
+        authenticated: true,
+        body: {
+          productId,
+          quantity,
+          ...(variant
+            ? {
+                product_id: productId,
+                dropshipProductSkuAttr: variant.sku_attr,
+                dropshipProductSkuId: variant.sku_id,
+              }
+            : {}),
+        },
+      }),
+    ),
+  removeFromCart: async (cartId) =>
+    unwrap(
+      await request("/user/cart/remove", {
+        method: "DELETE",
+        authenticated: true,
+        params: { cartId },
+      }),
+    ),
+  updateCart: async (cartId, quantity) =>
+    unwrap(
+      await request("/user/cart/update", {
+        method: "PUT",
+        authenticated: true,
+        body: { cartId, quantity },
+      }),
+    ),
+  bookService: async (serviceId, values) =>
+    unwrap(
+      await request(`/user/service/${serviceId}/bookings`, {
+        method: "POST",
+        authenticated: true,
+        body: values,
+      }),
+    ),
+  serviceBookings: async (signal) =>
+    unwrap(
+      await request("/user/service/bookings", { authenticated: true, signal }),
+    ),
+  completeServiceBooking: async (bookingId) =>
+    unwrap(
+      await request(`/user/service/bookings/${bookingId}/complete`, {
+        method: "PATCH",
+        authenticated: true,
+      }),
+    ),
+  cancelServiceBooking: async (bookingId) =>
+    unwrap(
+      await request(`/user/service/bookings/${bookingId}/cancel`, {
+        method: "PATCH",
+        authenticated: true,
+      }),
+    ),
+  reviewService: async (values) =>
+    unwrap(
+      await request("/user/service/review", {
+        method: "POST",
+        authenticated: true,
+        body: values,
+      }),
+    ),
+  initiateAuctionInterestPayment: async (auctionProductId) =>
+    unwrap(
+      await request("/user/auction/interest/initialize-payment", {
+        method: "POST",
+        authenticated: true,
+        body: { auctionProductId },
+      }),
+    ),
+  registerAuctionInterest: async (auctionProductId, refId) =>
+    unwrap(
+      await request("/user/auction/interest", {
+        method: "POST",
+        authenticated: true,
+        body: { auctionProductId, amountPaid: 0, ...(refId ? { refId } : {}) },
+      }),
+    ),
+  auctionInterests: async (signal) =>
+    unwrap(
+      await request("/user/auction/products/interest", {
+        authenticated: true,
+        signal,
+      }),
+    ),
+  auctionBidState: async (auctionProductId, signal) =>
+    unwrap(
+      await request("/user/auction/product/bidders", {
+        authenticated: true,
+        params: { auctionproductId: auctionProductId },
+        signal,
+      }),
+    ),
+  placeAuctionBid: async (auctionProductId, bidAmount) =>
+    unwrap(
+      await request("/user/place/bid", {
+        method: "POST",
+        authenticated: true,
+        body: { auctionProductId, bidAmount },
+      }),
+    ),
 };

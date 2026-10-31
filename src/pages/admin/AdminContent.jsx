@@ -1,39 +1,1017 @@
-import { useMemo, useState } from 'react';
-import { BriefcaseBusiness, FileQuestion, Image, Mail, MessageSquareQuote, Plus, Settings2, Trash2 } from 'lucide-react';
-import { adminApi } from '../../api/admin';
-import { uploadImage } from '../../api/upload';
-import { Button, EmptyState, Modal, Skeleton } from '../../components/ui';
-import { useResource } from '../../hooks/useResource';
+import { useMemo, useState } from "react";
+import {
+  BriefcaseBusiness,
+  FileQuestion,
+  Image,
+  Mail,
+  MessageSquareQuote,
+  Plus,
+  Settings2,
+  Trash2,
+} from "lucide-react";
+import { adminApi } from "../../api/admin";
+import { uploadImage } from "../../api/upload";
+import { Button, EmptyState, Modal, Skeleton } from "../../components/ui";
+import { useResource } from "../../hooks/useResource";
 
-const rows = payload => Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
-const feedbackInitial = { busy: false, error: '', success: '' };
+const rows = (payload) =>
+  Array.isArray(payload?.data)
+    ? payload.data
+    : Array.isArray(payload)
+      ? payload
+      : [];
+const feedbackInitial = { busy: false, error: "", success: "" };
 
 export function AdminContent() {
-  const [tab, setTab] = useState('banners'); const [revision, setRevision] = useState(0); const [editor, setEditor] = useState(null); const [feedback, setFeedback] = useState(feedbackInitial);
-  const banners = useResource(signal => adminApi.banners(signal), [revision]); const testimonials = useResource(signal => adminApi.testimonials(signal), [revision]); const faqs = useResource(signal => adminApi.faqs(signal), [revision]); const categories = useResource(signal => adminApi.faqCategories(signal), [revision]); const jobs = useResource(signal => adminApi.jobs(signal), [revision]); const contacts = useResource(signal => adminApi.contacts(signal), [revision]);
+  const [tab, setTab] = useState("banners");
+  const [revision, setRevision] = useState(0);
+  const [editor, setEditor] = useState(null);
+  const [applicantsJob, setApplicantsJob] = useState(null);
+  const [categoryEditor, setCategoryEditor] = useState(null);
+  const [feedback, setFeedback] = useState(feedbackInitial);
+  const banners = useResource((signal) => adminApi.banners(signal), [revision]);
+  const testimonials = useResource(
+    (signal) => adminApi.testimonials(signal),
+    [revision],
+  );
+  const faqs = useResource((signal) => adminApi.faqs(signal), [revision]);
+  const categories = useResource(
+    (signal) => adminApi.faqCategories(signal),
+    [revision],
+  );
+  const jobs = useResource((signal) => adminApi.jobs(signal), [revision]);
+  const contacts = useResource(
+    (signal) => adminApi.contacts(signal),
+    [revision],
+  );
   const source = { banners, testimonials, faqs, jobs, contacts }[tab];
-  const remove = async item => { if (!confirm('Delete this item permanently?')) return; setFeedback({ busy: true, error: '', success: '' }); try { if (tab === 'banners') await adminApi.deleteBanner(item.id); if (tab === 'testimonials') await adminApi.deleteTestimonial(item.id); if (tab === 'faqs') await adminApi.deleteFaq(item.id); if (tab === 'jobs') await adminApi.deleteJob(item.id); if (tab === 'contacts') await adminApi.deleteContact(item.id); setFeedback({ busy: false, error: '', success: 'Item deleted.' }); setRevision(v => v + 1); } catch (error) { setFeedback({ busy: false, error: error.message, success: '' }); } };
-  const save = async form => { setFeedback({ busy: true, error: '', success: '' }); try { if (tab === 'banners') await adminApi.saveBanner(form); if (tab === 'testimonials') await adminApi.saveTestimonial(form); if (tab === 'faqs') await adminApi.saveFaq(form); if (tab === 'jobs') await adminApi.saveJob(form); setEditor(null); setFeedback({ busy: false, error: '', success: 'Changes saved.' }); setRevision(v => v + 1); } catch (error) { setFeedback({ busy: false, error: error.message, success: '' }); } };
-  return <><div className="admin-page-head"><div><span className="eyebrow">PAGES & CAMPAIGNS</span><h1>Content management</h1><p>Control public content and incoming customer enquiries.</p></div>{tab !== 'contacts' && <Button icon={Plus} onClick={() => setEditor({})}>Add {tab === 'faqs' ? 'FAQ' : tab.slice(0, -1)}</Button>}</div><div className="admin-content-tabs">{[['banners', Image], ['testimonials', MessageSquareQuote], ['faqs', FileQuestion], ['jobs', BriefcaseBusiness], ['contacts', Mail]].map(([key, Icon]) => <button className={tab === key ? 'active' : ''} onClick={() => { setTab(key); setEditor(null); }} key={key}><Icon size={17}/>{key}</button>)}</div>{feedback.error && <p className="admin-error">{feedback.error}</p>}{feedback.success && <p className="admin-success">{feedback.success}</p>}{tab === 'faqs' && <div className="admin-faq-categories"><strong>FAQ categories</strong>{rows(categories.data).map(category => <span key={category.id}>{category.name}</span>)}<button onClick={async () => { const name = prompt('New FAQ category name'); if (name?.trim()) { await adminApi.saveFaqCategory({ name: name.trim() }); setRevision(v => v + 1); } }}>+ Add category</button></div>}<section className="admin-card">{source.loading ? <Skeleton className="admin-table-skeleton"/> : source.error ? <p className="admin-error">{source.error.message}</p> : rows(source.data).length ? <div className="admin-content-list">{rows(source.data).map(item => <article key={item.id}><div className="admin-content-list__image">{(item.image || item.photo) ? <img src={item.image || item.photo} alt=""/> : <Settings2/>}</div><div><strong>{item.title || item.question || item.name || item.emailAddress || 'Untitled'}</strong><small>{item.position || item.workplaceType || item.answer || item.message || item.status || 'Published content'}</small></div><span className={`admin-status admin-status--${item.status || 'approved'}`}>{tab === 'contacts' ? 'Enquiry' : item.status || 'Published'}</span><div className="admin-ops-actions">{tab !== 'contacts' && <button onClick={() => setEditor(item)}>Edit</button>}{tab === 'jobs' && item.status === 'active' && <button onClick={async () => { await adminApi.closeJob(item.id); setRevision(v => v + 1); }}>Close</button>}<button className="danger" onClick={() => remove(item)}><Trash2 size={15}/></button></div></article>)}</div> : <EmptyState title={`No ${tab} yet`} description={tab === 'contacts' ? 'Customer enquiries will appear here.' : 'Create the first item to publish it across KuduMart.'}/>}</section>{editor && <ContentEditor kind={tab} value={editor} categories={rows(categories.data)} busy={feedback.busy} onClose={() => setEditor(null)} onSave={save}/>}</>;
+  const remove = async (item) => {
+    if (!confirm("Delete this item permanently?")) return;
+    setFeedback({ busy: true, error: "", success: "" });
+    try {
+      if (tab === "banners") await adminApi.deleteBanner(item.id);
+      if (tab === "testimonials") await adminApi.deleteTestimonial(item.id);
+      if (tab === "faqs") await adminApi.deleteFaq(item.id);
+      if (tab === "jobs") await adminApi.deleteJob(item.id);
+      if (tab === "contacts") await adminApi.deleteContact(item.id);
+      setFeedback({ busy: false, error: "", success: "Item deleted." });
+      setRevision((v) => v + 1);
+    } catch (error) {
+      setFeedback({ busy: false, error: error.message, success: "" });
+    }
+  };
+  const save = async (form) => {
+    setFeedback({ busy: true, error: "", success: "" });
+    try {
+      if (tab === "banners") await adminApi.saveBanner(form);
+      if (tab === "testimonials") await adminApi.saveTestimonial(form);
+      if (tab === "faqs") await adminApi.saveFaq(form);
+      if (tab === "jobs") await adminApi.saveJob(form);
+      setEditor(null);
+      setFeedback({ busy: false, error: "", success: "Changes saved." });
+      setRevision((v) => v + 1);
+    } catch (error) {
+      setFeedback({ busy: false, error: error.message, success: "" });
+    }
+  };
+  return (
+    <>
+      <div className="admin-page-head">
+        <div>
+          <span className="eyebrow">PAGES & CAMPAIGNS</span>
+          <h1>Content management</h1>
+          <p>Control public content and incoming customer enquiries.</p>
+        </div>
+        {tab !== "contacts" && (
+          <Button icon={Plus} onClick={() => setEditor({})}>
+            Add {tab === "faqs" ? "FAQ" : tab.slice(0, -1)}
+          </Button>
+        )}
+      </div>
+      <div className="admin-content-tabs">
+        {[
+          ["banners", Image],
+          ["testimonials", MessageSquareQuote],
+          ["faqs", FileQuestion],
+          ["jobs", BriefcaseBusiness],
+          ["contacts", Mail],
+        ].map(([key, Icon]) => (
+          <button
+            className={tab === key ? "active" : ""}
+            onClick={() => {
+              setTab(key);
+              setEditor(null);
+            }}
+            key={key}
+          >
+            <Icon size={17} />
+            {key}
+          </button>
+        ))}
+      </div>
+      {feedback.error && <p className="admin-error">{feedback.error}</p>}
+      {feedback.success && <p className="admin-success">{feedback.success}</p>}
+      {tab === "faqs" && (
+        <div className="admin-faq-categories">
+          <strong>FAQ categories</strong>
+          {rows(categories.data).map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setCategoryEditor(category)}
+            >
+              {category.name}
+            </button>
+          ))}
+          <button onClick={() => setCategoryEditor({})}>+ Add category</button>
+        </div>
+      )}
+      <section className="admin-card">
+        {source.loading ? (
+          <Skeleton className="admin-table-skeleton" />
+        ) : source.error ? (
+          <p className="admin-error">{source.error.message}</p>
+        ) : rows(source.data).length ? (
+          <div className="admin-content-list">
+            {rows(source.data).map((item) => (
+              <article key={item.id}>
+                <div className="admin-content-list__image">
+                  {item.image || item.photo ? (
+                    <img src={item.image || item.photo} alt="" />
+                  ) : (
+                    <Settings2 />
+                  )}
+                </div>
+                <div>
+                  <strong>
+                    {item.title ||
+                      item.question ||
+                      item.name ||
+                      item.emailAddress ||
+                      "Untitled"}
+                  </strong>
+                  <small>
+                    {item.position ||
+                      item.workplaceType ||
+                      item.answer ||
+                      item.message ||
+                      item.status ||
+                      "Published content"}
+                  </small>
+                </div>
+                <span
+                  className={`admin-status admin-status--${item.status || "approved"}`}
+                >
+                  {tab === "contacts" ? "Enquiry" : item.status || "Published"}
+                </span>
+                <div className="admin-ops-actions">
+                  {tab !== "contacts" && (
+                    <button onClick={() => setEditor(item)}>Edit</button>
+                  )}
+                  {tab === "jobs" && item.status === "active" && (
+                    <button
+                      onClick={async () => {
+                        await adminApi.closeJob(item.id);
+                        setRevision((v) => v + 1);
+                      }}
+                    >
+                      Close
+                    </button>
+                  )}
+                  {tab === "jobs" && (
+                    <button onClick={() => setApplicantsJob(item)}>
+                      Applicants
+                    </button>
+                  )}
+                  {tab === "jobs" && item.status !== "active" && (
+                    <button
+                      onClick={async () => {
+                        await adminApi.repostJob(item.id);
+                        setRevision((v) => v + 1);
+                      }}
+                    >
+                      Repost
+                    </button>
+                  )}
+                  <button className="danger" onClick={() => remove(item)}>
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title={`No ${tab} yet`}
+            description={
+              tab === "contacts"
+                ? "Customer enquiries will appear here."
+                : "Create the first item to publish it across KuduMart."
+            }
+          />
+        )}
+      </section>
+      {editor && (
+        <ContentEditor
+          kind={tab}
+          value={editor}
+          categories={rows(categories.data)}
+          busy={feedback.busy}
+          onClose={() => setEditor(null)}
+          onSave={save}
+        />
+      )}
+      {applicantsJob && (
+        <ApplicantsModal
+          job={applicantsJob}
+          onClose={() => setApplicantsJob(null)}
+        />
+      )}
+      {categoryEditor && (
+        <FaqCategoryEditor
+          value={categoryEditor}
+          busy={feedback.busy}
+          onClose={() => setCategoryEditor(null)}
+          onSave={async (form) => {
+            setFeedback({ busy: true, error: "", success: "" });
+            try {
+              await adminApi.saveFaqCategory(form);
+              setCategoryEditor(null);
+              setRevision((v) => v + 1);
+              setFeedback({
+                busy: false,
+                error: "",
+                success: "FAQ category saved.",
+              });
+            } catch (error) {
+              setFeedback({ busy: false, error: error.message, success: "" });
+            }
+          }}
+          onDelete={
+            categoryEditor.id
+              ? async () => {
+                  if (!confirm("Delete this FAQ category?")) return;
+                  await adminApi.deleteFaqCategory(categoryEditor.id);
+                  setCategoryEditor(null);
+                  setRevision((v) => v + 1);
+                }
+              : null
+          }
+        />
+      )}
+    </>
+  );
+}
+
+function ApplicantsModal({ job, onClose }) {
+  const resource = useResource(
+    (signal) => adminApi.jobApplicants(job.id, signal),
+    [job.id],
+  );
+  const applicants = rows(resource.data);
+  return (
+    <Modal title={`Applicants · ${job.title || "Job"}`} onClose={onClose}>
+      {resource.loading ? (
+        <Skeleton className="admin-table-skeleton" />
+      ) : resource.error ? (
+        <p className="admin-error">{resource.error.message}</p>
+      ) : applicants.length ? (
+        <div className="admin-applicant-list">
+          {applicants.map((item, index) => (
+            <article key={item.id || index}>
+              <div>
+                <strong>
+                  {item.name ||
+                    item.fullName ||
+                    `${item.firstName || ""} ${item.lastName || ""}`.trim() ||
+                    "Applicant"}
+                </strong>
+                <small>
+                  {item.emailAddress || item.email} ·{" "}
+                  {item.phoneNumber || item.phone || "No phone"}
+                </small>
+              </div>
+              {item.resume && (
+                <a href={item.resume} target="_blank" rel="noreferrer">
+                  View résumé
+                </a>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title="No applicants yet"
+          description="Applications for this role will appear here."
+        />
+      )}
+    </Modal>
+  );
+}
+
+function FaqCategoryEditor({ value, busy, onClose, onSave, onDelete }) {
+  const [name, setName] = useState(value.name || "");
+  return (
+    <Modal
+      title={`${value.id ? "Edit" : "Add"} FAQ category`}
+      onClose={onClose}
+    >
+      <form
+        className="admin-content-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSave({ ...value, name: name.trim() });
+        }}
+      >
+        <label>
+          Category name
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </label>
+        <div className="admin-form-actions">
+          {onDelete && (
+            <Button type="button" variant="outline" onClick={onDelete}>
+              Delete
+            </Button>
+          )}
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={busy}>
+            Save
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
 }
 function ContentEditor({ kind, value, categories, busy, onClose, onSave }) {
-  const defaults = kind === 'banners' ? { image: '' } : kind === 'testimonials' ? { name: '', position: '', photo: '', message: '' } : kind === 'faqs' ? { categoryId: categories[0]?.id || '', question: '', answer: '' } : { title: '', workplaceType: 'remote', jobType: 'full-time', location: '', description: '' };
-  const [form, setForm] = useState({ ...defaults, ...value }); const [uploading, setUploading] = useState(false);
-  const imageField = kind === 'banners' ? 'image' : kind === 'testimonials' ? 'photo' : null;
-  const file = async event => { const selected = event.target.files?.[0]; if (!selected) return; setUploading(true); try { const url = await uploadImage(selected); setForm(old => ({ ...old, [imageField]: url })); } finally { setUploading(false); } };
-  return <Modal title={`${form.id ? 'Edit' : 'Add'} ${kind === 'faqs' ? 'FAQ' : kind.slice(0, -1)}`} onClose={onClose}><form className="admin-content-form" onSubmit={e => { e.preventDefault(); onSave(form); }}>{imageField && <label>Image<input type="file" accept="image/*" onChange={file}/>{form[imageField] && <img src={form[imageField]} alt="Preview"/>}</label>}{kind === 'testimonials' && <><label>Name<input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required/></label><label>Position<input value={form.position} onChange={e => setForm({ ...form, position: e.target.value })} required/></label><label>Message<textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} required/></label></>}{kind === 'faqs' && <><label>Category<select value={form.categoryId || form.faqCategoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })} required>{categories.map(category => <option value={category.id} key={category.id}>{category.name}</option>)}</select></label><label>Question<input value={form.question} onChange={e => setForm({ ...form, question: e.target.value })} required/></label><label>Answer<textarea value={form.answer} onChange={e => setForm({ ...form, answer: e.target.value })} required/></label></>}{kind === 'jobs' && <><label>Job title<input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required/></label><div className="admin-form-row"><label>Workplace<select value={form.workplaceType} onChange={e => setForm({ ...form, workplaceType: e.target.value })}><option value="remote">Remote</option><option value="on-site">On-site</option><option value="hybrid">Hybrid</option></select></label><label>Job type<input value={form.jobType} onChange={e => setForm({ ...form, jobType: e.target.value })} required/></label></div><label>Location<input value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} required/></label><label>Description<textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} required minLength={10}/></label></>}{kind === 'banners' && form.image && <p className="admin-helper">The banner will appear in the public banner feed.</p>}<div className="admin-form-actions"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" loading={busy || uploading} disabled={kind === 'banners' && !form.image}>Save</Button></div></form></Modal>;
+  const defaults =
+    kind === "banners"
+      ? { image: "" }
+      : kind === "testimonials"
+        ? { name: "", position: "", photo: "", message: "" }
+        : kind === "faqs"
+          ? { categoryId: categories[0]?.id || "", question: "", answer: "" }
+          : {
+              title: "",
+              workplaceType: "remote",
+              jobType: "full-time",
+              location: "",
+              description: "",
+            };
+  const [form, setForm] = useState({ ...defaults, ...value });
+  const [uploading, setUploading] = useState(false);
+  const imageField =
+    kind === "banners" ? "image" : kind === "testimonials" ? "photo" : null;
+  const file = async (event) => {
+    const selected = event.target.files?.[0];
+    if (!selected) return;
+    setUploading(true);
+    try {
+      const url = await uploadImage(selected);
+      setForm((old) => ({ ...old, [imageField]: url }));
+    } finally {
+      setUploading(false);
+    }
+  };
+  return (
+    <Modal
+      title={`${form.id ? "Edit" : "Add"} ${kind === "faqs" ? "FAQ" : kind.slice(0, -1)}`}
+      onClose={onClose}
+    >
+      <form
+        className="admin-content-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSave(form);
+        }}
+      >
+        {imageField && (
+          <label>
+            Image
+            <input type="file" accept="image/*" onChange={file} />
+            {form[imageField] && <img src={form[imageField]} alt="Preview" />}
+          </label>
+        )}
+        {kind === "testimonials" && (
+          <>
+            <label>
+              Name
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+            </label>
+            <label>
+              Position
+              <input
+                value={form.position}
+                onChange={(e) => setForm({ ...form, position: e.target.value })}
+                required
+              />
+            </label>
+            <label>
+              Message
+              <textarea
+                value={form.message}
+                onChange={(e) => setForm({ ...form, message: e.target.value })}
+                required
+              />
+            </label>
+          </>
+        )}
+        {kind === "faqs" && (
+          <>
+            <label>
+              Category
+              <select
+                value={form.categoryId || form.faqCategoryId}
+                onChange={(e) =>
+                  setForm({ ...form, categoryId: e.target.value })
+                }
+                required
+              >
+                {categories.map((category) => (
+                  <option value={category.id} key={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Question
+              <input
+                value={form.question}
+                onChange={(e) => setForm({ ...form, question: e.target.value })}
+                required
+              />
+            </label>
+            <label>
+              Answer
+              <textarea
+                value={form.answer}
+                onChange={(e) => setForm({ ...form, answer: e.target.value })}
+                required
+              />
+            </label>
+          </>
+        )}
+        {kind === "jobs" && (
+          <>
+            <label>
+              Job title
+              <input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                required
+              />
+            </label>
+            <div className="admin-form-row">
+              <label>
+                Workplace
+                <select
+                  value={form.workplaceType}
+                  onChange={(e) =>
+                    setForm({ ...form, workplaceType: e.target.value })
+                  }
+                >
+                  <option value="remote">Remote</option>
+                  <option value="on-site">On-site</option>
+                  <option value="hybrid">Hybrid</option>
+                </select>
+              </label>
+              <label>
+                Job type
+                <input
+                  value={form.jobType}
+                  onChange={(e) =>
+                    setForm({ ...form, jobType: e.target.value })
+                  }
+                  required
+                />
+              </label>
+            </div>
+            <label>
+              Location
+              <input
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                required
+              />
+            </label>
+            <label>
+              Description
+              <textarea
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                required
+                minLength={10}
+              />
+            </label>
+          </>
+        )}
+        {kind === "banners" && form.image && (
+          <p className="admin-helper">
+            The banner will appear in the public banner feed.
+          </p>
+        )}
+        <div className="admin-form-actions">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            loading={busy || uploading}
+            disabled={kind === "banners" && !form.image}
+          >
+            Save
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
 }
 
 export function AdminConfiguration() {
-  const [tab, setTab] = useState('charges'); const [revision, setRevision] = useState(0); const [editor, setEditor] = useState(null); const [feedback, setFeedback] = useState(feedbackInitial);
-  const charges = useResource(signal => adminApi.productCharges(signal), [revision]); const attributes = useResource(signal => adminApi.serviceAttributes(signal), [revision]); const source = tab === 'charges' ? charges : attributes;
+  const [tab, setTab] = useState("charges");
+  const [revision, setRevision] = useState(0);
+  const [editor, setEditor] = useState(null);
+  const [attributeManager, setAttributeManager] = useState(null);
+  const [feedback, setFeedback] = useState(feedbackInitial);
+  const charges = useResource(
+    (signal) => adminApi.productCharges(signal),
+    [revision],
+  );
+  const attributes = useResource(
+    (signal) => adminApi.serviceAttributes(signal),
+    [revision],
+  );
+  const source = tab === "charges" ? charges : attributes;
   const items = useMemo(() => rows(source.data), [source.data]);
-  const save = async form => { setFeedback({ busy: true, error: '', success: '' }); try { if (tab === 'charges') await adminApi.saveProductCharge(form); else await adminApi.saveServiceAttributes([{ name: form.name, input_type: form.input_type, ...(form.options ? { value: form.options.split(',').map(v => v.trim()).filter(Boolean) } : {}) }]); setEditor(null); setRevision(v => v + 1); setFeedback({ busy: false, error: '', success: 'Configuration saved.' }); } catch (error) { setFeedback({ busy: false, error: error.message, success: '' }); } };
-  const remove = async item => { if (!confirm('Delete this configuration?')) return; if (tab === 'charges') await adminApi.deleteProductCharge(item.id); else await adminApi.deleteServiceAttribute(item.id); setRevision(v => v + 1); };
-  return <><div className="admin-page-head"><div><span className="eyebrow">MARKETPLACE RULES</span><h1>Charges & service fields</h1><p>Manage product fees and the reusable details collected for services.</p></div><Button icon={Plus} onClick={() => setEditor({})}>Create {tab === 'charges' ? 'charge' : 'attribute'}</Button></div><div className="admin-content-tabs"><button className={tab === 'charges' ? 'active' : ''} onClick={() => setTab('charges')}>Product charges</button><button className={tab === 'attributes' ? 'active' : ''} onClick={() => setTab('attributes')}>Service attributes</button></div>{feedback.error && <p className="admin-error">{feedback.error}</p>}{feedback.success && <p className="admin-success">{feedback.success}</p>}<section className="admin-card">{source.loading ? <Skeleton className="admin-table-skeleton"/> : items.length ? <div className="admin-content-list">{items.map(item => <article key={item.id}><div className="admin-content-list__image"><Settings2/></div><div><strong>{item.name}</strong><small>{tab === 'charges' ? `${item.calculation_type} · ${item.charge_currency} ${item.charge_amount || item.charge_percentage || ''}` : `${item.input_type}${item.options?.length ? ` · ${item.options.length} options` : ''}`}</small></div><span className={`admin-status ${item.is_active === false ? '' : 'admin-status--good'}`}>{item.is_active === false ? 'Inactive' : 'Active'}</span><div className="admin-ops-actions">{tab === 'charges' && <button onClick={() => setEditor(item)}>Edit</button>}{tab === 'charges' && <button onClick={async () => { await adminApi.setProductChargeStatus(item.id, item.is_active === false); setRevision(v => v + 1); }}>{item.is_active === false ? 'Activate' : 'Deactivate'}</button>}<button className="danger" onClick={() => remove(item)}>Delete</button></div></article>)}</div> : <EmptyState title="Nothing configured yet" description="Create the first rule when you are ready."/>}</section>{editor && <ConfigurationEditor kind={tab} value={editor} busy={feedback.busy} onClose={() => setEditor(null)} onSave={save}/>}</>;
+  const save = async (form) => {
+    setFeedback({ busy: true, error: "", success: "" });
+    try {
+      if (tab === "charges") await adminApi.saveProductCharge(form);
+      else
+        await adminApi.saveServiceAttributes([
+          {
+            name: form.name,
+            input_type: form.input_type,
+            ...(form.options
+              ? {
+                  value: form.options
+                    .split(",")
+                    .map((v) => v.trim())
+                    .filter(Boolean),
+                }
+              : {}),
+          },
+        ]);
+      setEditor(null);
+      setRevision((v) => v + 1);
+      setFeedback({ busy: false, error: "", success: "Configuration saved." });
+    } catch (error) {
+      setFeedback({ busy: false, error: error.message, success: "" });
+    }
+  };
+  const remove = async (item) => {
+    if (!confirm("Delete this configuration?")) return;
+    if (tab === "charges") await adminApi.deleteProductCharge(item.id);
+    else await adminApi.deleteServiceAttribute(item.id);
+    setRevision((v) => v + 1);
+  };
+  return (
+    <>
+      <div className="admin-page-head">
+        <div>
+          <span className="eyebrow">MARKETPLACE RULES</span>
+          <h1>Charges & service fields</h1>
+          <p>
+            Manage product fees and the reusable details collected for services.
+          </p>
+        </div>
+        <Button icon={Plus} onClick={() => setEditor({})}>
+          Create {tab === "charges" ? "charge" : "attribute"}
+        </Button>
+      </div>
+      <div className="admin-content-tabs">
+        <button
+          className={tab === "charges" ? "active" : ""}
+          onClick={() => setTab("charges")}
+        >
+          Product charges
+        </button>
+        <button
+          className={tab === "attributes" ? "active" : ""}
+          onClick={() => setTab("attributes")}
+        >
+          Service attributes
+        </button>
+      </div>
+      {feedback.error && <p className="admin-error">{feedback.error}</p>}
+      {feedback.success && <p className="admin-success">{feedback.success}</p>}
+      <section className="admin-card">
+        {source.loading ? (
+          <Skeleton className="admin-table-skeleton" />
+        ) : items.length ? (
+          <div className="admin-content-list">
+            {items.map((item) => (
+              <article key={item.id}>
+                <div className="admin-content-list__image">
+                  <Settings2 />
+                </div>
+                <div>
+                  <strong>{item.name}</strong>
+                  <small>
+                    {tab === "charges"
+                      ? `${item.calculation_type} · ${item.charge_currency} ${item.charge_amount || item.charge_percentage || ""}`
+                      : `${item.input_type}${item.options?.length ? ` · ${item.options.length} options` : ""}`}
+                  </small>
+                </div>
+                <span
+                  className={`admin-status ${item.is_active === false ? "" : "admin-status--good"}`}
+                >
+                  {item.is_active === false ? "Inactive" : "Active"}
+                </span>
+                <div className="admin-ops-actions">
+                  {tab === "charges" && (
+                    <button onClick={() => setEditor(item)}>Edit</button>
+                  )}
+                  {tab === "attributes" && (
+                    <button onClick={() => setAttributeManager(item)}>
+                      Manage
+                    </button>
+                  )}
+                  {tab === "charges" && (
+                    <button
+                      onClick={async () => {
+                        await adminApi.setProductChargeStatus(
+                          item.id,
+                          item.is_active === false,
+                        );
+                        setRevision((v) => v + 1);
+                      }}
+                    >
+                      {item.is_active === false ? "Activate" : "Deactivate"}
+                    </button>
+                  )}
+                  <button className="danger" onClick={() => remove(item)}>
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="Nothing configured yet"
+            description="Create the first rule when you are ready."
+          />
+        )}
+      </section>
+      {editor && (
+        <ConfigurationEditor
+          kind={tab}
+          value={editor}
+          busy={feedback.busy}
+          onClose={() => setEditor(null)}
+          onSave={save}
+        />
+      )}
+      {attributeManager && (
+        <AttributeManager
+          attribute={attributeManager}
+          onClose={() => setAttributeManager(null)}
+          onChanged={() => setRevision((v) => v + 1)}
+        />
+      )}
+    </>
+  );
+}
+
+function AttributeManager({ attribute, onClose, onChanged }) {
+  const [newOptions, setNewOptions] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [feedback, setFeedback] = useState(feedbackInitial);
+  const categories = useResource(
+    (signal) => adminApi.serviceCategories(signal),
+    [],
+  );
+  const assigned = useResource(
+    (signal) =>
+      categoryId
+        ? adminApi.categoryAttributes(categoryId, signal)
+        : Promise.resolve({ data: [] }),
+    [categoryId, feedback.success],
+  );
+  const options = Array.isArray(attribute.options)
+    ? attribute.options
+    : Array.isArray(attribute.value)
+      ? attribute.value
+      : [];
+  const assignedRows = rows(assigned.data);
+  const isAssigned = assignedRows.some(
+    (item) => (item.id || item.attributeId) === attribute.id,
+  );
+  const run = async (action, message) => {
+    setFeedback({ busy: true, error: "", success: "" });
+    try {
+      await action();
+      setFeedback({ busy: false, error: "", success: message });
+      onChanged();
+    } catch (error) {
+      setFeedback({ busy: false, error: error.message, success: "" });
+    }
+  };
+  return (
+    <Modal title={`Manage · ${attribute.name}`} onClose={onClose}>
+      <div className="admin-content-form">
+        {feedback.error && <p className="admin-error">{feedback.error}</p>}
+        {feedback.success && (
+          <p className="admin-success">{feedback.success}</p>
+        )}
+        <label>
+          Options
+          <div className="admin-option-list">
+            {options.length ? (
+              options.map((option, index) => {
+                const label =
+                  option.value || option.name || option.label || option;
+                return (
+                  <span key={option.id || index}>
+                    {label}
+                    {option.id && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          run(
+                            () =>
+                              adminApi.deleteServiceAttributeOption(option.id),
+                            "Option removed.",
+                          )
+                        }
+                      >
+                        ×
+                      </button>
+                    )}
+                  </span>
+                );
+              })
+            ) : (
+              <small>
+                No options. Text, number, and yes/no fields may not require
+                them.
+              </small>
+            )}
+          </div>
+        </label>
+        <label>
+          Add options, separated by commas
+          <input
+            value={newOptions}
+            onChange={(e) => setNewOptions(e.target.value)}
+            placeholder="Example: Small, Medium, Large"
+          />
+        </label>
+        <Button
+          type="button"
+          variant="outline"
+          loading={feedback.busy}
+          disabled={!newOptions.trim()}
+          onClick={() =>
+            run(async () => {
+              await adminApi.addServiceAttributeOptions(
+                attribute.id,
+                newOptions
+                  .split(",")
+                  .map((value) => value.trim())
+                  .filter(Boolean),
+              );
+              setNewOptions("");
+            }, "Options added.")
+          }
+        >
+          Add options
+        </Button>
+        <hr />
+        <label>
+          Assign to service category
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
+            <option value="">Select category</option>
+            {rows(categories.data).map((item) => (
+              <option value={item.id} key={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        {categoryId && (
+          <Button
+            type="button"
+            variant="outline"
+            loading={feedback.busy || assigned.loading}
+            onClick={() =>
+              run(
+                () =>
+                  isAssigned
+                    ? adminApi.removeCategoryAttribute(categoryId, attribute.id)
+                    : adminApi.assignCategoryAttributes(categoryId, [
+                        attribute.id,
+                      ]),
+                isAssigned
+                  ? "Attribute removed from category."
+                  : "Attribute assigned to category.",
+              )
+            }
+          >
+            {isAssigned ? "Remove from category" : "Assign to category"}
+          </Button>
+        )}
+        <div className="admin-form-actions">
+          <Button type="button" onClick={onClose}>
+            Done
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
 function ConfigurationEditor({ kind, value, busy, onClose, onSave }) {
-  const [form, setForm] = useState(kind === 'charges' ? { name: '', description: '', charge_currency: 'NGN', calculation_type: 'fixed', charge_amount: '0', charge_percentage: '0', minimum_product_amount: '0', maximum_product_amount: '0', ...value } : { name: '', input_type: 'str_input', options: '', ...value });
-  return <Modal title={`${form.id ? 'Edit' : 'Create'} ${kind === 'charges' ? 'product charge' : 'service attribute'}`} onClose={onClose}><form className="admin-content-form" onSubmit={e => { e.preventDefault(); onSave(form); }}><label>Name<input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required/></label>{kind === 'charges' ? <><label>Description<textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} minLength={5} required/></label><div className="admin-form-row"><label>Currency<select value={form.charge_currency} onChange={e => setForm({ ...form, charge_currency: e.target.value })}><option>NGN</option><option>USD</option></select></label><label>Calculation<select value={form.calculation_type} onChange={e => setForm({ ...form, calculation_type: e.target.value })}><option value="fixed">Fixed</option><option value="percentage">Percentage</option></select></label></div><div className="admin-form-row"><label>{form.calculation_type === 'fixed' ? 'Amount' : 'Percentage'}<input type="number" step="0.01" min="0" value={form.calculation_type === 'fixed' ? form.charge_amount : form.charge_percentage} onChange={e => setForm({ ...form, [form.calculation_type === 'fixed' ? 'charge_amount' : 'charge_percentage']: e.target.value })} required/></label><label>Minimum product amount<input type="number" step="0.01" min="0" value={form.minimum_product_amount} onChange={e => setForm({ ...form, minimum_product_amount: e.target.value })} required/></label></div><label>Maximum product amount<input type="number" step="0.01" min="0" value={form.maximum_product_amount} onChange={e => setForm({ ...form, maximum_product_amount: e.target.value })} required/></label></> : <><label>Input type<select value={form.input_type} onChange={e => setForm({ ...form, input_type: e.target.value })}><option value="str_input">Text</option><option value="int_input">Number</option><option value="bool_input">Yes / No</option><option value="single_select">Single select</option><option value="multi_select">Multi select</option></select></label>{['single_select', 'multi_select'].includes(form.input_type) && <label>Options, separated by commas<input value={form.options} onChange={e => setForm({ ...form, options: e.target.value })} required/></label>}</>}<div className="admin-form-actions"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button type="submit" loading={busy}>Save</Button></div></form></Modal>;
+  const [form, setForm] = useState(
+    kind === "charges"
+      ? {
+          name: "",
+          description: "",
+          charge_currency: "NGN",
+          calculation_type: "fixed",
+          charge_amount: "0",
+          charge_percentage: "0",
+          minimum_product_amount: "0",
+          maximum_product_amount: "0",
+          ...value,
+        }
+      : { name: "", input_type: "str_input", options: "", ...value },
+  );
+  return (
+    <Modal
+      title={`${form.id ? "Edit" : "Create"} ${kind === "charges" ? "product charge" : "service attribute"}`}
+      onClose={onClose}
+    >
+      <form
+        className="admin-content-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSave(form);
+        }}
+      >
+        <label>
+          Name
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+          />
+        </label>
+        {kind === "charges" ? (
+          <>
+            <label>
+              Description
+              <textarea
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+                minLength={5}
+                required
+              />
+            </label>
+            <div className="admin-form-row">
+              <label>
+                Currency
+                <select
+                  value={form.charge_currency}
+                  onChange={(e) =>
+                    setForm({ ...form, charge_currency: e.target.value })
+                  }
+                >
+                  <option>NGN</option>
+                  <option>USD</option>
+                </select>
+              </label>
+              <label>
+                Calculation
+                <select
+                  value={form.calculation_type}
+                  onChange={(e) =>
+                    setForm({ ...form, calculation_type: e.target.value })
+                  }
+                >
+                  <option value="fixed">Fixed</option>
+                  <option value="percentage">Percentage</option>
+                </select>
+              </label>
+            </div>
+            <div className="admin-form-row">
+              <label>
+                {form.calculation_type === "fixed" ? "Amount" : "Percentage"}
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={
+                    form.calculation_type === "fixed"
+                      ? form.charge_amount
+                      : form.charge_percentage
+                  }
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      [form.calculation_type === "fixed"
+                        ? "charge_amount"
+                        : "charge_percentage"]: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </label>
+              <label>
+                Minimum product amount
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.minimum_product_amount}
+                  onChange={(e) =>
+                    setForm({ ...form, minimum_product_amount: e.target.value })
+                  }
+                  required
+                />
+              </label>
+            </div>
+            <label>
+              Maximum product amount
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.maximum_product_amount}
+                onChange={(e) =>
+                  setForm({ ...form, maximum_product_amount: e.target.value })
+                }
+                required
+              />
+            </label>
+          </>
+        ) : (
+          <>
+            <label>
+              Input type
+              <select
+                value={form.input_type}
+                onChange={(e) =>
+                  setForm({ ...form, input_type: e.target.value })
+                }
+              >
+                <option value="str_input">Text</option>
+                <option value="int_input">Number</option>
+                <option value="bool_input">Yes / No</option>
+                <option value="single_select">Single select</option>
+                <option value="multi_select">Multi select</option>
+              </select>
+            </label>
+            {["single_select", "multi_select"].includes(form.input_type) && (
+              <label>
+                Options, separated by commas
+                <input
+                  value={form.options}
+                  onChange={(e) =>
+                    setForm({ ...form, options: e.target.value })
+                  }
+                  required
+                />
+              </label>
+            )}
+          </>
+        )}
+        <div className="admin-form-actions">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={busy}>
+            Save
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
 }
