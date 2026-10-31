@@ -3,7 +3,14 @@ import { useModal } from "../hooks/modal";
 import Modal from "./Modal";
 import Table from "./ReviewTable";
 
-const PostProducts = ({ data, paginate, loading, refetch, searchQuery, onSearchChange }) => {
+const formatPrice = (value) => {
+  const amount = Number(value);
+  return Number.isFinite(amount)
+    ? amount.toLocaleString("en-NG", { maximumFractionDigits: 2 })
+    : value;
+};
+
+const PostProducts = ({ data, paginate, loading, refetch, searchQuery, onSearchChange, categories, categoryId, onCategoryChange }) => {
   const { openModal } = useModal();
 
   const fetchNew = (page) => {
@@ -73,6 +80,32 @@ const PostProducts = ({ data, paginate, loading, refetch, searchQuery, onSearchC
       </div>
       <div className="bg-white rounded-md p-6 w-full gap-5">
         <h2 className="text-lg font-semibold text-black-700">All Products</h2>
+        <div className="mt-4 flex flex-wrap items-end gap-3">
+          <label className="flex min-w-60 flex-col gap-1 text-sm font-medium text-gray-700">
+            Filter by category
+            <select
+              className="h-11 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+              value={categoryId}
+              onChange={(event) => onCategoryChange(event.target.value)}
+            >
+              <option value="">All categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          {categoryId && (
+            <button
+              type="button"
+              className="h-11 rounded-md px-3 text-sm font-medium text-orange-600 hover:bg-orange-50"
+              onClick={() => onCategoryChange("")}
+            >
+              Clear filter
+            </button>
+          )}
+        </div>
         <div className="overflow-x-auto">
           <Table
             columns={[
@@ -114,7 +147,7 @@ const PostProducts = ({ data, paginate, loading, refetch, searchQuery, onSearchC
               vendor: item.vendor
                 ? `${item.vendor.firstName} ${item.vendor.lastName}`
                 : "Administrator",
-              price: `${item.store?.currency?.symbol || "₦"} ${item.price}`,
+              price: `${item.store?.currency?.symbol || "₦"} ${formatPrice(item.price)}`,
             }))}
             disableInternalSearch
             searchQuery={searchQuery}
