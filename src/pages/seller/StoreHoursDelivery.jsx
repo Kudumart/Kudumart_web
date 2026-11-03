@@ -8,6 +8,7 @@ const schedules = [
 ];
 
 const arrivalOptions = ['Same day', 'Next day', '2–3 days', '3–5 days', '5–7 days'];
+const nigeriaStates = ['Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno', 'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'Federal Capital Territory', 'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'];
 
 function toTwentyFourHour(time, period) {
   const [hours, minutes] = time.split(':').map(Number);
@@ -48,18 +49,19 @@ function HoursRow({ config, value, onChange }) {
   </div>;
 }
 
-export default function StoreHoursDelivery({ values, onHoursChange, deliveryOptions, onDeliveryChange }) {
+export default function StoreHoursDelivery({ values, country, onHoursChange, deliveryOptions, onDeliveryChange }) {
   const updateDelivery = (index, field, value) => onDeliveryChange(current => current.map((option, itemIndex) => itemIndex === index ? { ...option, [field]: value } : option));
-  const addDelivery = () => onDeliveryChange(current => [...current, { city: '', price: '', arrival_day: '' }]);
+  const changeScope = (index, scope) => onDeliveryChange(current => current.map((option, itemIndex) => itemIndex === index ? { ...option, scope, city: scope === 'country' ? country : '' } : option));
+  const addDelivery = () => onDeliveryChange(current => [...current, { scope: 'city', city: '', price: '', arrival_day: '' }]);
 
   return <section className="seller-panel seller-hours-delivery">
     <div className="seller-section-title"><span className="seller-section-icon"><Clock3 size={20}/></span><div><h2>Opening hours</h2><p>Let buyers know when your store is available.</p></div></div>
     <div className="seller-hours-list">{schedules.map(config => <HoursRow key={config.key} config={config} value={values[config.key]} onChange={value => onHoursChange(config.key, value)}/>)}</div>
     <div className="seller-delivery-section">
-      <div className="seller-section-title"><span className="seller-section-icon"><Truck size={20}/></span><div><h2>Delivery areas</h2><p>Add the places you deliver to, with the fee and expected arrival.</p></div></div>
+      <div className="seller-section-title"><span className="seller-section-icon"><Truck size={20}/></span><div><h2>Delivery areas <span aria-hidden="true">*</span></h2><p>Add at least one city, state, or countrywide rule. Checkout uses these rules to calculate the fee.</p></div></div>
       {deliveryOptions.length ? <div className="seller-delivery-list">{deliveryOptions.map((option, index) => <div className="seller-delivery-card" key={index}>
-        <div className="seller-delivery-card__head"><strong><MapPin size={16}/> Area {index + 1}</strong><button type="button" aria-label={`Remove delivery area ${index + 1}`} onClick={() => onDeliveryChange(current => current.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={16}/> Remove</button></div>
-        <div className="seller-delivery-card__fields"><TextField label="City or area" placeholder="e.g. Lagos" required value={option.city || ''} onChange={event => updateDelivery(index, 'city', event.target.value)}/><TextField label="Delivery fee (₦)" type="number" min="0" step="0.01" placeholder="0 for free" required value={option.price ?? ''} onChange={event => updateDelivery(index, 'price', event.target.value)}/><SelectField label="Estimated arrival" required value={option.arrival_day || ''} onChange={event => updateDelivery(index, 'arrival_day', event.target.value)}><option value="">Choose a timeframe</option>{option.arrival_day && !arrivalOptions.includes(option.arrival_day) && <option value={option.arrival_day}>{option.arrival_day}</option>}{arrivalOptions.map(option => <option key={option} value={option}>{option}</option>)}</SelectField></div>
+        <div className="seller-delivery-card__head"><strong><MapPin size={16}/> Delivery rule {index + 1}</strong>{deliveryOptions.length > 1 && <button type="button" aria-label={`Remove delivery rule ${index + 1}`} onClick={() => onDeliveryChange(current => current.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={16}/> Remove</button>}</div>
+        <div className="seller-delivery-card__fields"><SelectField label="Coverage" required value={option.scope || 'city'} onChange={event => changeScope(index, event.target.value)}><option value="city">Specific city</option><option value="state">Entire state / province</option><option value="country">Countrywide</option></SelectField>{option.scope === 'state' && country === 'Nigeria' ? <SelectField label="State" required value={option.city || ''} onChange={event => updateDelivery(index, 'city', event.target.value)}><option value="">Choose a state</option>{nigeriaStates.map(state => <option key={state} value={state}>{state}</option>)}</SelectField> : option.scope === 'country' ? <TextField label="Country" required readOnly value={country}/> : <TextField label={option.scope === 'state' ? 'State / province' : 'City'} placeholder={option.scope === 'state' ? 'e.g. California' : 'e.g. Ikeja'} required value={option.city || ''} onChange={event => updateDelivery(index, 'city', event.target.value)}/>}<TextField label="Delivery fee (₦)" type="number" min="0" step="0.01" placeholder="0 for free" required value={option.price ?? ''} onChange={event => updateDelivery(index, 'price', event.target.value)}/><SelectField label="Estimated arrival" required value={option.arrival_day || ''} onChange={event => updateDelivery(index, 'arrival_day', event.target.value)}><option value="">Choose a timeframe</option>{option.arrival_day && !arrivalOptions.includes(option.arrival_day) && <option value={option.arrival_day}>{option.arrival_day}</option>}{arrivalOptions.map(option => <option key={option} value={option}>{option}</option>)}</SelectField></div>
       </div>)}</div> : <div className="seller-delivery-empty"><MapPin size={20}/><span><strong>No delivery areas added yet.</strong><small>Delivery checkout cannot calculate a fee until you add an area. Customers can still choose pickup.</small></span></div>}
       <button className="seller-add-delivery" type="button" onClick={addDelivery}><Plus size={17}/> Add delivery area</button>
     </div>
