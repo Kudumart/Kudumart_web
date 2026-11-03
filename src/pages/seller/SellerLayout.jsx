@@ -1,27 +1,38 @@
-import { ArrowLeft, BarChart3, Bell, Box, BriefcaseBusiness, CreditCard, Gavel, Handshake, Landmark, Megaphone, Menu, MessageCircle, Package, PanelLeftClose, PanelLeftOpen, ShieldCheck, Store, X } from 'lucide-react';
-import { useState } from 'react';
-import { Link, NavLink, Navigate, Outlet } from 'react-router-dom';
+import { ArrowLeft, BarChart3, Bell, Box, BriefcaseBusiness, ChevronDown, CreditCard, Gavel, Handshake, Landmark, Megaphone, Menu, MessageCircle, Package, PanelLeftClose, PanelLeftOpen, ShieldCheck, Store, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useApp } from '../../contexts/AppContext';
 import './SellerLayout.css';
 
-const links = [
-  { to: '/seller', label: 'Overview', icon: BarChart3, end: true },
-  { to: '/seller/products', label: 'Products', icon: Box },
-  { to: '/seller/auctions', label: 'Auctions', icon: Gavel },
-  { to: '/seller/orders', label: 'Orders', icon: Package },
-  { to: '/seller/offers', label: 'Offers', icon: Handshake },
-  { to: '/seller/stores', label: 'Stores', icon: Store },
-  { to: '/seller/services', label: 'Services', icon: BriefcaseBusiness },
-  { to: '/seller/adverts', label: 'Adverts', icon: Megaphone },
-  { to: '/seller/finance', label: 'Finance', icon: Landmark },
-  { to: '/seller/subscriptions', label: 'Subscriptions', icon: CreditCard },
-  { to: '/seller/verification', label: 'Verification', icon: ShieldCheck },
-  { to: '/account/messages', label: 'Messages', icon: MessageCircle },
-  { to: '/account/notifications', label: 'Notifications', icon: Bell },
+const navigationSections = [
+  { id: 'workspace', label: 'Workspace', links: [
+    { to: '/seller', label: 'Overview', icon: BarChart3, end: true },
+    { to: '/seller/products', label: 'Products', icon: Box },
+    { to: '/seller/auctions', label: 'Auctions', icon: Gavel },
+    { to: '/seller/orders', label: 'Orders', icon: Package },
+    { to: '/seller/offers', label: 'Offers', icon: Handshake },
+  ] },
+  { id: 'growth', label: 'Store & growth', links: [
+    { to: '/seller/stores', label: 'Stores', icon: Store },
+    { to: '/seller/services', label: 'Services', icon: BriefcaseBusiness },
+    { to: '/seller/adverts', label: 'Adverts', icon: Megaphone },
+  ] },
+  { id: 'business', label: 'Money & compliance', links: [
+    { to: '/seller/finance', label: 'Finance', icon: Landmark },
+    { to: '/seller/subscriptions', label: 'Subscriptions', icon: CreditCard },
+    { to: '/seller/verification', label: 'Verification', icon: ShieldCheck },
+  ] },
+  { id: 'communication', label: 'Communication', links: [
+    { to: '/account/messages', label: 'Messages', icon: MessageCircle },
+    { to: '/account/notifications', label: 'Notifications', icon: Bell },
+  ] },
 ];
+
+const linkMatches = (link, pathname) => link.end ? pathname === link.to : pathname.startsWith(link.to);
 
 export default function SellerLayout() {
   const { user } = useApp();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -30,6 +41,29 @@ export default function SellerLayout() {
       return false;
     }
   });
+  const [openSections, setOpenSections] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('kuduSellerNavSections') || '{}');
+      if (Object.keys(saved).length) return saved;
+    } catch {
+      // Fall back to the active section below.
+    }
+    const active = navigationSections.find(section => section.links.some(link => linkMatches(link, location.pathname)));
+    return { [active?.id || 'workspace']: true };
+  });
+
+  useEffect(() => {
+    const active = navigationSections.find(section => section.links.some(link => linkMatches(link, location.pathname)));
+    if (active) setOpenSections(current => current[active.id] ? current : { ...current, [active.id]: true });
+  }, [location.pathname]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('kuduSellerNavSections', JSON.stringify(openSections));
+    } catch {
+      // Navigation remains usable when storage is unavailable.
+    }
+  }, [openSections]);
 
   const toggleSidebar = () => {
     setCollapsed((current) => {
@@ -45,5 +79,5 @@ export default function SellerLayout() {
 
   if (!user) return <Navigate to="/login" replace state={{ from: '/seller' }}/>;
   if (user.accountType?.toLowerCase() !== 'vendor') return <Navigate to="/account" replace/>;
-  return <div className={`seller-shell ${collapsed ? 'seller-shell--collapsed' : ''}`}><aside className={`seller-sidebar ${mobileOpen ? 'seller-sidebar--open' : ''}`}><button className="seller-sidebar__collapse" type="button" aria-label={collapsed ? 'Expand seller sidebar' : 'Collapse seller sidebar'} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} onClick={toggleSidebar}>{collapsed ? <PanelLeftOpen size={17}/> : <PanelLeftClose size={17}/>}</button><div className="seller-sidebar__top"><Link to="/seller" className="seller-brand" title={collapsed ? 'Seller Studio' : undefined}><img src="/kudumart-logo.png" alt="KuduMart"/><span>Seller Studio</span></Link><button className="seller-sidebar__close" aria-label="Close seller menu" onClick={() => setMobileOpen(false)}><X size={20}/></button></div><p className="seller-sidebar__label">WORKSPACE</p><nav aria-label="Seller workspace">{links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} title={collapsed ? label : undefined} aria-label={label} onClick={() => setMobileOpen(false)} className={({ isActive }) => `seller-nav-link ${isActive ? 'active' : ''}`}><Icon size={19}/><span>{label}</span></NavLink>)}</nav><div className="seller-sidebar__bottom"><Link to="/account" title={collapsed ? 'Back to my account' : undefined}><ArrowLeft size={17}/><span>Back to my account</span></Link><span>{user.email}</span></div></aside><div className="seller-main"><header className="seller-topbar"><button className="seller-menu-button" aria-label="Open seller menu" onClick={() => setMobileOpen(true)}><Menu size={21}/></button><span>Seller Studio</span><Link to="/" className="seller-topbar__market">View marketplace ↗</Link></header><main className="seller-content"><Outlet/></main></div>{mobileOpen && <button className="seller-sidebar-backdrop" aria-label="Close seller menu" onClick={() => setMobileOpen(false)}/>}</div>;
+  return <div className={`seller-shell ${collapsed ? 'seller-shell--collapsed' : ''}`}><aside className={`seller-sidebar ${mobileOpen ? 'seller-sidebar--open' : ''}`}><button className="seller-sidebar__collapse" type="button" aria-label={collapsed ? 'Expand seller sidebar' : 'Collapse seller sidebar'} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} onClick={toggleSidebar}>{collapsed ? <PanelLeftOpen size={17}/> : <PanelLeftClose size={17}/>}</button><div className="seller-sidebar__top"><Link to="/seller" className="seller-brand" title={collapsed ? 'Seller Studio' : undefined}><img src="/kudumart-logo.png" alt="KuduMart"/><span>Seller Studio</span></Link><button className="seller-sidebar__close" aria-label="Close seller menu" onClick={() => setMobileOpen(false)}><X size={20}/></button></div><nav aria-label="Seller workspace" className="seller-navigation">{navigationSections.map(section => { const open = !!openSections[section.id]; const active = section.links.some(link => linkMatches(link, location.pathname)); return <section className={`seller-nav-section ${active ? 'seller-nav-section--active' : ''}`} key={section.id}><button type="button" className="seller-nav-section__toggle" aria-expanded={open} onClick={() => setOpenSections(current => ({ ...current, [section.id]: !open }))}><span>{section.label}</span><ChevronDown size={15}/></button><div className="seller-nav-section__links" hidden={!open && !collapsed}>{section.links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} title={collapsed ? label : undefined} aria-label={label} onClick={() => setMobileOpen(false)} className={({ isActive }) => `seller-nav-link ${isActive ? 'active' : ''}`}><Icon size={19}/><span>{label}</span></NavLink>)}</div></section>; })}</nav><div className="seller-sidebar__bottom"><Link to="/account" title={collapsed ? 'Back to my account' : undefined}><ArrowLeft size={17}/><span>Back to my account</span></Link><span>{user.email}</span></div></aside><div className="seller-main"><header className="seller-topbar"><button className="seller-menu-button" aria-label="Open seller menu" onClick={() => setMobileOpen(true)}><Menu size={21}/></button><span>Seller Studio</span><Link to="/" className="seller-topbar__market">View marketplace ↗</Link></header><main className="seller-content"><Outlet/></main></div>{mobileOpen && <button className="seller-sidebar-backdrop" aria-label="Close seller menu" onClick={() => setMobileOpen(false)}/>}</div>;
 }
