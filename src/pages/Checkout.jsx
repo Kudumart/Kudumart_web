@@ -10,7 +10,7 @@ import { StripePayment } from '../components/PaymentMethods';
 import { Button, EmptyState, Modal, Skeleton } from '../components/ui';
 import { useApp } from '../contexts/AppContext';
 import { useResource } from '../hooks/useResource';
-import { availableStock, calculateNairaQuote, formatAddress, hasDeliveryAddress, isDropship, parseLocation, paymentMode } from '../utils/checkout';
+import { availableStock, calculateNairaQuote, countryCodeForLocation, formatAddress, hasDeliveryAddress, isDropship, parseLocation, paymentMode } from '../utils/checkout';
 import { imageFor, money } from '../utils/format';
 import { isVendorAccount } from '../utils/account';
 import './Checkout.css';
@@ -37,7 +37,7 @@ export default function Checkout() {
   const location = parseLocation(user?.location);
   const hasAddress = hasDeliveryAddress(location);
   const mode = paymentMode({ items, country: location?.country || country.name });
-  const countryCode = location?.country === 'Nigeria' ? 'NG' : location?.country === 'United Kingdom' ? 'UK' : country.code;
+  const countryCode = countryCodeForLocation(location, country.code);
   const canPickup = mode === 'NGN' && !items.some(isDropship);
   const needsDelivery = deliveryOption !== 'store' || !canPickup;
   const charges = useResource(signal => user && items.length && mode === 'NGN' ? checkoutApi.charges(signal) : Promise.resolve([]), [user?.id, items.length, mode]);

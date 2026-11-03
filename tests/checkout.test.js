@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { availableStock, calculateNairaQuote, formatAddress, hasDeliveryAddress, linePrice, parseLocation, paymentMode } from '../src/utils/checkout.js';
+import { availableStock, calculateNairaQuote, countryCodeForLocation, formatAddress, hasDeliveryAddress, linePrice, parseLocation, paymentMode } from '../src/utils/checkout.js';
 
 test('cart quote applies fixed and percentage charges per unit, then delivery', () => {
   const items = [
@@ -42,4 +42,11 @@ test('saved user addresses parse into a usable checkout address', () => {
   assert.equal(hasDeliveryAddress(location), true);
   assert.equal(hasDeliveryAddress({ country: 'Nigeria', street: '12 Market Road', zipCode: '110001' }), false);
   assert.equal(hasDeliveryAddress(null), false);
+});
+
+test('delivery country codes are normalized for the backend quote', () => {
+  assert.equal(countryCodeForLocation({ country: 'Nigeria' }, 'US'), 'NG');
+  assert.equal(countryCodeForLocation({ country: 'USA' }, 'NG'), 'US');
+  assert.equal(countryCodeForLocation({ country: 'Great Britain' }, 'NG'), 'UK');
+  assert.equal(countryCodeForLocation({ country: 'Ghana' }, 'US'), 'US');
 });

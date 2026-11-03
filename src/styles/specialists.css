@@ -79,3 +79,4 @@
     flex-direction: column;
   }
 }
+.admin-specialist-account{display:grid;gap:7px;max-width:520px;margin:18px 0;font-weight:700}.admin-specialist-account input{min-height:44px;padding:0 13px;border:1px solid #dfe4ea;border-radius:8px;font:inherit}.admin-specialist-account small{color:#748195;font-weight:500}.oauth-result-page{min-height:70vh;display:grid;place-items:center;padding:40px 20px}.oauth-result-card{width:min(520px,100%);display:grid;justify-items:center;gap:14px;padding:44px;border:1px solid #e4e8ec;border-radius:18px;background:#fff;text-align:center;box-shadow:0 18px 50px rgba(23,38,66,.1)}.oauth-result-card p{color:#66778b}.oauth-result-icon{width:48px;height:48px;color:#179c62}.oauth-result-icon--error{color:#d94747}

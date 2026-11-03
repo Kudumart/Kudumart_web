@@ -150,6 +150,11 @@ const AdminDropshipping = lazy(() =>
     default: module.AdminDropshipping,
   })),
 );
+const AliExpressCallback = lazy(() =>
+  import("./pages/admin/AdminSpecialists").then((module) => ({
+    default: module.AliExpressCallback,
+  })),
+);
 const deferred = (element) => (
   <Suspense
     fallback={
@@ -193,6 +198,14 @@ function App() {
               element={<Navigate to="/forgot-password" replace />}
             />
             <Route path="verify-email" element={<EmailVerification />} />
+            <Route
+              path="reconnect"
+              element={
+                <Suspense fallback={<div className="admin-route-loading"><span className="spinner" /></div>}>
+                  <AliExpressCallback />
+                </Suspense>
+              }
+            />
             <Route element={<RequireAuth />}>
               <Route path="checkout" element={<Checkout />} />
               <Route path="account" element={<Account />} />

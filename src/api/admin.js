@@ -403,8 +403,19 @@ export const adminApi = {
     }),
   dropshipCredentials: (signal) =>
     adminRequest("/admin/aliexpress/credentials/status", { signal }),
+  registerDropshipAccount: (account) =>
+    adminRequest("/auth/aliexpress/create-account", {
+      method: "POST",
+      body: { account },
+    }),
   dropshipAuth: () =>
-    adminRequest("/auth/aliexpress/auth", { authenticated: false }),
+    adminRequest("/auth/aliexpress/auth"),
+  completeDropshipAuth: (code, signal) =>
+    adminRequest("/auth/aliexpress/auth-callback", {
+      params: { code },
+      signal,
+      authenticated: false,
+    }),
   dropshipCategories: (signal) =>
     adminRequest("/admin/aliexpress/categories", { signal }),
   dropshipProducts: (filters, signal) =>

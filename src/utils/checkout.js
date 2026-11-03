@@ -10,6 +10,13 @@ export function formatAddress(location) {
 export function hasDeliveryAddress(location) {
   return Boolean((location?.street || location?.address)?.trim?.() && location?.city?.trim?.() && location?.state?.trim?.() && location?.country?.trim?.() && String(location?.zipCode || '').trim());
 }
+export function countryCodeForLocation(location, fallback = 'NG') {
+  const value = String(location?.country || '').trim().toLowerCase();
+  if (['ng', 'nigeria'].includes(value)) return 'NG';
+  if (['us', 'usa', 'united states', 'united states of america'].includes(value)) return 'US';
+  if (['uk', 'gb', 'united kingdom', 'great britain'].includes(value)) return 'UK';
+  return String(fallback || 'NG').toUpperCase();
+}
 export function isDropship(item) { return item?.productType === 'dropship' || item?.product?.type === 'dropship'; }
 export function availableStock(item) {
   const variant = isDropship(item) && item?.product?.variants?.find(value => value.sku_id === item.dropshipProductSkuId);

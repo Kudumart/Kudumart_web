@@ -1,11 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  AlertCircle,
+  CheckCircle2,
   CreditCard,
   ExternalLink,
   PackageSearch,
   Plus,
   Trash2,
 } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { adminApi } from "../../api/admin";
 import { Button, EmptyState, Modal, Skeleton } from "../../components/ui";
 import { useResource } from "../../hooks/useResource";
@@ -15,7 +18,15 @@ const rows = (payload) =>
     ? payload.data
     : Array.isArray(payload)
       ? payload
-      : payload?.data?.products || payload?.products || [];
+      : payload?.data?.products ||
+        payload?.products ||
+        payload?.data?.category ||
+        payload?.category ||
+        payload?.data?.aliexpress_ds_text_search_response?.data?.products
+          ?.selection_search_product ||
+        payload?.aliexpress_ds_text_search_response?.data?.products
+          ?.selection_search_product ||
+        [];
 const feedbackInitial = { busy: false, error: "", success: "" };
 
 export function AdminPaymentGateways() {
@@ -204,6 +215,7 @@ export function AdminDropshipping() {
   const [query, setQuery] = useState(null);
   const [feedback, setFeedback] = useState(feedbackInitial);
   const [importing, setImporting] = useState(null);
+  const [account, setAccount] = useState("");
   const credentials = useResource(
     (signal) => adminApi.dropshipCredentials(signal),
     [],
@@ -228,11 +240,20 @@ export function AdminDropshipping() {
   const categoryRows = rows(categories.data);
   const kuduCategoryRows = rows(kuduCategories.data);
   const items = useMemo(() => rows(products.data), [products.data]);
+  const connection = credentials.data?.data || credentials.data || {};
+  const isConnected = Boolean(connection.isConnected || connection.connected);
   const connect = async () => {
     try {
+      if (!isConnected) {
+        if (!account.trim()) {
+          throw new Error("Enter the AliExpress account email before connecting.");
+        }
+        setFeedback({ busy: true, error: "", success: "" });
+        await adminApi.registerDropshipAccount(account.trim());
+      }
       const result = await adminApi.dropshipAuth();
       const url = result.authUrl || result.data?.authUrl;
-      if (url) window.open(url, "_blank", "noopener,noreferrer");
+      if (url) window.location.assign(url);
       else throw new Error("AliExpress did not return an authorization link.");
     } catch (error) {
       setFeedback({ busy: false, error: error.message, success: "" });
@@ -258,8 +279,13 @@ export function AdminDropshipping() {
             products into a KuduMart store.
           </p>
         </div>
-        <Button variant="outline" icon={ExternalLink} onClick={connect}>
-          Connect AliExpress
+        <Button
+          variant="outline"
+          icon={ExternalLink}
+          loading={feedback.busy}
+          onClick={connect}
+        >
+          {isConnected ? "Reconnect AliExpress" : "Connect AliExpress"}
         </Button>
       </div>
       {feedback.error && <p className="admin-error">{feedback.error}</p>}
@@ -272,12 +298,27 @@ export function AdminDropshipping() {
               ? "Checking…"
               : credentials.error
                 ? "Unavailable"
-                : credentials.data?.data?.connected ||
-                    credentials.data?.connected
+                : isConnected
                   ? "Connected"
                   : "Connection required"}
           </span>
         </div>
+        {!isConnected && !credentials.loading && (
+          <label className="admin-specialist-account">
+            AliExpress account email
+            <input
+              type="email"
+              value={account}
+              onChange={(event) => setAccount(event.target.value)}
+              placeholder="account@example.com"
+              autoComplete="email"
+            />
+            <small>
+              This must match the AliExpress account you authorize on the next
+              screen.
+            </small>
+          </label>
+        )}
         <form
           className="admin-filter-bar"
           onSubmit={(e) => {
@@ -302,10 +343,10 @@ export function AdminDropshipping() {
             <option value="">All AliExpress categories</option>
             {categoryRows.map((item) => (
               <option
-                value={item.id || item.categoryId}
-                key={item.id || item.categoryId}
+                value={item.id || item.categoryId || item.category_id}
+                key={item.id || item.categoryId || item.category_id}
               >
-                {item.name || item.categoryName}
+                {item.name || item.categoryName || item.category_name}
               </option>
             ))}
           </select>
@@ -320,8 +361,11 @@ export function AdminDropshipping() {
             {items.map((item, index) => (
               <article key={item.productId || item.id || index}>
                 <div className="admin-content-list__image">
-                  {item.image || item.productMainImageUrl ? (
-                    <img src={item.image || item.productMainImageUrl} alt="" />
+                  {item.image || item.productMainImageUrl || item.itemMainPic ? (
+                    <img
+                      src={item.image || item.productMainImageUrl || item.itemMainPic}
+                      alt=""
+                    />
                   ) : (
                     <PackageSearch />
                   )}
@@ -387,7 +431,7 @@ export function AdminDropshipping() {
 }
 function ImportEditor({ product, stores, categories, busy, onClose, onSave }) {
   const [form, setForm] = useState({
-    productId: product.productId || product.id,
+    productId: product.productId || product.itemId || product.id,
     shippingCountry: "NG",
     currency: "NGN",
     storeId: stores[0]?.id || "",
@@ -435,7 +479,7 @@ function ImportEditor({ product, stores, categories, busy, onClose, onSave }) {
                 value={item.id || item.categoryId}
                 key={item.id || item.categoryId}
               >
-                {item.name || item.categoryName}
+                {item.name || item.categoryName || item.category_name}
               </option>
             ))}
           </select>
@@ -465,5 +509,61 @@ function ImportEditor({ product, stores, categories, busy, onClose, onSave }) {
         </div>
       </form>
     </Modal>
+  );
+}
+
+export function AliExpressCallback() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const code = searchParams.get("code");
+  const [state, setState] = useState({ loading: true, error: "" });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    if (!code) {
+      setState({ loading: false, error: "AliExpress did not return an authorization code." });
+      return () => controller.abort();
+    }
+    adminApi
+      .completeDropshipAuth(code, controller.signal)
+      .then(() => setState({ loading: false, error: "" }))
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          setState({ loading: false, error: error.message });
+        }
+      });
+    return () => controller.abort();
+  }, [code]);
+
+  return (
+    <main className="oauth-result-page">
+      <section className="oauth-result-card">
+        {state.loading ? (
+          <>
+            <span className="spinner" />
+            <h1>Connecting AliExpress…</h1>
+            <p>Please wait while we securely finish the authorization.</p>
+          </>
+        ) : state.error ? (
+          <>
+            <AlertCircle className="oauth-result-icon oauth-result-icon--error" />
+            <h1>Connection unsuccessful</h1>
+            <p>{state.error}</p>
+            <Button onClick={() => navigate("/admin/dropshipping", { replace: true })}>
+              Return to dropshipping
+            </Button>
+          </>
+        ) : (
+          <>
+            <CheckCircle2 className="oauth-result-icon" />
+            <h1>AliExpress connected</h1>
+            <p>The supplier catalog and product importing tools are now ready.</p>
+            <Button onClick={() => navigate("/admin/dropshipping", { replace: true })}>
+              Continue to dropshipping
+            </Button>
+          </>
+        )}
+      </section>
+    </main>
   );
 }
