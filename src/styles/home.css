@@ -1,0 +1,34 @@
+/* Home-page merchandising overrides. */
+.home-adverts__grid {
+  align-items: start;
+}
+
+.home-adverts__grid > a,
+.home-advert {
+  align-self: start;
+  min-height: 100px;
+}
+
+.home-adverts__grid strong,
+.home-adverts__grid small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.home-adverts__grid strong {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.home-adverts__grid small {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.45;
+}
+
+.home-adverts__grid > a > svg,
+.home-advert > svg {
+  flex: none;
+}
