@@ -404,14 +404,14 @@ export const adminApi = {
   dropshipCredentials: (signal) =>
     adminRequest("/admin/aliexpress/credentials/status", { signal }),
   registerDropshipAccount: (account) =>
-    adminRequest("/auth/aliexpress/create-account", {
+    adminRequest("/aliexpress/create-account", {
       method: "POST",
       body: { account },
     }),
   dropshipAuth: () =>
-    adminRequest("/auth/aliexpress/auth"),
+    adminRequest("/aliexpress/auth"),
   completeDropshipAuth: (code, signal) =>
-    adminRequest("/auth/aliexpress/auth-callback", {
+    adminRequest("/aliexpress/auth-callback", {
       params: { code },
       signal,
       authenticated: false,

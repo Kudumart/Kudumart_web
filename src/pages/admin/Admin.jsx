@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -6,6 +6,7 @@ import {
   Bell,
   Box,
   ClipboardCheck,
+  ChevronDown,
   CreditCard,
   FileText,
   Gavel,
@@ -30,6 +31,7 @@ import {
   Navigate,
   NavLink,
   Outlet,
+  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
@@ -45,39 +47,42 @@ import {
 } from "../../components/ui";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useResource } from "../../hooks/useResource";
+import "./AdminNavigation.css";
 
-const links = [
-  { to: "/admin", label: "Overview", icon: BarChart3, end: true },
-  { to: "/admin/vendors", label: "Vendors", icon: Store },
-  { to: "/admin/customers", label: "Customers", icon: Users },
-  { to: "/admin/products", label: "Products", icon: Box },
-  { to: "/admin/categories", label: "Categories", icon: ClipboardCheck },
-  { to: "/admin/stores", label: "Stores", icon: Store },
-  { to: "/admin/auctions", label: "Auctions", icon: Gavel },
-  { to: "/admin/adverts", label: "Adverts", icon: Megaphone },
-  { to: "/admin/services", label: "Services", icon: Wrench },
-  { to: "/admin/service-taxonomy", label: "Service taxonomy", icon: Tags },
-  { to: "/admin/orders", label: "Orders", icon: Package },
-  { to: "/admin/transactions", label: "Transactions", icon: ArrowUpRight },
-  { to: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
-  { to: "/admin/verification", label: "Verification", icon: ClipboardCheck },
-  { to: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
-  { to: "/admin/reports", label: "Reports", icon: ReceiptText },
-  { to: "/admin/notifications", label: "Notifications", icon: Bell },
-  { to: "/admin/content", label: "Content", icon: FileText },
-  {
-    to: "/admin/configuration",
-    label: "Charges & attributes",
-    icon: SlidersHorizontal,
-  },
-  {
-    to: "/admin/payment-gateways",
-    label: "Payment gateways",
-    icon: CreditCard,
-  },
-  { to: "/admin/dropshipping", label: "Dropshipping", icon: PackageSearch },
-  { to: "/admin/access", label: "Team & permissions", icon: KeyRound },
+const navigationSections = [
+  { id: "people", label: "People & trust", links: [
+    { to: "/admin/vendors", label: "Vendors", icon: Store },
+    { to: "/admin/customers", label: "Customers", icon: Users },
+    { to: "/admin/verification", label: "Verification", icon: ClipboardCheck },
+  ] },
+  { id: "marketplace", label: "Marketplace", links: [
+    { to: "/admin/products", label: "Products", icon: Box },
+    { to: "/admin/categories", label: "Categories", icon: ClipboardCheck },
+    { to: "/admin/stores", label: "Stores", icon: Store },
+    { to: "/admin/auctions", label: "Auctions", icon: Gavel },
+    { to: "/admin/adverts", label: "Adverts", icon: Megaphone },
+    { to: "/admin/services", label: "Services", icon: Wrench },
+    { to: "/admin/service-taxonomy", label: "Service taxonomy", icon: Tags },
+    { to: "/admin/dropshipping", label: "Dropshipping", icon: PackageSearch },
+  ] },
+  { id: "commerce", label: "Commerce", links: [
+    { to: "/admin/orders", label: "Orders", icon: Package },
+    { to: "/admin/transactions", label: "Transactions", icon: ArrowUpRight },
+    { to: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
+    { to: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
+  ] },
+  { id: "operations", label: "Operations", links: [
+    { to: "/admin/reports", label: "Reports", icon: ReceiptText },
+    { to: "/admin/notifications", label: "Notifications", icon: Bell },
+    { to: "/admin/content", label: "Content", icon: FileText },
+  ] },
+  { id: "settings", label: "Configuration", links: [
+    { to: "/admin/configuration", label: "Charges & attributes", icon: SlidersHorizontal },
+    { to: "/admin/payment-gateways", label: "Payment gateways", icon: CreditCard },
+    { to: "/admin/access", label: "Team & permissions", icon: KeyRound },
+  ] },
 ];
+const linkMatches = (link, pathname) => link.end ? pathname === link.to : pathname.startsWith(link.to);
 const rowsFrom = (payload) =>
   Array.isArray(payload?.data)
     ? payload.data
@@ -167,7 +172,33 @@ export function AdminLogin() {
 
 export function AdminLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [openSections, setOpenSections] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("kuduAdminNavSections") || "{}");
+      if (Object.keys(saved).length) return saved;
+    } catch {
+      // Fall through to the active section.
+    }
+    const active = navigationSections.find((section) =>
+      section.links.some((link) => linkMatches(link, location.pathname)),
+    );
+    return { [active?.id || "people"]: true };
+  });
+  useEffect(() => {
+    const active = navigationSections.find((section) =>
+      section.links.some((link) => linkMatches(link, location.pathname)),
+    );
+    if (active) setOpenSections((current) => current[active.id] ? current : { ...current, [active.id]: true });
+  }, [location.pathname]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("kuduAdminNavSections", JSON.stringify(openSections));
+    } catch {
+      // Navigation remains usable when storage is unavailable.
+    }
+  }, [openSections]);
   if (!adminSession.get()) return <Navigate to="/auth/admin/login" replace />;
   return (
     <div className="admin-shell">
@@ -181,22 +212,24 @@ export function AdminLayout() {
             <X size={20} />
           </button>
         </div>
-        <p className="admin-sidebar__label">WORKSPACE</p>
-        <nav aria-label="Admin workspace">
-          {links.map(({ to, label, icon: Icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `admin-nav ${isActive ? "active" : ""}`
-              }
-            >
-              <Icon size={19} />
-              {label}
-            </NavLink>
-          ))}
+        <nav aria-label="Admin workspace" className="admin-navigation">
+          <NavLink to="/admin" end onClick={() => setOpen(false)} className={({ isActive }) => `admin-nav admin-nav--overview ${isActive ? "active" : ""}`}>
+            <BarChart3 size={19} /> Overview
+          </NavLink>
+          {navigationSections.map((section) => {
+            const sectionOpen = Boolean(openSections[section.id]);
+            const active = section.links.some((link) => linkMatches(link, location.pathname));
+            return <section className={`admin-nav-section ${active ? "admin-nav-section--active" : ""}`} key={section.id}>
+              <button type="button" className="admin-nav-section__toggle" aria-expanded={sectionOpen} onClick={() => setOpenSections((current) => ({ ...current, [section.id]: !sectionOpen }))}>
+                <span>{section.label}</span><ChevronDown size={15} />
+              </button>
+              <div className="admin-nav-section__links" hidden={!sectionOpen}>
+                {section.links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setOpen(false)} className={({ isActive }) => `admin-nav ${isActive ? "active" : ""}`}>
+                  <Icon size={19} />{label}
+                </NavLink>)}
+              </div>
+            </section>;
+          })}
         </nav>
         <div className="admin-sidebar__bottom">
           <button
