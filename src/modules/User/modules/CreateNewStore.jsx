@@ -130,7 +130,7 @@ const AddNewStore = () => {
         state: opt.state,
         stateCode: opt.stateCode,
         city: opt.city,
-        scope: "city",
+        scope: opt.scope || "city",
         price: Number(opt.price),
         arrival_day: opt.arrival_day,
       })),
@@ -509,9 +509,11 @@ const AddNewStore = () => {
                         />
                         <input
                           type="hidden"
-                          {...register(`deliveryOptions.${index}.state`, {
-                            required: "Select a state",
-                          })}
+                          {...register(`deliveryOptions.${index}.state`)}
+                        />
+                        <input
+                          type="hidden"
+                          {...register(`deliveryOptions.${index}.scope`)}
                         />
                         <input
                           type="hidden"
@@ -523,7 +525,6 @@ const AddNewStore = () => {
                           value={watchedDeliveryOptions[index] || field}
                           error={
                             errors.deliveryOptions?.[index]?.country?.message ||
-                            errors.deliveryOptions?.[index]?.state?.message ||
                             errors.deliveryOptions?.[index]?.city?.message
                           }
                           onChange={(location) => {

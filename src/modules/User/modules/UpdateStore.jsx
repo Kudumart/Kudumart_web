@@ -83,7 +83,7 @@ const UpdateStore = () => {
         state: input[`deliveryState${index}`] || "",
         stateCode: input[`deliveryStateCode${index}`] || "",
         city: input[`city${index}`],
-        scope: "city",
+        scope: input[`deliveryScope${index}`] || "city",
         price: Number(input[`price${index}`] || 0),
         arrival_day: input[`arrival_day${index}`] || "",
       })),
@@ -183,6 +183,7 @@ const UpdateStore = () => {
         setValue(`deliveryState${index}`, option.state || "");
         setValue(`deliveryStateCode${index}`, option.stateCode || "");
         setValue(`city${index}`, option.city);
+        setValue(`deliveryScope${index}`, option.scope || "city");
         setValue(`price${index}`, option.price);
         setValue(`arrival_day${index}`, option.arrival_day);
       });
@@ -260,6 +261,7 @@ const UpdateStore = () => {
     setValue(`deliveryState${newIndex}`, "");
     setValue(`deliveryStateCode${newIndex}`, "");
     setValue(`city${newIndex}`, "");
+    setValue(`deliveryScope${newIndex}`, "city");
     setValue(`price${newIndex}`, 0);
     setValue(`arrival_day${newIndex}`, "");
   };
@@ -272,7 +274,7 @@ const UpdateStore = () => {
         state: watchedValues[`deliveryState${index}`] || "",
         stateCode: watchedValues[`deliveryStateCode${index}`] || "",
         city: watchedValues[`city${index}`] || "",
-        scope: "city",
+        scope: watchedValues[`deliveryScope${index}`] || "city",
         price: watchedValues[`price${index}`] || 0,
         arrival_day: watchedValues[`arrival_day${index}`] || "",
       }))
@@ -284,6 +286,7 @@ const UpdateStore = () => {
       setValue(`deliveryState${index}`, option.state);
       setValue(`deliveryStateCode${index}`, option.stateCode);
       setValue(`city${index}`, option.city);
+      setValue(`deliveryScope${index}`, option.scope);
       setValue(`price${index}`, option.price);
       setValue(`arrival_day${index}`, option.arrival_day);
     });
@@ -653,9 +656,11 @@ const UpdateStore = () => {
                         />
                         <input
                           type="hidden"
-                          {...register(`deliveryState${index}`, {
-                            required: "Select a state",
-                          })}
+                          {...register(`deliveryState${index}`)}
+                        />
+                        <input
+                          type="hidden"
+                          {...register(`deliveryScope${index}`)}
                         />
                         <input
                           type="hidden"
@@ -672,11 +677,10 @@ const UpdateStore = () => {
                             stateCode:
                               watchedValues[`deliveryStateCode${index}`] || "",
                             city: watchedValues[`city${index}`] || "",
-                            scope: "city",
+                            scope: watchedValues[`deliveryScope${index}`] || "city",
                           }}
                           error={
                             errors[`deliveryCountry${index}`]?.message ||
-                            errors[`deliveryState${index}`]?.message ||
                             errors[`city${index}`]?.message
                           }
                           onChange={(location) => {
@@ -701,6 +705,9 @@ const UpdateStore = () => {
                             setValue(`city${index}`, location.city, {
                               shouldDirty: true,
                               shouldValidate: true,
+                            });
+                            setValue(`deliveryScope${index}`, location.scope, {
+                              shouldDirty: true,
                             });
                           }}
                         />
