@@ -4,7 +4,7 @@ import Imgix from "react-imgix";
 import { useGeoLocatorProduct } from "../../../hooks/geoLocatorProduct";
 import { goToAdvert } from "../../../helpers/advertLink";
 
-const TrendingProducts = ({ productsArr, ads }) => {
+const TrendingProducts = ({ productsArr = [], ads = [] }) => {
 
     const filteredProducts = useGeoLocatorProduct(productsArr);
 
@@ -21,7 +21,7 @@ const TrendingProducts = ({ productsArr, ads }) => {
                 <Link to={'/see-all'} className="text-white font-semibold">See All</Link>
             </div>
 
-            <ProductListing productsArr={filteredProducts.slice(0, 12)} displayError />
+            <ProductListing productsArr={filteredProducts} displayError />
 
             <div className="flex w-full flex-col md:flex-row gap-4 my-2">
             {ads.map((ad, index) => (
@@ -48,9 +48,6 @@ const TrendingProducts = ({ productsArr, ads }) => {
                     </div>
                 ))}
             </div>
-
-            <ProductListing productsArr={filteredProducts.slice(12, 24)} />
-
         </div>
     );
 };

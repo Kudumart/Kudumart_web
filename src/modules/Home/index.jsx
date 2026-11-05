@@ -76,7 +76,7 @@ export default function NewHome() {
 
       const trendingProductRequest = new Promise((resolve, reject) => {
         mutate({
-          url: `/products?popular=true&country=${country.value}`,
+          url: `/products?popular=true&limit=100000000&country=${country.value}`,
           method: "GET",
           hideToast: true,
           onSuccess: (response) => resolve(response.data?.data || []),
@@ -210,6 +210,18 @@ export default function NewHome() {
       <div className="w-full flex flex-col bg-white">
         <SearchSection categories={categoriesArr} />
         <div className="w-full flex flex-col xl:px-40 lg:pl-20 lg:pr-30 md:px-20 md:mt-2 mt-4 px-5 py-3 lg:gap-10 md:gap-8 gap-5 bg-white h-full">
+          <div className="w-full lg:flex md:flex gap-3 md:mt-3">
+            {loading ? (
+              <div className="w-full min-h-64 flex items-center justify-center">
+                <Loader />
+              </div>
+            ) : (
+              <TrendingProducts
+                productsArr={trendingProducts}
+                ads={ads.slice(4, 8)}
+              />
+            )}
+          </div>
           <div className="w-full flex-col lg:hidden md:hidden gap-3 md:mt-3">
             <div className="bg-[#A5B3FF] w-full flex justify-between p-6 rounded-md cursor-pointer">
               <h2 className="text-lg font-semibold">
@@ -233,18 +245,6 @@ export default function NewHome() {
                   ads={ads?.slice(0, 4)}
                 />*/}
             </>
-          </div>
-          <div className="w-full lg:flex md:flex gap-3 md:mt-3">
-            {loading ? (
-              <div className="w-full h-screen flex items-center justify-center">
-                <Loader />
-              </div>
-            ) : (
-              <TrendingProducts
-                productsArr={trendingProducts}
-                ads={ads.slice(4, 8)}
-              />
-            )}
           </div>
           {auctionProducts && auctionProducts.length > 0 && (
             <div className="w-full lg:flex md:flex gap-3 md:mt-3">
