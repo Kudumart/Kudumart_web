@@ -36,17 +36,33 @@ export default function UpdateShipAdd({ onclose }: { onclose: () => void }) {
   const dispatch = useDispatch();
 
   // Parse existing user location for pre-fill
-  const existingLocation = user?.location
-    ? typeof user.location === "string"
-      ? JSON.parse(user.location)
-      : user.location
-    : null;
+  let existingLocation = null;
+  if (user?.location) {
+    try {
+      existingLocation =
+        typeof user.location === "string"
+          ? JSON.parse(user.location)
+          : user.location;
+    } catch {
+      existingLocation = null;
+    }
+  }
 
   const existingCountry =
-    country_list.find((c) => c.name === existingLocation?.country) ||
+    country_list.find(
+      (c) =>
+        c.name === existingLocation?.country ||
+        c.id === String(existingLocation?.country || "").toUpperCase(),
+    ) ||
     { name: "Nigeria", id: "NG" };
 
-  const { register, watch, handleSubmit, setValue } = useForm<FormValues>({
+  const {
+    register,
+    watch,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<FormValues>({
     defaultValues: {
       country: existingCountry,
       province: existingLocation?.state || "",
@@ -144,7 +160,7 @@ export default function UpdateShipAdd({ onclose }: { onclose: () => void }) {
             </div>
           ) : provinces.length > 0 ? (
             <select
-              {...register("province")}
+              {...register("province", { required: "State / province is required" })}
               className="select select-bordered w-full"
             >
               <option value="">Select State</option>
@@ -155,10 +171,13 @@ export default function UpdateShipAdd({ onclose }: { onclose: () => void }) {
           ) : (
             <input
               type="text"
-              {...register("province")}
+              {...register("province", { required: "State / province is required" })}
               placeholder="Enter your state / province"
               className="input input-bordered w-full"
             />
+          )}
+          {errors.province && (
+            <p className="mt-1 text-sm text-red-500">{errors.province.message}</p>
           )}
         </div>
 
@@ -169,7 +188,7 @@ export default function UpdateShipAdd({ onclose }: { onclose: () => void }) {
           </label>
           {cities.length > 0 ? (
             <select
-              {...register("city")}
+              {...register("city", { required: "City is required" })}
               className="select select-bordered w-full"
             >
               <option value="">Select City</option>
@@ -180,10 +199,13 @@ export default function UpdateShipAdd({ onclose }: { onclose: () => void }) {
           ) : (
             <input
               type="text"
-              {...register("city")}
+              {...register("city", { required: "City is required" })}
               placeholder="Enter your city"
               className="input input-bordered w-full"
             />
+          )}
+          {errors.city && (
+            <p className="mt-1 text-sm text-red-500">{errors.city.message}</p>
           )}
         </div>
 
@@ -194,10 +216,13 @@ export default function UpdateShipAdd({ onclose }: { onclose: () => void }) {
           </label>
           <input
             type="text"
-            {...register("street")}
+            {...register("street", { required: "Street address is required" })}
             placeholder="Enter street address"
             className="input input-bordered w-full"
           />
+          {errors.street && (
+            <p className="mt-1 text-sm text-red-500">{errors.street.message}</p>
+          )}
         </div>
 
         {/* Zip Code */}
@@ -207,10 +232,13 @@ export default function UpdateShipAdd({ onclose }: { onclose: () => void }) {
           </label>
           <input
             type="text"
-            {...register("zipCode")}
+            {...register("zipCode", { required: "Postcode is required" })}
             placeholder="Enter zip code"
             className="input input-bordered w-full"
           />
+          {errors.zipCode && (
+            <p className="mt-1 text-sm text-red-500">{errors.zipCode.message}</p>
+          )}
         </div>
 
         <Button

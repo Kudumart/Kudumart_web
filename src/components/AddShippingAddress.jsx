@@ -67,7 +67,6 @@ const AddShippingAddress = ({ isOpen, closeModal, countries }) => {
   };
 
   const onSubmit = (formData) => {
-    formData.city = `${formData.street}, ${formData.city}`;
     const payload = {
       firstName: user.firstName,
       lastName: user.lastName,
@@ -177,6 +176,25 @@ const AddShippingAddress = ({ isOpen, closeModal, countries }) => {
         />
         {errors.street && (
           <p className="text-red-500 text-sm">{errors.street.message}</p>
+        )}
+      </div>
+
+      {/* Postcode Field */}
+      <div className="col-span-2">
+        <label className="block text-md font-medium mb-3" htmlFor="zipCode">
+          Postcode
+        </label>
+        <input
+          type="text"
+          id="zipCode"
+          {...register("zipCode", {
+            required: "Postcode is required",
+          })}
+          placeholder="Your postcode"
+          className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
+        />
+        {errors.zipCode && (
+          <p className="text-red-500 text-sm">{errors.zipCode.message}</p>
         )}
       </div>
 

@@ -168,7 +168,12 @@ export default function ProfileSettings() {
   const saveProfile = (data) => {
     const payload = {
       ...data,
-      location: { country: data.country, state: data.state, city: data.city },
+      location: {
+        ...parsedLocation,
+        country: data.country,
+        state: data.state,
+        city: data.city,
+      },
       photo: profilePicture,
     };
     mutate({
