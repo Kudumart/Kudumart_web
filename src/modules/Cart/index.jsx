@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import CartBlock from "./layouts/cartsBlock";
 import { useCart, useRemoveFromCart } from "../../api/cart";
 import Loader from "../../components/Loader";
@@ -12,11 +13,28 @@ export default function Cart() {
   const { mutate: removeFromCart } = useRemoveFromCart();
   const { country } = useCountrySelect();
   const { user } = useAppState();
-  const user_country = user?.location["country"];
+  const location = useLocation();
+  const navigate = useNavigate();
+  const user_country = user?.location?.country;
 
   // "Buy It Now": when set, checkout is scoped to just this one cart item
   // instead of the whole cart.
   const [buyNowItem, setBuyNowItem] = useState(null);
+
+  useEffect(() => {
+    const productId = location.state?.buyNowProductId;
+    if (!productId || !cart?.length) return;
+
+    const selectedItem = cart.find(
+      (item) => String(item.productId || item.product?.id) === String(productId),
+    );
+
+    if (selectedItem) {
+      setBuyNowItem(selectedItem);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [cart, location.pathname, location.state, navigate]);
+
   const effectiveCart =
     buyNowItem && cart?.some((item) => item.id === buyNowItem.id)
       ? cart.filter((item) => item.id === buyNowItem.id)

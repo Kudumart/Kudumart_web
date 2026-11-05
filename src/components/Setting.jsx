@@ -9,6 +9,8 @@ import { useNavigate } from "react-router-dom";
 import PaymentGateway from "../modules/SuperAdmin/Dashboard/PaymentGateway";
 import Charges from "./admin/Charges";
 import Button from "./Button";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 const Setting = () => {
   const { user } = useAppState();
@@ -46,7 +48,10 @@ const Setting = () => {
   const { mutate } = useApiMutation();
 
   const onSubmit = (data) => {
-    const payload = { ...data, photo: profilePicture };
+    const phoneNumber = data.phoneNumber
+      ? `+${String(data.phoneNumber).replace(/\D/g, "")}`
+      : null;
+    const payload = { ...data, phoneNumber, photo: profilePicture };
     setIsLoading(true);
     mutate({
       url: "/admin/profile/update",
@@ -102,6 +107,12 @@ const Setting = () => {
   useEffect(() => {
     getGateways();
   }, []);
+
+  useEffect(() => {
+    setValue("name", user?.name || "");
+    setValue("email", user?.email || "");
+    setValue("phoneNumber", String(user?.phoneNumber || "").replace(/^\+/, ""));
+  }, [setValue, user]);
 
   return (
     <div className="min-h-screen">
@@ -170,7 +181,7 @@ const Setting = () => {
                 </div>
 
                 {/* Form */}
-                <tab
+                <form
                   className="grid grid-cols-2 gap-6"
                   onSubmit={handleSubmit(onSubmit)}
                 >
@@ -186,9 +197,7 @@ const Setting = () => {
                       id="lastName"
                       className="border rounded-lg p-4 w-full bg-gray-50"
                       placeholder="Enter last name"
-                      value={user?.name}
                       style={{ outline: "none" }}
-                      disabled
                       {...register("name")}
                     />
                   </div>
@@ -203,7 +212,6 @@ const Setting = () => {
                       type="email"
                       id="email"
                       {...register("email")}
-                      value={user?.email}
                       className="border rounded-lg p-4 w-full bg-gray-50"
                       placeholder="Enter email address"
                       style={{ outline: "none" }}
@@ -216,6 +224,30 @@ const Setting = () => {
                     )}
                   </div>
 
+                  <div className="col-span-2">
+                    <label
+                      htmlFor="phoneNumber"
+                      className="block text-sm font-medium mb-4 mt-4"
+                    >
+                      Product enquiry phone number
+                    </label>
+                    <PhoneInput
+                      country="ng"
+                      value={watch("phoneNumber") || ""}
+                      onChange={(value) =>
+                        setValue("phoneNumber", value, { shouldDirty: true })
+                      }
+                      inputProps={{ id: "phoneNumber", name: "phoneNumber" }}
+                      inputClass="!w-full !h-[58px] !border-gray-200 !rounded-lg !pl-14"
+                      buttonClass="!border-gray-200 !rounded-l-lg !bg-gray-50"
+                      enableSearch
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      This number appears on products owned by the admin account so
+                      customers can make enquiries.
+                    </p>
+                  </div>
+
                   <div className="col-span-2 flex justify-start">
                     <Button
                       type="submit"
@@ -225,7 +257,7 @@ const Setting = () => {
                       Update Info
                     </Button>
                   </div>
-                </tab>
+                </form>
               </>
             )}
 

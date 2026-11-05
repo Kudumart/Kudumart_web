@@ -16,6 +16,7 @@ import { useNewModal } from "../../../components/modals/modals";
 import Modal from "../../../components/modals/DialogModal";
 import UpdateShipAdd from "../../../components/UpdateShippingAddress";
 import Button from "../../../components/Button";
+import { getEffectiveProductPrice } from "../../../helpers/pricing";
 
 interface ProductCharge {
   id: number;
@@ -222,9 +223,7 @@ const CartSummary = ({ cart, refetch, cartItemIds }: CartSummaryType) => {
   const item_amounts = cart.map((cart_items) => {
     const quantity = cart_items.quantity;
 
-    const discount = parseFloat(cart_items.product.discount_price);
-    let basePrice =
-      discount != 0 ? discount : parseFloat(cart_items.product.price);
+    let basePrice = getEffectiveProductPrice(cart_items.product);
     console.log(basePrice, "price");
     let initial_price = basePrice * quantity;
     if ((cart_items as any).productType === "dropship") {
@@ -499,6 +498,8 @@ const CartSummary = ({ cart, refetch, cartItemIds }: CartSummaryType) => {
                   total_price={total_price}
                   paymentKey={paymentKey}
                   cartItemIds={cartItemIds}
+                  deliveryMethod={deliveryOption === "store" ? "pickup" : "delivery"}
+                  onSelectPickup={() => setDeliveryOption("store")}
                 ></DropShipNairaPayment>
               </div>
             ) : (

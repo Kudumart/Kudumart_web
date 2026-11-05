@@ -379,7 +379,10 @@ export default function ViewProduct() {
     if (user) {
       const payload = { productId: id, quantity };
       addItemToCart(payload, {
-        onSuccess: () => navigate("/cart"),
+        onSuccess: () =>
+          navigate("/cart", {
+            state: { buyNowProductId: id },
+          }),
       });
     } else {
       navigate("/login");
@@ -457,7 +460,12 @@ export default function ViewProduct() {
   };
 
   const { mutate: initiate, isLoading: isInitiating } = sendMessage();
+  const seller = product.vendor || product.admin;
   const initiateChat = () => {
+    if (!product.vendor) {
+      showContact();
+      return;
+    }
     initiate(
       {
         productId: id,
@@ -505,7 +513,7 @@ export default function ViewProduct() {
                   />
                 </svg>
                 <span className="flex flex-col justify-center h-full text-black items-center">
-                  {product.vendor.phoneNumber}
+                  {seller?.phoneNumber || "Phone number not available"}
                 </span>
               </span>
 
@@ -525,7 +533,7 @@ export default function ViewProduct() {
                   />
                 </svg>
                 <span className="flex flex-col justify-center h-full text-black items-center">
-                  {product.vendor.email}
+                  {seller?.email || "Email not available"}
                 </span>
               </span>
             </div>

@@ -93,6 +93,8 @@ export interface Item {
   };
 }
 
+import { getEffectiveProductPrice } from "../../../helpers/pricing";
+
 export const calculate_dropship_price = (item: Item) => {
   const variant = item.product.variants.find(
     (v) => v.sku_id === item.dropshipProductSkuId,
@@ -100,7 +102,7 @@ export const calculate_dropship_price = (item: Item) => {
 
   const unitPrice = variant
     ? parseFloat(variant.offer_sale_price)
-    : parseFloat(item.product.discount_price || item.product.price);
+    : getEffectiveProductPrice(item.product);
   console.log(unitPrice, "unitPrice");
   return unitPrice * item.quantity;
 };
