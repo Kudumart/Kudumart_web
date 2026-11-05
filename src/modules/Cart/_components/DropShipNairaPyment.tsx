@@ -129,7 +129,9 @@ export const DropShipNairaPayment = ({
         <div className="flex justify-between items-center text-sm">
           <span className="text-gray-500">Delivery Fee</span>
           <span className="font-medium text-gray-900">
-            NGN {deliveryFee?.toLocaleString()}
+            {deliveryMethod === "delivery" && deliveryFeeError
+              ? "Unavailable"
+              : `NGN ${deliveryFee?.toLocaleString()}`}
           </span>
         </div>
         <div className="pt-3 border-t border-dashed border-gray-200 flex justify-between items-center">
@@ -137,7 +139,9 @@ export const DropShipNairaPayment = ({
             Total Amount
           </span>
           <span className="text-lg font-bold text-primary">
-            ₦{finalTotal.toLocaleString()}
+            {deliveryMethod === "delivery" && deliveryFeeError
+              ? "Pending delivery"
+              : `₦${finalTotal.toLocaleString()}`}
           </span>
         </div>
       </div>
