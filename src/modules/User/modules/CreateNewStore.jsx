@@ -5,13 +5,13 @@ import { useNavigate } from "react-router-dom";
 import NaijaStates from "naija-state-local-government";
 import useApiMutation from "../../../api/hooks/useApiMutation";
 import Button from "../../../components/Button";
+import DeliveryAreaLocationFields from "../../../components/DeliveryAreaLocationFields";
 import {
   Store,
   MapPin,
   Clock,
   Truck,
   DollarSign,
-  Info,
   ArrowLeft,
   CheckCircle2,
   ShieldCheck,
@@ -41,11 +41,23 @@ const AddNewStore = () => {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      deliveryOptions: [{ city: "", price: "", arrival_day: "" }],
+      deliveryOptions: [
+        {
+          country: "",
+          countryCode: "",
+          state: "",
+          stateCode: "",
+          city: "",
+          scope: "city",
+          price: "",
+          arrival_day: "",
+        },
+      ],
     },
   });
 
   const watchedStoreName = watch("name");
+  const watchedDeliveryOptions = watch("deliveryOptions") || [];
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -113,7 +125,12 @@ const AddNewStore = () => {
         sunday: data.sunday,
       },
       deliveryOptions: data.deliveryOptions.map((opt) => ({
+        country: opt.country,
+        countryCode: opt.countryCode,
+        state: opt.state,
+        stateCode: opt.stateCode,
         city: opt.city,
+        scope: "city",
         price: Number(opt.price),
         arrival_day: opt.arrival_day,
       })),
@@ -458,11 +475,22 @@ const AddNewStore = () => {
 
                   <button
                     type="button"
-                    onClick={() => append({ city: "", price: "", arrival_day: "" })}
+                    onClick={() =>
+                      append({
+                        country: "",
+                        countryCode: "",
+                        state: "",
+                        stateCode: "",
+                        city: "",
+                        scope: "city",
+                        price: "",
+                        arrival_day: "",
+                      })
+                    }
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-primary bg-orange-50 hover:bg-orange-100 rounded-xl border border-orange-200/60 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Add City
+                    Add delivery area
                   </button>
                 </div>
 
@@ -470,21 +498,46 @@ const AddNewStore = () => {
                   {fields.map((field, index) => (
                     <div
                       key={field.id}
-                      className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-200/70 transition-all hover:border-gray-300"
+                      className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_9rem_11rem_auto] items-start gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-200/70 transition-all hover:border-gray-300"
                     >
-                      <div className="w-full sm:flex-1">
-                        <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                          Destination City
-                        </label>
+                      <div className="w-full min-w-0">
                         <input
-                          type="text"
-                          {...register(`deliveryOptions.${index}.city`, { required: true })}
-                          placeholder="e.g. Lagos Mainland"
-                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          type="hidden"
+                          {...register(`deliveryOptions.${index}.country`, {
+                            required: "Select a country",
+                          })}
+                        />
+                        <input
+                          type="hidden"
+                          {...register(`deliveryOptions.${index}.state`, {
+                            required: "Select a state",
+                          })}
+                        />
+                        <input
+                          type="hidden"
+                          {...register(`deliveryOptions.${index}.city`, {
+                            required: "Select a city",
+                          })}
+                        />
+                        <DeliveryAreaLocationFields
+                          value={watchedDeliveryOptions[index] || field}
+                          error={
+                            errors.deliveryOptions?.[index]?.country?.message ||
+                            errors.deliveryOptions?.[index]?.state?.message ||
+                            errors.deliveryOptions?.[index]?.city?.message
+                          }
+                          onChange={(location) => {
+                            Object.entries(location).forEach(([key, value]) => {
+                              setValue(`deliveryOptions.${index}.${key}`, value, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              });
+                            });
+                          }}
                         />
                       </div>
 
-                      <div className="w-full sm:w-36">
+                      <div className="w-full">
                         <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
                           Rate (Fee)
                         </label>
@@ -496,7 +549,7 @@ const AddNewStore = () => {
                         />
                       </div>
 
-                      <div className="w-full sm:w-44">
+                      <div className="w-full">
                         <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
                           Estimated Timeline
                         </label>
@@ -512,7 +565,7 @@ const AddNewStore = () => {
                         <button
                           type="button"
                           onClick={() => remove(index)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-2 sm:mt-5 self-end sm:self-center cursor-pointer"
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-5 justify-self-end cursor-pointer"
                           title="Remove delivery option"
                         >
                           <Trash2 className="w-4 h-4" />

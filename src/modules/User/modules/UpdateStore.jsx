@@ -6,6 +6,7 @@ import useApiMutation from "../../../api/hooks/useApiMutation";
 import Loader from "../../../components/Loader";
 import NaijaStates from "naija-state-local-government";
 import Button from "../../../components/Button";
+import DeliveryAreaLocationFields from "../../../components/DeliveryAreaLocationFields";
 import {
   Store,
   MapPin,
@@ -42,6 +43,7 @@ const UpdateStore = () => {
   const [disabled, setDisabled] = useState(false);
 
   const watchedStoreName = watch("name");
+  const watchedValues = watch();
 
   const { mutate } = useApiMutation();
   const navigate = useNavigate();
@@ -76,7 +78,12 @@ const UpdateStore = () => {
         sunday: input.sunday,
       },
       deliveryOptions: deliveryOptions.map((_, index) => ({
+        country: input[`deliveryCountry${index}`] || "",
+        countryCode: input[`deliveryCountryCode${index}`] || "",
+        state: input[`deliveryState${index}`] || "",
+        stateCode: input[`deliveryStateCode${index}`] || "",
         city: input[`city${index}`],
+        scope: "city",
         price: Number(input[`price${index}`] || 0),
         arrival_day: input[`arrival_day${index}`] || "",
       })),
@@ -171,6 +178,10 @@ const UpdateStore = () => {
 
     if (store.deliveryOptions && store.deliveryOptions.length > 0) {
       store.deliveryOptions.forEach((option, index) => {
+        setValue(`deliveryCountry${index}`, option.country || "");
+        setValue(`deliveryCountryCode${index}`, option.countryCode || "");
+        setValue(`deliveryState${index}`, option.state || "");
+        setValue(`deliveryStateCode${index}`, option.stateCode || "");
         setValue(`city${index}`, option.city);
         setValue(`price${index}`, option.price);
         setValue(`arrival_day${index}`, option.arrival_day);
@@ -233,15 +244,50 @@ const UpdateStore = () => {
     const newIndex = deliveryOptions.length;
     setDeliveryOptions([
       ...deliveryOptions,
-      { city: "", price: 0, arrival_day: "" },
+      {
+        country: "",
+        countryCode: "",
+        state: "",
+        stateCode: "",
+        city: "",
+        scope: "city",
+        price: 0,
+        arrival_day: "",
+      },
     ]);
+    setValue(`deliveryCountry${newIndex}`, "");
+    setValue(`deliveryCountryCode${newIndex}`, "");
+    setValue(`deliveryState${newIndex}`, "");
+    setValue(`deliveryStateCode${newIndex}`, "");
     setValue(`city${newIndex}`, "");
     setValue(`price${newIndex}`, 0);
     setValue(`arrival_day${newIndex}`, "");
   };
 
   const removeDeliveryOption = (indexToRemove) => {
-    setDeliveryOptions(deliveryOptions.filter((_, idx) => idx !== indexToRemove));
+    const remainingValues = deliveryOptions
+      .map((_, index) => ({
+        country: watchedValues[`deliveryCountry${index}`] || "",
+        countryCode: watchedValues[`deliveryCountryCode${index}`] || "",
+        state: watchedValues[`deliveryState${index}`] || "",
+        stateCode: watchedValues[`deliveryStateCode${index}`] || "",
+        city: watchedValues[`city${index}`] || "",
+        scope: "city",
+        price: watchedValues[`price${index}`] || 0,
+        arrival_day: watchedValues[`arrival_day${index}`] || "",
+      }))
+      .filter((_, index) => index !== indexToRemove);
+
+    remainingValues.forEach((option, index) => {
+      setValue(`deliveryCountry${index}`, option.country);
+      setValue(`deliveryCountryCode${index}`, option.countryCode);
+      setValue(`deliveryState${index}`, option.state);
+      setValue(`deliveryStateCode${index}`, option.stateCode);
+      setValue(`city${index}`, option.city);
+      setValue(`price${index}`, option.price);
+      setValue(`arrival_day${index}`, option.arrival_day);
+    });
+    setDeliveryOptions(remainingValues);
   };
 
   const applySchedulePreset = (type) => {
@@ -588,7 +634,7 @@ const UpdateStore = () => {
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-primary bg-orange-50 hover:bg-orange-100 rounded-xl border border-orange-200/60 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Add City
+                    Add delivery area
                   </button>
                 </div>
 
@@ -596,21 +642,71 @@ const UpdateStore = () => {
                   {deliveryOptions.map((_, index) => (
                     <div
                       key={index}
-                      className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-200/70 transition-all hover:border-gray-300"
+                      className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_9rem_11rem_auto] items-start gap-3 p-4 bg-gray-50/80 rounded-xl border border-gray-200/70 transition-all hover:border-gray-300"
                     >
-                      <div className="w-full sm:flex-1">
-                        <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                          Destination City
-                        </label>
+                      <div className="w-full min-w-0">
                         <input
-                          type="text"
-                          {...register(`city${index}`, { required: true })}
-                          placeholder="e.g. Lagos Mainland"
-                          className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          type="hidden"
+                          {...register(`deliveryCountry${index}`, {
+                            required: "Select a country",
+                          })}
+                        />
+                        <input
+                          type="hidden"
+                          {...register(`deliveryState${index}`, {
+                            required: "Select a state",
+                          })}
+                        />
+                        <input
+                          type="hidden"
+                          {...register(`city${index}`, {
+                            required: "Select a city",
+                          })}
+                        />
+                        <DeliveryAreaLocationFields
+                          value={{
+                            country: watchedValues[`deliveryCountry${index}`] || "",
+                            countryCode:
+                              watchedValues[`deliveryCountryCode${index}`] || "",
+                            state: watchedValues[`deliveryState${index}`] || "",
+                            stateCode:
+                              watchedValues[`deliveryStateCode${index}`] || "",
+                            city: watchedValues[`city${index}`] || "",
+                            scope: "city",
+                          }}
+                          error={
+                            errors[`deliveryCountry${index}`]?.message ||
+                            errors[`deliveryState${index}`]?.message ||
+                            errors[`city${index}`]?.message
+                          }
+                          onChange={(location) => {
+                            setValue(`deliveryCountry${index}`, location.country, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                            setValue(
+                              `deliveryCountryCode${index}`,
+                              location.countryCode,
+                              { shouldDirty: true },
+                            );
+                            setValue(`deliveryState${index}`, location.state, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                            setValue(
+                              `deliveryStateCode${index}`,
+                              location.stateCode,
+                              { shouldDirty: true },
+                            );
+                            setValue(`city${index}`, location.city, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                          }}
                         />
                       </div>
 
-                      <div className="w-full sm:w-36">
+                      <div className="w-full">
                         <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
                           Rate (Fee)
                         </label>
@@ -622,7 +718,7 @@ const UpdateStore = () => {
                         />
                       </div>
 
-                      <div className="w-full sm:w-44">
+                      <div className="w-full">
                         <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
                           Estimated Timeline
                         </label>
@@ -638,7 +734,7 @@ const UpdateStore = () => {
                         <button
                           type="button"
                           onClick={() => removeDeliveryOption(index)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-2 sm:mt-5 self-end sm:self-center cursor-pointer"
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-5 justify-self-end cursor-pointer"
                           title="Remove delivery option"
                         >
                           <Trash2 className="w-4 h-4" />
