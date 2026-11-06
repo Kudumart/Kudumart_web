@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CheckCircle2, CreditCard, MapPin, PackageCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, CreditCard, MapPin, PackageCheck, ShieldCheck } from 'lucide-react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import PaystackPop from '@paystack/inline-js';
