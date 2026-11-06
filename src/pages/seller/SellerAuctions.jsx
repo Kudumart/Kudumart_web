@@ -22,6 +22,7 @@ export function SellerAuctions() {
   const [revision, setRevision] = useState(0);
   const [action, setAction] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [ai, setAi] = useState(false);
   const resource = useResource(signal => sellerApi.auctionProducts(signal), [user?.id, revision]);
   const auctions = sellerList(resource.data);
   const confirm = async () => {
