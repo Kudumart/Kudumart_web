@@ -975,6 +975,19 @@ export default function ViewProduct() {
                 </div>
               )}
 
+              {/* Admin-owned products: show the enquiry phone number even though purchasing is enabled */}
+              {product.admin && !product.vendor && product.admin.phoneNumber && (
+                <Button
+                  variant="outline"
+                  size="md"
+                  fullWidth
+                  onClick={() => showContact()}
+                  icon={<PhoneIcon size={18} />}
+                >
+                  Call / Enquire: {product.admin.phoneNumber}
+                </Button>
+              )}
+
               {/* Secondary Actions: Make an Offer & Save to Favorites */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 {((product.vendor?.isVerified || product.admin) || isNonCartCategory()) && (
