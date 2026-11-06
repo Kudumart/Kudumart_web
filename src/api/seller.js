@@ -46,6 +46,7 @@ export const sellerApi = {
   createStore: async values => unwrap(await request('/vendor/store', { method: 'POST', authenticated: true, body: values })),
   updateStore: async values => unwrap(await request('/vendor/store', { method: 'PUT', authenticated: true, body: values })),
   deleteStore: async storeId => unwrap(await request('/vendor/store', { method: 'DELETE', authenticated: true, params: { storeId } })),
+  aiGenerateProduct: async values => unwrap(await request('/vendor/products/ai-generate', { method: 'POST', authenticated: true, body: values })),
   createProduct: async values => unwrap(await request('/vendor/products', { method: 'POST', authenticated: true, body: values })),
   updateProduct: async values => unwrap(await request('/vendor/products', { method: 'PUT', authenticated: true, body: values })),
   deleteProduct: async productId => unwrap(await request('/vendor/products', { method: 'DELETE', authenticated: true, params: { productId } })),

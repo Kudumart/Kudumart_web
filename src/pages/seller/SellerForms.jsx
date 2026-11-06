@@ -1,6 +1,6 @@
 import { ArrowLeft, ImagePlus, LoaderCircle, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { sellerApi, sellerList, uploadSellerImage } from '../../api/seller';
 import { Button, EmptyState, SelectField, Skeleton, TextField } from '../../components/ui';
 import { useApp } from '../../contexts/AppContext';
@@ -8,6 +8,7 @@ import { useResource } from '../../hooks/useResource';
 import { SellerHeading } from './SellerPages';
 import { plainText } from '../../utils/format';
 import StoreHoursDelivery from './StoreHoursDelivery';
+import { takeAiDraft } from './AIProductCreator';
 
 export function SellerStoreForm() {
   const { id } = useParams(); const navigate = useNavigate(); const { user, notify } = useApp();
@@ -38,6 +39,15 @@ export function SellerProductForm() {
   const [values, setValues] = useState({ storeId: '', categoryId: '', name: '', condition: 'brand_new', price: '', discount_price: '', quantity: '', description: '', specification: '', warranty: '', return_policy: '', sku: '' });
   const [files, setFiles] = useState([]); const [existingImages, setExistingImages] = useState([]); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   useEffect(() => { if (!id || !product.data) return; const item = product.data; setValues({ storeId: item.storeId || item.store?.id || '', categoryId: item.sub_category?.id || item.categoryId || '', name: item.name || '', condition: item.condition || 'brand_new', price: item.price || '', discount_price: item.discount_price || '', quantity: item.quantity ?? '', description: plainText(item.description), specification: plainText(item.specification || item.specifications), warranty: item.warranty || '', return_policy: item.return_policy || '', sku: item.sku || '' }); setCategory(item.sub_category?.categoryId || item.category?.id || ''); setExistingImages([item.image_url, ...(item.additional_images || [])].filter(Boolean).filter((value, index, all) => all.indexOf(value) === index)); }, [id, product.data]);
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    if (id || searchParams.get('ai') !== '1') return;
+    const draft = takeAiDraft();
+    if (!draft) return;
+    setValues(current => ({ ...current, name: draft.name || current.name, price: draft.price || current.price, discount_price: draft.discount_price || current.discount_price, quantity: draft.quantity || current.quantity, warranty: draft.warranty || current.warranty, return_policy: draft.return_policy || current.return_policy, sku: draft.sku || current.sku, condition: draft.condition || current.condition, description: draft.description || current.description, specification: draft.specification || draft.specifications || current.specification }));
+    if (draft.imagePreview) setExistingImages([draft.imagePreview]);
+    notify('AI has pre-filled your product details. Review and adjust as needed.', 'success');
+  }, []);
   const previews = useMemo(() => files.map(file => ({ name: file.name, url: URL.createObjectURL(file) })), [files]);
   useEffect(() => () => previews.forEach(item => URL.revokeObjectURL(item.url)), [previews]);
   const change = event => setValues(current => ({ ...current, [event.target.name]: event.target.value }));
