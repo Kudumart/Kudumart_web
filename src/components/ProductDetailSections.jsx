@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BadgeCheck, Check, Copy, MapPin, Share2, Star, Store } from 'lucide-react';
+import { BadgeCheck, Check, Copy, Mail, MapPin, Phone, Share2, Star, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import { plainText } from '../utils/format';
@@ -21,12 +21,15 @@ export function ProductFacts({ product }) {
 
 export function SellerProfile({ product }) {
   const vendor = product.vendor;
+  const admin = product.admin;
   const store = product.store;
   const vendorId = vendor?.id || product.vendorId;
-  if (!vendor && !store) return null;
-  const name = store?.name || [vendor?.firstName, vendor?.lastName].filter(Boolean).join(' ') || 'KuduMart seller';
+  if (!vendor && !admin && !store) return null;
+  const name = store?.name || [vendor?.firstName, vendor?.lastName].filter(Boolean).join(' ') || admin?.name || 'KuduMart seller';
   const address = locationText(store?.location);
-  return <section className="detail-section seller-profile" aria-labelledby="seller-title"><div className="detail-section__heading"><span className="eyebrow">THE SELLER</span><h2 id="seller-title">Meet the store</h2></div><div className="seller-profile__body"><div className="seller-profile__identity">{store?.logo ? <img src={store.logo} alt=""/> : <span className="seller-profile__placeholder"><Store size={25}/></span>}<div><strong>{name}</strong>{(vendor?.isVerified || product.admin) && <span className="seller-profile__verified"><BadgeCheck size={15}/> Verified seller</span>}</div></div>{address && <p className="seller-profile__location"><MapPin size={17}/>{address}</p>}{vendorId && <Link className="seller-profile__link" to={`/store/${encodeURIComponent(vendorId)}`}>Explore this store →</Link>}</div></section>;
+  const phone = admin?.phoneNumber || vendor?.phoneNumber;
+  const email = admin?.email || vendor?.email;
+  return <section className="detail-section seller-profile" aria-labelledby="seller-title"><div className="detail-section__heading"><span className="eyebrow">THE SELLER</span><h2 id="seller-title">Meet the store</h2></div><div className="seller-profile__body"><div className="seller-profile__identity">{store?.logo ? <img src={store.logo} alt=""/> : <span className="seller-profile__placeholder"><Store size={25}/></span>}<div><strong>{name}</strong>{(vendor?.isVerified || admin) && <span className="seller-profile__verified"><BadgeCheck size={15}/> Verified seller</span>}</div></div>{address && <p className="seller-profile__location"><MapPin size={17}/>{address}</p>}{phone && <p className="seller-profile__location"><Phone size={17}/><a href={`tel:${phone}`}>{phone}</a></p>}{email && <p className="seller-profile__location"><Mail size={17}/><a href={`mailto:${email}`}>{email}</a></p>}{vendorId && <Link className="seller-profile__link" to={`/store/${encodeURIComponent(vendorId)}`}>Explore this store →</Link>}</div></section>;
 }
 
 function Rating({ value }) {
