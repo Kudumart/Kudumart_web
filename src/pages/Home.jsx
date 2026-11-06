@@ -1,4 +1,5 @@
-import { ArrowRight, ArrowUpRight, BadgeCheck, Gavel, Headphones, Package, RefreshCcw, ShieldCheck, ShoppingBag, Sparkles, Truck } from 'lucide-react';
+import { useRef } from 'react';
+import { ArrowRight, ArrowUpRight, BadgeCheck, ChevronLeft, ChevronRight, Gavel, Headphones, Package, RefreshCcw, ShieldCheck, ShoppingBag, Sparkles, Truck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { catalogApi } from '../api/catalog';
 import { contentApi } from '../api/content';
@@ -9,11 +10,22 @@ import { useResource } from '../hooks/useResource';
 import { money, plainText } from '../utils/format';
 import '../styles/home.css';
 
-function ProductFeed({ eyebrow, title, description, link, products, emptyTitle }) {
+function TrendingCarousel({ items }) {
+  const track = useRef(null);
+  const scroll = direction => track.current?.scrollBy({ left: direction * Math.max(track.current.clientWidth * 0.85, 260), behavior: 'smooth' });
+  return <div className="trending-carousel">
+    {items.length > 4 && <button type="button" className="trending-carousel__arrow trending-carousel__arrow--prev" aria-label="Scroll trending products left" onClick={() => scroll(-1)}><ChevronLeft size={22}/></button>}
+    <div className="trending-carousel__track" ref={track}>{items.map(product => <div className="trending-carousel__item" key={product.id}><ProductCard product={product}/></div>)}</div>
+    {items.length > 4 && <button type="button" className="trending-carousel__arrow trending-carousel__arrow--next" aria-label="Scroll trending products right" onClick={() => scroll(1)}><ChevronRight size={22}/></button>}
+  </div>;
+}
+
+function ProductFeed({ eyebrow, title, description, link, products, emptyTitle, carousel }) {
   return <section className="section section--products"><div className="container">
     <div className="section__head"><div><div className="eyebrow">{eyebrow}</div><h2>{title}</h2><p>{description}</p></div><Link to={link} className="section-link">View all <ArrowUpRight size={17}/></Link></div>
     {products.loading ? <div className="product-grid">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="product-skeleton"/>)}</div>
       : products.error ? <EmptyState icon={RefreshCcw} title="We couldn’t load these products" description="Please check your connection and try again."/>
+      : products.data?.length && carousel ? <TrendingCarousel items={products.data}/>
       : products.data?.length ? <div className="product-grid">{products.data.map(product => <ProductCard key={product.id} product={product}/>)}</div>
       : <EmptyState title={emptyTitle} description="Check back soon for more finds."/>}
   </div></section>;
@@ -42,7 +54,7 @@ export default function Home() {
   const { country } = useApp();
   const categories = useResource(signal => catalogApi.categories(signal), []);
   const products = useResource(signal => catalogApi.products({ country: country.name, limit: 8, signal }), [country.name]);
-  const popular = useResource(signal => catalogApi.products({ country: country.name, popular: true, limit: 8, signal }), [country.name]);
+  const popular = useResource(signal => catalogApi.products({ country: country.name, popular: true, limit: 100, signal }), [country.name]);
   const auctions = useResource(signal => catalogApi.activeAuctions(country.name, signal), [country.name]);
   const adverts = useResource(signal => contentApi.adverts(signal), []);
   const jobs = useResource(signal => contentApi.jobs('', signal), []);
@@ -51,7 +63,7 @@ export default function Home() {
   return <>
     <section className="hero container"><div className="hero__content"><div className="eyebrow eyebrow--light"><span className="eyebrow__dot"/> A MARKETPLACE FOR EVERY POSSIBILITY</div><h1>Good things<br/>start with a <em>find.</em></h1><p>Discover products you’ll love, sellers you can trust, and ideas worth exploring — all in one place.</p><div className="hero__actions"><Link to="/catalog"><Button icon={ShoppingBag}>Explore the marketplace</Button></Link><Link to="/services" className="hero__text-link">Discover services <ArrowUpRight size={18}/></Link></div><div className="hero__proof"><div className="hero__proof-icon"><BadgeCheck size={20}/></div><span>Made for discovery.<br/><strong>Built around you.</strong></span></div></div><div className="hero__visual" aria-label="A curated mix of lifestyle products"><div className="hero-orbit hero-orbit--one"/><div className="hero-orbit hero-orbit--two"/><div className="hero-photo hero-photo--main"><img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1100&q=85" alt="Modern red sneaker"/></div><div className="hero-photo hero-photo--small"><img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=85" alt="Minimal wristwatch"/></div><div className="hero-sticker"><Sparkles size={19}/><span>Find your<br/><strong>next favorite</strong></span></div><div className="hero-sparkle hero-sparkle--one">✦</div><div className="hero-sparkle hero-sparkle--two">✦</div></div></section>
     <section className="trust-strip"><div className="container trust-strip__inner"><div><ShieldCheck size={23}/><span><strong>Shop with confidence</strong><small>Thoughtful buying, every step</small></span></div><div><Truck size={23}/><span><strong>Find it all in one place</strong><small>Products, services, and more</small></span></div><div><Headphones size={23}/><span><strong>Here when you need us</strong><small>Support for your journey</small></span></div></div></section>
-    <ProductFeed eyebrow="TRENDING PRODUCTS" title="The finds everyone’s noticing." description="Explore products handpicked by KuduMart and trending right now." link="/catalog?popular=true" products={popular} emptyTitle="Trending products are on their way"/>
+    <ProductFeed eyebrow="TRENDING PRODUCTS" title="The finds everyone’s noticing." description="Explore products handpicked by KuduMart and trending right now." link="/catalog?popular=true" products={popular} carousel emptyTitle="Trending products are on their way"/>
     {adverts.data?.length > 0 && <section className="section container home-adverts"><div className="home-adverts__intro"><div><div className="eyebrow">FEATURED ON KUDUMART</div><h2>Offers worth discovering.</h2><p>A rotating edit of standout products, useful finds, and offers selected for right now.</p></div><Link to="/catalog" className="home-adverts__all">Browse the marketplace <ArrowUpRight size={18}/></Link></div><div className="home-adverts__grid">{adverts.data.slice(0, 4).map((advert, index) => <FeaturedAdvert advert={advert} index={index} key={advert.id || index}/>)}</div></section>}
     <section className="section container"><div className="section__head"><div><div className="eyebrow">EXPLORE YOUR WAY</div><h2>What are you looking for?</h2><p>Start somewhere that sparks your curiosity.</p></div><Link to="/catalog" className="section-link">View all categories <ArrowUpRight size={17}/></Link></div><div className="category-grid">{categories.loading ? Array.from({ length: 5 }, (_, index) => <Skeleton key={index} className="category-skeleton"/>) : categories.data?.length ? categories.data.slice(0, 5).map((category, index) => <Link to={`/catalog?category=${encodeURIComponent(category.id)}&name=${encodeURIComponent(category.name)}`} className={`category-card category-card--${index % 5}`} key={category.id}><span className="category-card__number">0{index + 1}</span>{category.image && <img src={category.image} alt="" loading="lazy"/>}<span className="category-card__title">{category.name}</span><span className="category-card__arrow"><ArrowUpRight size={19}/></span></Link>) : <div className="category-grid__empty"><EmptyState title="Categories are on their way" description="Explore the full catalog while we load the latest categories." action={<Link to="/catalog"><Button variant="outline">Shop all</Button></Link>}/></div>}</div></section>
     <ProductFeed eyebrow="JUST LANDED" title="Fresh finds, just for you." description="See what’s new in the marketplace." link="/catalog" products={products} emptyTitle="No products available yet"/>

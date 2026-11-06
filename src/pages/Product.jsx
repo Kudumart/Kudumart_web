@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImageOff, MessageCircle, Minus, Plus, ShieldCheck, ShoppingBag, Truck } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImageOff, MessageCircle, Minus, Phone, Plus, ShieldCheck, ShoppingBag, Truck } from 'lucide-react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { accountApi } from '../api/account';
 import { catalogApi } from '../api/catalog';
@@ -13,7 +13,6 @@ import ProductCard from '../components/ProductCard';
 import SaveHeart from '../components/SaveHeart';
 import { ProductFacts, ProductReviews, SellerProfile, ShareProduct } from '../components/ProductDetailSections';
 import './Product.css';
-import { isVendorAccount } from '../utils/account';
 export default function Product() {
   const { id } = useParams(); const navigate = useNavigate(); const [searchParams, setSearchParams] = useSearchParams(); const { user, notify, setCartCount } = useApp();
   const [quantity, setQuantity] = useState(1); const [busy, setBusy] = useState(false); const [activeImage, setActiveImage] = useState('');
@@ -28,26 +27,24 @@ export default function Product() {
   const storeProducts = useResource(signal => vendorId ? catalogApi.products({ vendorId, limit: 12, signal }) : Promise.resolve([]), [vendorId]);
   const categoryProducts = useResource(signal => product && !product.recommendedProducts?.length && categoryId ? catalogApi.products({ categoryId, limit: 12, signal }) : Promise.resolve([]), [id, categoryId, product?.recommendedProducts?.length]);
   const action = productAction(product); const price = priceFor(product); const symbol = product?.store?.currency?.symbol || '₦';
-  const vendorAccount = isVendorAccount(user);
   const images = product ? [...new Set([imageFor(product), ...(product.additional_images || [])].filter(Boolean))] : [];
   const imageIndex = Math.max(0, images.indexOf(activeImage));
   const changeImage = step => setActiveImage(images[(imageIndex + step + images.length) % images.length]);
-  const dialog = searchParams.has('offer') && !vendorAccount ? 'offer' : searchParams.has('contact') ? 'contact' : '';
+  const dialog = searchParams.has('offer') ? 'offer' : searchParams.has('contact') ? 'contact' : '';
   useEffect(() => { if (dialog && !user) navigate('/login', { replace: true, state: { from: `/product/${id}?${dialog}=1` } }); }, [dialog, user, id, navigate]);
   const closeDialog = () => { const next = new URLSearchParams(searchParams); next.delete('offer'); next.delete('contact'); setSearchParams(next, { replace: true }); };
-  const openDialog = (kind) => { if (!user) { navigate('/login', { state: { from: `/product/${id}?${kind}=1` } }); return; } if (kind === 'offer' && vendorAccount) { notify('Offers and purchases use customer accounts.', 'info'); return; } setSearchParams({ [kind]: '1' }); };
+  const openDialog = (kind) => { if (!user) { navigate('/login', { state: { from: `/product/${id}?${kind}=1` } }); return; } setSearchParams({ [kind]: '1' }); };
   useEffect(() => {
-    if (!user || vendorAccount || !id || action !== 'offer') return;
+    if (!user || !id || action !== 'offer') return;
     const controller = new AbortController();
     accountApi.offers(controller.signal).then(result => {
       const items = Array.isArray(result) ? result : result?.offers || result?.data || [];
       if (!controller.signal.aborted) setOffer(items.find(item => item.productId === id || item.product?.id === id) || null);
     }).catch(() => {});
     return () => controller.abort();
-  }, [user, vendorAccount, id, action]);
+  }, [user, id, action]);
   const add = async () => {
     if (!user) { navigate('/login', { state: { from: `/product/${id}` } }); return; }
-    if (vendorAccount) { notify('Seller accounts cannot purchase products. Use a customer account to shop.', 'info'); navigate('/seller'); return; }
     setBusy(true);
     try { await accountApi.addToCart(id, quantity, action === 'details' ? product.variants[Number(selectedVariant)] : undefined); setCartCount(value => value + quantity); notify('Added to your cart.', 'success'); }
     catch (error) { notify(error.message, 'error'); } finally { setBusy(false); }
@@ -82,11 +79,12 @@ export default function Product() {
   const moreFromStore = (storeProducts.data || []).filter(item => item.id && item.id !== id).slice(0, 4);
   const similarProducts = (product.recommendedProducts?.length ? product.recommendedProducts : categoryProducts.data || []).filter(item => item.id && item.id !== id).slice(0, 4);
   return <div className="container product-page"><Link to="/catalog" className="back-link"><ArrowLeft size={16}/> Back to shopping</Link><div className="product-detail"><div className="product-detail__gallery"><div className="product-detail__main-image">{images.length ? <img src={activeImage || images[0]} alt={product.name}/> : <ImageOff size={48}/>}{images.length > 1 && <><button className="product-gallery__arrow product-gallery__arrow--left" onClick={() => changeImage(-1)} aria-label="Previous image"><ChevronLeft size={20}/></button><button className="product-gallery__arrow product-gallery__arrow--right" onClick={() => changeImage(1)} aria-label="Next image"><ChevronRight size={20}/></button></>}</div>{images.length > 1 && <div className="product-detail__thumbs">{images.map((image, index) => <button className={(activeImage || images[0]) === image ? 'active' : ''} onClick={() => setActiveImage(image)} key={`${image}-${index}`} aria-label={`View product image ${index + 1}`}><img src={image} alt=""/></button>)}</div>}</div><div className="product-detail__info"><span className="eyebrow">{product.store?.name || 'KUDUMART MARKETPLACE'}</span><h1>{product.name}</h1><div className="product-detail__status"><span><Check size={15}/> {isAvailable ? 'Available now' : 'Out of stock'}</span><span>{product.condition?.replaceAll('_',' ') || 'Product'}</span></div><div className="product-detail__price"><strong>{action === 'details' && variantPrice.starting ? 'From ' : ''}{money(displayPrice, displaySymbol)}</strong>{!variant && price.discounted && <del>{money(price.original, symbol)}</del>}</div><p className="product-detail__description">{plainText(product.description) || 'Discover more about this item and make it yours today.'}</p>
-    {vendorAccount && ['cart', 'details', 'offer'].includes(action) ? <div className="seller-purchase-notice"><ShieldCheck size={20}/><div><strong>You’re browsing with a seller account</strong><p>Seller accounts can explore the marketplace and message vendors, but purchasing is available through customer accounts.</p></div><Link className="button button--outline button--sm" to="/seller">Seller workspace</Link></div> : <>{action === 'sold-out' && <div className="product-detail__purchase"><Button disabled>Sold out</Button></div>}
+    {action === 'sold-out' && <div className="product-detail__purchase"><Button disabled>Sold out</Button></div>}
     {action === 'contact' && <div className="product-detail__purchase"><Button onClick={() => openDialog('contact')}>Contact seller</Button></div>}
     {action === 'offer' && <div className="product-detail__purchase"><Button onClick={() => openDialog('offer')}>{offer ? 'View your offer' : 'Request an offer'}</Button></div>}
     {action === 'details' && <div className="product-detail__variant"><p>Select an option to see availability and add this item to your cart.</p>{variants.length ? <div className="product-detail__variant-list">{variants.map((variant, index) => <button key={variant.sku_id || index} className={selectedVariant === String(index) ? 'active' : ''} onClick={() => { setSelectedVariant(String(index)); setQuantity(1); }}>{variantLabel(variant)}</button>)}</div> : <p>Available options are not listed yet. Contact the seller for details.</p>}{variant && <div className="product-detail__variant-summary"><span>{variantSoldOut ? 'This option is sold out' : `${variant.sku_available_stock ?? product.quantity} available`}</span><strong>{money(displayPrice * quantity, displaySymbol)}</strong></div>}{variant && !variantSoldOut && <div className="product-detail__purchase"><div className="quantity-picker"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label="Decrease quantity"><Minus size={17}/></button><span>{quantity}</span><button onClick={() => setQuantity(Math.min(Number(variant.sku_available_stock) || 99, quantity + 1))} aria-label="Increase quantity"><Plus size={17}/></button></div><Button icon={ShoppingBag} loading={busy} onClick={add}>Add to cart</Button></div>}</div>}
-    {action === 'cart' && <div className="product-detail__purchase"><div className="quantity-picker"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label="Decrease quantity"><Minus size={17}/></button><span>{quantity}</span><button onClick={() => setQuantity(Math.min(Number(product.quantity) || 99, quantity + 1))} aria-label="Increase quantity"><Plus size={17}/></button></div><Button icon={ShoppingBag} loading={busy} onClick={add}>Add to cart</Button></div>}</>}
+    {action === 'cart' && <div className="product-detail__purchase"><div className="quantity-picker"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label="Decrease quantity"><Minus size={17}/></button><span>{quantity}</span><button onClick={() => setQuantity(Math.min(Number(product.quantity) || 99, quantity + 1))} aria-label="Increase quantity"><Plus size={17}/></button></div><Button icon={ShoppingBag} loading={busy} onClick={add}>Add to cart</Button></div>}
+    {product.admin && !product.vendor && product.admin.phoneNumber && <a className="button button--outline product-enquiry" href={`tel:${product.admin.phoneNumber}`}><Phone size={18}/> Call / Enquire: {product.admin.phoneNumber}</a>}
     <div className="product-detail__secondary"><SaveHeart productId={product.id} showText/>{canMessageVendor && action !== 'contact' && <button type="button" className="product-message" onClick={() => openDialog('contact')}><MessageCircle size={18}/> Message vendor</button>}<ShareProduct product={product}/></div><div className="product-detail__benefits"><span><ShieldCheck size={20}/> Shop with confidence</span><span><Truck size={20}/> Delivery options at checkout</span>{product.return_policy && <span>Returns: {product.return_policy}</span>}</div><SellerProfile product={product}/></div></div>
     <div className="product-information-grid"><ProductFacts product={product}/><ProductReviews reviews={product.reviews}/></div>
     <div className="product-related">

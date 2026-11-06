@@ -8,7 +8,33 @@ const ADMIN_TOKEN = "kuduAdminToken";
 export const adminSession = {
   get: () => sessionStorage.getItem(ADMIN_TOKEN),
   set: (token) => sessionStorage.setItem(ADMIN_TOKEN, token),
-  clear: () => sessionStorage.removeItem(ADMIN_TOKEN),
+  clear: () => {
+    sessionStorage.removeItem(ADMIN_TOKEN);
+    sessionStorage.removeItem(ADMIN_ACCESS);
+  },
+};
+
+const ADMIN_ACCESS = "kuduAdminAccess";
+
+/**
+ * Which areas the signed-in admin may use. Super admins (and accounts without a
+ * role) have full access; sub-admins only see what their role grants.
+ */
+export const adminAccess = {
+  get: () => {
+    try {
+      return JSON.parse(sessionStorage.getItem(ADMIN_ACCESS) || "null");
+    } catch {
+      return null;
+    }
+  },
+  set: (value) => sessionStorage.setItem(ADMIN_ACCESS, JSON.stringify(value)),
+  can: (permissions) => {
+    const access = adminAccess.get();
+    if (!permissions || !permissions.length) return true;
+    if (!access || access.full) return true;
+    return permissions.some((name) => access.permissions?.includes(name));
+  },
 };
 
 async function adminRequest(
@@ -71,7 +97,26 @@ export const adminApi = {
         500,
       );
     adminSession.set(token);
-    return response?.data?.data || response?.data || {};
+    const profile = response?.data?.data || response?.data || {};
+    const roleId = profile.roleId || profile.role?.id;
+    if (!roleId || profile.role?.name === "superadmin") {
+      adminAccess.set({ full: true, permissions: [] });
+    } else {
+      let permissions = [];
+      try {
+        const result = await adminRequest("/admin/permissions/me");
+        const list =
+          result?.data?.permissions ||
+          (Array.isArray(result?.data) ? result.data : null) ||
+          result?.permissions ||
+          [];
+        permissions = list.map((item) => item?.name || item).filter(Boolean);
+      } catch {
+        permissions = [];
+      }
+      adminAccess.set({ full: false, permissions });
+    }
+    return profile;
   },
   customers: (page = 1, signal) =>
     adminRequest("/admin/customers", { params: { page }, signal }),
@@ -97,6 +142,16 @@ export const adminApi = {
     adminRequest(`/admin/subscription-offers/${offerId}/revoke`, {
       method: "PATCH",
     }),
+  saveSubscriptionPlan: (body) =>
+    adminRequest(
+      body.planId || body.id
+        ? "/admin/subscription/plan/update"
+        : "/admin/subscription/plan/create",
+      { method: body.planId || body.id ? "PUT" : "POST", body },
+    ),
+  currencies: (signal) => adminRequest("/admin/currencies", { signal }),
+  createPermission: (name) =>
+    adminRequest("/admin/permission/create", { method: "POST", body: { name } }),
   setPlanWaiver: (planId, waived) =>
     adminRequest(`/admin/subscription/plans/${planId}/fee-waiver`, {
       method: "PATCH",

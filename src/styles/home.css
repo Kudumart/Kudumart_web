@@ -35,3 +35,34 @@
 .home-advert-card--no-image .home-advert-card__media{display:grid;place-items:center;color:#ffffff14;font:900 clamp(120px,20vw,280px)/1 Manrope,sans-serif}
 @media(max-width:900px){.home-adverts__grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"lead lead" "wide wide" "small-a small-b";grid-template-rows:390px 240px 235px}}
 @media(max-width:600px){.home-adverts__intro{align-items:flex-start;flex-direction:column}.home-adverts__all{min-height:39px}.home-adverts__grid{display:flex;gap:13px;min-height:0;margin-inline:calc((100vw - 100%)/-2);padding-inline:calc((100vw - 100%)/2);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.home-adverts__grid::-webkit-scrollbar{display:none}.home-advert-card{flex:0 0 82vw;height:390px;scroll-snap-align:center}.home-advert-card--2 .home-advert-card__shade,.home-adverts__grid>.home-advert-card--2>.home-advert-card__shade{background:linear-gradient(180deg,transparent 22%,rgba(12,24,43,.16) 47%,rgba(12,24,43,.94) 100%)}.home-advert-card--2 .home-advert-card__content{top:auto;right:0;display:block}.home-advert-card--3 p,.home-advert-card--4 p{display:-webkit-box}.home-advert-card h3,.home-advert-card--1 h3{font-size:25px}}
+
+/* Trending: two-row horizontally scrolling carousel */
+.trending-carousel { position: relative; }
+.trending-carousel__track {
+  display: grid;
+  grid-template-rows: repeat(2, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 3 * 20px) / 4);
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.trending-carousel__track::-webkit-scrollbar { display: none; }
+.trending-carousel__item { scroll-snap-align: start; min-width: 0; }
+.trending-carousel__arrow {
+  position: absolute; top: 50%; z-index: 2; width: 42px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  transform: translateY(-50%); border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1); background: #fff; color: #192d4c;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15); cursor: pointer;
+}
+.trending-carousel__arrow:hover { background: #192d4c; color: #fff; }
+.trending-carousel__arrow--prev { left: -14px; }
+.trending-carousel__arrow--next { right: -14px; }
+@media (max-width: 1023px) { .trending-carousel__track { grid-auto-columns: calc((100% - 2 * 16px) / 3); gap: 16px; } }
+@media (max-width: 719px) {
+  .trending-carousel__track { grid-auto-columns: calc((100% - 12px) / 2); gap: 12px; }
+  .trending-carousel__arrow { display: none; }
+}

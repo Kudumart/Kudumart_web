@@ -35,7 +35,7 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
-import { adminApi, adminSession } from "../../api/admin";
+import { adminAccess, adminApi, adminSession } from "../../api/admin";
 import { uploadImage } from "../../api/upload";
 import {
   Button,
@@ -47,6 +47,7 @@ import {
 } from "../../components/ui";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useResource } from "../../hooks/useResource";
+import AdminPlanForm from "./AdminPlanForm";
 import "./AdminNavigation.css";
 
 const navigationSections = [
@@ -82,6 +83,33 @@ const navigationSections = [
     { to: "/admin/access", label: "Team & permissions", icon: KeyRound },
   ] },
 ];
+// Permissions (as granted to sub-admin roles) required for each admin area.
+// Areas without an entry are open to every signed-in administrator.
+const routePermissions = {
+  "/admin/customers": ["view-customers"],
+  "/admin/vendors": ["view-vendors"],
+  "/admin/verification": ["view-vendors"],
+  "/admin/products": ["manage-products"],
+  "/admin/categories": ["manage-products"],
+  "/admin/auctions": ["manage-products"],
+  "/admin/dropshipping": ["manage-products"],
+  "/admin/stores": ["view-stores"],
+  "/admin/services": ["view-services"],
+  "/admin/service-taxonomy": ["view-services"],
+  "/admin/adverts": ["view-adverts"],
+  "/admin/orders": ["view-orders"],
+  "/admin/transactions": ["view-transactions"],
+  "/admin/withdrawals": ["view-withdrawals"],
+  "/admin/content": ["view-pages", "view-jobs"],
+  "/admin/access": ["view-subadmin", "view-role", "view-permission"],
+};
+const requiredFor = (pathname) => {
+  const match = Object.keys(routePermissions)
+    .filter((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+    .sort((a, b) => b.length - a.length)[0];
+  return match ? routePermissions[match] : null;
+};
+const linkAllowed = (link) => adminAccess.can(routePermissions[link.to]);
 const linkMatches = (link, pathname) => link.end ? pathname === link.to : pathname.startsWith(link.to);
 const rowsFrom = (payload) =>
   Array.isArray(payload?.data)
@@ -200,6 +228,8 @@ export function AdminLayout() {
     }
   }, [openSections]);
   if (!adminSession.get()) return <Navigate to="/auth/admin/login" replace />;
+  const required = requiredFor(location.pathname);
+  const blocked = required && !adminAccess.can(required);
   return (
     <div className="admin-shell">
       <aside className={`admin-sidebar ${open ? "admin-sidebar--open" : ""}`}>
@@ -216,7 +246,7 @@ export function AdminLayout() {
           <NavLink to="/admin" end onClick={() => setOpen(false)} className={({ isActive }) => `admin-nav admin-nav--overview ${isActive ? "active" : ""}`}>
             <BarChart3 size={19} /> Overview
           </NavLink>
-          {navigationSections.map((section) => {
+          {navigationSections.map((full) => ({ ...full, links: full.links.filter(linkAllowed) })).filter((section) => section.links.length).map((section) => {
             const sectionOpen = Boolean(openSections[section.id]);
             const active = section.links.some((link) => linkMatches(link, location.pathname));
             return <section className={`admin-nav-section ${active ? "admin-nav-section--active" : ""}`} key={section.id}>
@@ -261,7 +291,15 @@ export function AdminLayout() {
           <Link to="/">View marketplace ↗</Link>
         </header>
         <main className="admin-content">
-          <Outlet />
+          {blocked ? (
+            <EmptyState
+              title="You don’t have access to this area"
+              description="Ask a super administrator to grant your role the permission it needs."
+              action={<Link to="/admin"><Button variant="outline">Back to overview</Button></Link>}
+            />
+          ) : (
+            <Outlet />
+          )}
         </main>
       </div>
       {open && (
@@ -922,6 +960,7 @@ export function AdminSubscriptions() {
   );
   const [busy, setBusy] = useState("");
   const [feedback, setFeedback] = useState(null);
+  const [editing, setEditing] = useState(null);
   const plans = rowsFrom(resource.data);
   const toggle = async (plan) => {
     setBusy(plan.id);
@@ -943,10 +982,22 @@ export function AdminSubscriptions() {
           <span className="eyebrow">REVENUE CONTROLS</span>
           <h1>Subscriptions</h1>
           <p>
-            Manage plan-wide fee waivers for campaigns and marketplace growth.
+            Create and edit plans, and manage plan-wide fee waivers.
           </p>
         </div>
+        <Button onClick={() => setEditing({})}>New plan</Button>
       </div>
+      {editing && (
+        <AdminPlanForm
+          plan={editing.id ? editing : undefined}
+          onClose={() => setEditing(null)}
+          onSaved={(message) => {
+            setEditing(null);
+            setFeedback({ message });
+            setRefresh((value) => value + 1);
+          }}
+        />
+      )}
       {feedback && (
         <div
           className={
@@ -1002,6 +1053,9 @@ export function AdminSubscriptions() {
                       ? "Fees waived globally"
                       : "Normal pricing"}
                   </span>
+                  <Button variant="outline" onClick={() => setEditing(plan)}>
+                    Edit plan
+                  </Button>
                   <Button
                     variant={plan.isFeeWaived ? "outline" : "primary"}
                     loading={busy === plan.id}
