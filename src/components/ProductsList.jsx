@@ -7,6 +7,8 @@ const ProductListing = ({
   productsArr = [],
   displayError = false,
   rowNo = 6,
+  layout = "grid",
+  scrollRef,
 }) => {
   const filteredProducts = productsArr;
 
@@ -49,8 +51,12 @@ const ProductListing = ({
   return (
     <div className="w-full">
       <div
-        className={`grid grid-cols-[repeat(auto-fill,minmax(150px,auto))]
-         md:grid-cols-[repeat(auto-fill,minmax(250px,auto))] gap-4`}
+        ref={scrollRef}
+        className={
+          layout === "two-row-carousel"
+            ? "grid grid-flow-col grid-rows-2 auto-cols-[minmax(150px,180px)] md:auto-cols-[minmax(220px,250px)] gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 overscroll-x-contain"
+            : "grid grid-cols-[repeat(auto-fill,minmax(150px,auto))] md:grid-cols-[repeat(auto-fill,minmax(250px,auto))] gap-4"
+        }
       >
         {filteredProducts.map((item) => {
           const isSoldOut = item.quantity === 0;
@@ -62,7 +68,7 @@ const ProductListing = ({
           const card = (
             <div
               key={item.id}
-              className={`bg-white shadow-lg p-1 border rounded-lg relative flex flex-col h-full ${
+              className={`bg-white shadow-lg p-1 border rounded-lg relative flex flex-col h-full ${layout === "two-row-carousel" ? "snap-start" : ""} ${
                 isSoldOut ? "opacity-50 pointer-events-none" : ""
               }`}
             >
