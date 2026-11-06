@@ -54,7 +54,7 @@ const ProductListing = ({
         ref={scrollRef}
         className={
           layout === "two-row-carousel"
-            ? "grid grid-flow-col grid-rows-2 auto-cols-[minmax(150px,180px)] md:auto-cols-[minmax(220px,250px)] gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 overscroll-x-contain"
+            ? "grid grid-flow-col grid-rows-2 auto-cols-[44%] min-[480px]:auto-cols-[calc((100%-1.5rem)/3)] md:auto-cols-[calc((100%-2rem)/3)] lg:auto-cols-[calc((100%-3rem)/4)] xl:auto-cols-[calc((100%-4rem)/5)] gap-3 md:gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 overscroll-x-contain [scrollbar-width:thin]"
             : "grid grid-cols-[repeat(auto-fill,minmax(150px,auto))] md:grid-cols-[repeat(auto-fill,minmax(250px,auto))] gap-4"
         }
       >

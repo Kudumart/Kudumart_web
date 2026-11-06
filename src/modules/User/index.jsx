@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import useApiMutation from "../../api/hooks/useApiMutation";
 import { setCurrencyData } from "../../reducers/userSlice";
 import { Menu } from "lucide-react"; // Hamburger icon for mobile
+import DeliveryZoneNotice from "./components/DeliveryZoneNotice";
 
 export default function UserProfile() {
     const { mutate } = useApiMutation();
@@ -61,7 +62,8 @@ export default function UserProfile() {
                     </div>
 
                     {/* Main Content */}
-                    <div className="flex w-full md:w-[80%]">
+                    <div className="flex w-full md:w-[80%] flex-col">
+                        <DeliveryZoneNotice />
                         <Outlet />
                     </div>
                 </div>

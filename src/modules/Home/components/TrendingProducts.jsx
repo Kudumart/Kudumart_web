@@ -29,12 +29,12 @@ const TrendingProducts = ({ productsArr = [], ads = [] }) => {
 
     return (
         <div className="w-full">
-            <div className="bg-[#192D4C] w-full flex justify-between p-6 rounded-md mb-10 cursor-pointer">
-                <h2 className="text-lg text-white font-semibold">Trending Products</h2>
-                <Link to={'/see-all'} className="text-white font-semibold">See All</Link>
+            <div className="bg-[#192D4C] w-full flex items-center justify-between px-4 py-4 md:p-6 rounded-md mb-5 md:mb-8">
+                <h2 className="text-base md:text-lg text-white font-semibold">Trending Products</h2>
+                <Link to={'/see-all'} className="text-white text-sm md:text-base font-semibold hover:underline">See All</Link>
             </div>
 
-            <div className="relative px-1 md:px-12">
+            <div className="relative px-0 md:px-14">
                 {filteredProducts.length > 0 && (
                     <>
                         <button
