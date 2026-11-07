@@ -358,19 +358,24 @@ export default function Home() {
             <Link to="/catalog">
               <Button icon={ShoppingBag}>Explore the marketplace</Button>
             </Link>
-            <Link to="/services" className="hero__text-link">
+            <Link to="/services" className="hero__text-link hero__text-link--desktop">
               Discover services <ArrowUpRight size={18} />
             </Link>
           </div>
           <div className="hero__proof">
-            <div className="hero__proof-icon">
-              <BadgeCheck size={20} />
+            <div className="hero__proof-badge">
+              <div className="hero__proof-icon">
+                <BadgeCheck size={20} />
+              </div>
+              <span>
+                Made for discovery.
+                <br />
+                <strong>Built around you.</strong>
+              </span>
             </div>
-            <span>
-              Made for discovery.
-              <br />
-              <strong>Built around you.</strong>
-            </span>
+            <Link to="/services" className="hero__text-link hero__text-link--mobile">
+              Discover services <ArrowUpRight size={15} />
+            </Link>
           </div>
         </div>
 
