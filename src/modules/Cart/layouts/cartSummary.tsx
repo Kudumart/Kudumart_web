@@ -459,7 +459,7 @@ const CartSummary = ({ cart, refetch, cartItemIds }: CartSummaryType) => {
               <div>
                 <p className="text-sm font-bold text-gray-800">Kudumart Store Location</p>
                 <p className="text-sm text-gray-600 mt-1 leading-relaxed">
-                  Abeokuta, Ogun State, Nigeria.<br/>
+                  52, Gbemisola Adenubi Street, Off Ago Palace Way, by Jemtok Bus Stop, Ago-Okota, Lagos.<br/>
                   <span className="text-xs text-gray-500">(Main Office)</span>
                 </p>
                 <p className="text-xs text-gray-500 mt-2 font-medium bg-white px-2 py-1 rounded inline-block border border-orange-100">
