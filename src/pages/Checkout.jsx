@@ -26,6 +26,7 @@ export default function Checkout() {
   const [confirmationError, setConfirmationError] = useState('');
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [messageModal, setMessageModal] = useState(false);
+  const [selectedStoreVendor, setSelectedStoreVendor] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [pendingPayment, setPendingPayment] = useState(() => {
@@ -47,10 +48,57 @@ export default function Checkout() {
   const quoteError = charges.error || deliveryError;
   const supportPhone = items.find(i => i.product?.admin?.phoneNumber)?.product?.admin?.phoneNumber || '+2348133059324';
   const supportPhoneDisplay = supportPhone.replace(/^(\+234|0)(\d{3})(\d{3})(\d{4})$/, '+234 $2 $3 $4');
-  const sellerVendor = items.find(i => i.product?.vendor?.id || i.product?.vendorId)?.product?.vendor;
-  const sellerVendorId = sellerVendor?.id || items.find(i => i.product?.vendorId)?.product?.vendorId;
-  const sellerStoreName = items[0]?.product?.store?.name || [sellerVendor?.firstName, sellerVendor?.lastName].filter(Boolean).join(' ') || 'the seller';
-  const sellerProductId = items[0]?.productId || items[0]?.product?.id;
+  // Group cart items by store / vendor so multi-vendor carts are cleanly separated
+  const storeVendors = useMemo(() => {
+    const map = new Map();
+    for (const item of items) {
+      const vendor = item.product?.vendor;
+      const vendorId = vendor?.id || item.product?.vendorId;
+      const storeName = item.product?.store?.name || [vendor?.firstName, vendor?.lastName].filter(Boolean).join(' ') || 'the seller';
+      const storeId = item.product?.store?.id || vendorId || item.id;
+      if (!map.has(storeId)) {
+        map.set(storeId, {
+          storeId,
+          storeName,
+          vendorId,
+          productId: item.productId || item.product?.id,
+          productNames: [item.product?.name].filter(Boolean),
+          items: [item]
+        });
+      } else {
+        const entry = map.get(storeId);
+        entry.items.push(item);
+        if (item.product?.name && !entry.productNames.includes(item.product.name)) {
+          entry.productNames.push(item.product.name);
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [items]);
+
+  // Identify if a specific store is mentioned in the delivery/rate error (e.g. "${store.name} does not have a delivery rate for...")
+  const troubledStore = useMemo(() => {
+    if (!quoteError?.message) return null;
+    const msg = quoteError.message.toLowerCase();
+    return storeVendors.find(sv =>
+      (sv.storeName && msg.includes(sv.storeName.toLowerCase())) ||
+      sv.items.some(item => item.product?.name && msg.includes(item.product.name.toLowerCase()))
+    ) || null;
+  }, [quoteError, storeVendors]);
+
+  const activeStoreVendor = selectedStoreVendor || troubledStore || storeVendors[0];
+  const sellerStoreName = activeStoreVendor?.storeName || 'the seller';
+  const sellerVendorId = activeStoreVendor?.vendorId;
+  const sellerProductId = activeStoreVendor?.productId;
+
+  const openMessageModalForStore = (sv) => {
+    const target = sv || troubledStore || storeVendors[0];
+    if (!target) return;
+    setSelectedStoreVendor(target);
+    const productList = target.productNames?.length ? `"${target.productNames.join(', ')}"` : 'items in my cart';
+    setMessageText(`Hi ${target.storeName}, I'd like to order ${productList}, but delivery to ${location?.city || 'my location'} is unavailable. Could you provide a delivery rate?`);
+    setMessageModal(true);
+  };
 
   const handleSendMessage = async (event) => {
     event.preventDefault();
@@ -209,7 +257,7 @@ export default function Checkout() {
           {mode === 'NGN' && (hasAddress || !needsDelivery) && !quote && !charges.loading && !deliveryFees.loading && <div className="form-alert" role="alert">We couldn’t calculate a valid total. Review your cart before paying.</div>}
           {pendingPayment ? <div className="checkout-warning"><strong>Payment verification pending</strong><p>{confirmationError || `Checking reference ${pendingPayment.refId} with the payment provider. Do not pay again.`}</p><Button variant="outline" loading={confirming} onClick={() => completeOrder(pendingPayment)}>Retry verification</Button></div>
             : needsDelivery && !hasAddress ? <div className="checkout-warning"><MapPin size={20}/><div><strong>Add a delivery address to continue</strong><p>We’ll show the final delivery cost and unlock payment once your address is saved.</p></div></div>
-            : mode === 'NGN' ? quoteError ? <div className="checkout-warning"><div><strong>{deliveryError ? 'Delivery is unavailable for this address' : 'We couldn’t verify the current product charges'}</strong><p>{(quoteError.message || 'Please try again before continuing to payment.').replace(/contact the seller\.?/i, 'choose contact options.')}</p><div className="checkout-warning__actions">{deliveryError && canPickup && <Button variant="outline" size="sm" onClick={() => { setDeliveryOption('store'); setPaymentReady(null); }}>Use pickup instead</Button>}{sellerVendorId && <Button variant="outline" size="sm" icon={MessageCircle} onClick={() => { setMessageText(`Hi ${sellerStoreName}, I'd like to order "${items[0]?.product?.name || 'items in my cart'}", but delivery to ${location?.city || 'my location'} is unavailable. Could you provide a delivery rate?`); setMessageModal(true); }}>Message seller</Button>}<a className="button button--outline button--sm checkout-support-btn" href={`tel:${supportPhone}`}><Phone size={14}/> Contact support ({supportPhoneDisplay})</a></div></div></div> : <Button className="checkout-pay-button" type="button" icon={CreditCard} onClick={startNaira} disabled={!canPay} loading={preparing}>Continue to secure payment</Button>
+            : mode === 'NGN' ? quoteError ? <div className="checkout-warning"><div><strong>{deliveryError ? 'Delivery is unavailable for this address' : 'We couldn’t verify the current product charges'}</strong><p>{(quoteError.message || 'Please try again before continuing to payment.').replace(/contact the seller\.?/i, 'choose contact options.')}</p><div className="checkout-warning__actions">{deliveryError && canPickup && <Button variant="outline" size="sm" onClick={() => { setDeliveryOption('store'); setPaymentReady(null); }}>Use pickup instead</Button>}{activeStoreVendor?.vendorId && <Button variant="outline" size="sm" icon={MessageCircle} onClick={() => openMessageModalForStore(troubledStore || activeStoreVendor)}>Message {troubledStore ? troubledStore.storeName : 'seller'}</Button>}<a className="button button--outline button--sm checkout-support-btn" href={`tel:${supportPhone}`}><Phone size={14}/> Contact support ({supportPhoneDisplay})</a></div></div></div> : <Button className="checkout-pay-button" type="button" icon={CreditCard} onClick={startNaira} disabled={!canPay} loading={preparing}>Continue to secure payment</Button>
             : paymentReady ? <StripePayment clientSecret={paymentReady.clientSecret} publicKey={paymentReady.publicKey} amount={money(paymentReady.totalAmount, '$')} onPaid={completeOrder} onError={setConfirmationError}/>
             : preparing ? <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 0', color: '#64748b', fontSize: 13 }}><span className="spinner" /><span>Calculating quote and preparing payment options…</span></div>
             : <div><Button loading={preparing} disabled={!canPay} onClick={startDollar} icon={CreditCard}>Proceed to payment options</Button><small style={{ display: 'block', marginTop: 8, color: '#64748b', fontSize: 12 }}>You will review your final quote and enter payment details before any charge is made.</small></div>}
@@ -220,7 +268,7 @@ export default function Checkout() {
           : paymentReady ? <><div className="checkout-summary__row"><span>Items</span><strong>{money(paymentReady.paymentBreakdown?.subtotal, '$')}</strong></div><div className="checkout-summary__row"><span>Product charges</span><strong>{money(paymentReady.paymentBreakdown?.chargeAmount, '$')}</strong></div><div className="checkout-summary__total"><span>Total</span><strong>{money(paymentReady.totalAmount, '$')}</strong></div></> : preparing ? <p className="checkout-summary__hint">Calculating your payment quote…</p> : <p className="checkout-summary__hint">{needsDelivery && !hasAddress ? 'Add a delivery address to see your final total.' : 'Your final dollar total comes from the payment quote before you pay.'}</p>}
         <p className="checkout-summary__assurance"><ShieldCheck size={17}/> Your order is confirmed only after payment is verified.</p></aside></div>}
     {showAddress && <Modal title="Delivery address" onClose={() => setShowAddress(false)}><AddressForm onSaved={() => { setShowAddress(false); setPaymentReady(null); }} onCancel={() => setShowAddress(false)}/></Modal>}
-    {messageModal && <Modal title={`Message ${sellerStoreName}`} onClose={() => setMessageModal(false)}><form className="offer-form" onSubmit={handleSendMessage}><p>Ask <strong>{sellerStoreName}</strong> about delivery to your address or alternative options. Their reply will appear in your messages.</p><label className="field" htmlFor="checkoutMessage"><span className="field__label">Message</span><textarea id="checkoutMessage" className="field__input" rows="4" maxLength="2000" required value={messageText} onChange={event => setMessageText(event.target.value)} placeholder="What would you like to ask the seller?"/></label><Button type="submit" loading={sendingMessage} disabled={!messageText.trim()}>Send message</Button></form></Modal>}
+    {messageModal && <Modal title={`Message ${sellerStoreName}`} onClose={() => setMessageModal(false)}><form className="offer-form" onSubmit={handleSendMessage}>{storeVendors.length > 1 && <label className="field" htmlFor="selectStoreVendor"><span className="field__label">Store / Seller to contact</span><select id="selectStoreVendor" className="field__input" value={activeStoreVendor?.storeId || ''} onChange={event => { const chosen = storeVendors.find(sv => sv.storeId === event.target.value); if (chosen) { setSelectedStoreVendor(chosen); const productList = chosen.productNames?.length ? `"${chosen.productNames.join(', ')}"` : 'items in my cart'; setMessageText(`Hi ${chosen.storeName}, I'd like to order ${productList}, but delivery to ${location?.city || 'my location'} is unavailable. Could you provide a delivery rate?`); } }}>{storeVendors.map(sv => <option key={sv.storeId} value={sv.storeId}>{sv.storeName} {sv.storeId === troubledStore?.storeId ? '(needs delivery rate update)' : ''}</option>)}</select></label>}<p>Ask <strong>{sellerStoreName}</strong> about delivery to your address or alternative options. Their reply will appear in your messages.</p><label className="field" htmlFor="checkoutMessage"><span className="field__label">Message</span><textarea id="checkoutMessage" className="field__input" rows="4" maxLength="2000" required value={messageText} onChange={event => setMessageText(event.target.value)} placeholder="What would you like to ask the seller?"/></label><Button type="submit" loading={sendingMessage} disabled={!messageText.trim()}>Send message</Button></form></Modal>}
     {orderSuccess && <Modal title="Order confirmed" icon={<CheckCircle2 size={20}/>} onClose={() => navigate('/account/orders', { replace: true })} footer={<Button icon={PackageCheck} onClick={() => navigate('/account/orders', { replace: true })}>View my orders</Button>}><div className="checkout-success"><span className="checkout-success__icon"><CheckCircle2 size={38}/></span><h3>Thank you for your order!</h3><p>Your payment was verified and your order has been placed successfully. You can follow its progress from your orders page.</p></div></Modal>}
   </div>;
 }
