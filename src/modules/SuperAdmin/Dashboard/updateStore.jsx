@@ -5,6 +5,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import useApiMutation from '../../../api/hooks/useApiMutation';
 import NaijaStates from 'naija-state-local-government';
 import Loader from '../../../components/Loader';
+import { Plus, Trash2, Truck } from 'lucide-react';
+import DeliveryAreaLocationFields from '../../../components/DeliveryAreaLocationFields';
 
 const UpdateStore = () => {
     const {
@@ -24,6 +26,7 @@ const UpdateStore = () => {
     const [selectedCity, setSelectedCity] = useState(null);
     const [currencies, setCurrencies] = useState([]);
     const [deliveryOptions, setDeliveryOptions] = useState([]);
+    const [deliveryErrors, setDeliveryErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { mutate } = useApiMutation();
@@ -49,6 +52,68 @@ const UpdateStore = () => {
         initializeData();
     }, []);
 
+    const handleDeliveryLocationChange = (index, location) => {
+        setDeliveryOptions((prev) => {
+            const updated = [...prev];
+            updated[index] = {
+                ...updated[index],
+                ...location,
+            };
+            return updated;
+        });
+        if (deliveryErrors[index]) {
+            setDeliveryErrors((prev) => {
+                const copy = { ...prev };
+                delete copy[index];
+                return copy;
+            });
+        }
+    };
+
+    const handleDeliveryFieldChange = (index, field, value) => {
+        setDeliveryOptions((prev) => {
+            const updated = [...prev];
+            updated[index] = {
+                ...updated[index],
+                [field]: value,
+            };
+            return updated;
+        });
+        if (deliveryErrors[index]) {
+            setDeliveryErrors((prev) => {
+                const copy = { ...prev };
+                delete copy[index];
+                return copy;
+            });
+        }
+    };
+
+    const addDeliveryOption = () => {
+        setDeliveryOptions((prev) => [
+            ...prev,
+            {
+                country: selectedCountry?.name || "Nigeria",
+                countryCode: selectedCountry?.isoCode || "NG",
+                state: "",
+                stateCode: "",
+                city: "",
+                scope: "city",
+                price: "",
+                arrival_day: "",
+            },
+        ]);
+    };
+
+    const removeDeliveryOption = (indexToRemove) => {
+        if (deliveryOptions.length <= 1) return;
+        setDeliveryOptions((prev) => prev.filter((_, i) => i !== indexToRemove));
+        setDeliveryErrors((prev) => {
+            const copy = { ...prev };
+            delete copy[indexToRemove];
+            return copy;
+        });
+    };
+
     // Transform form data for API submission
     const transformPayload = (formData) => {
         return {
@@ -66,10 +131,15 @@ const UpdateStore = () => {
                 saturday: formData.saturday,
                 sunday: formData.sunday,
             },
-            deliveryOptions: deliveryOptions.map((_, index) => ({
-                city: formData[`city${index}`],
-                price: Number(formData[`price${index}`]) || 0,
-                arrival_day: formData[`arrival_day${index}`] || '',
+            deliveryOptions: deliveryOptions.map((opt) => ({
+                country: opt.country || '',
+                countryCode: opt.countryCode || '',
+                state: opt.state || '',
+                stateCode: opt.stateCode || '',
+                city: opt.city || '',
+                scope: opt.scope || 'city',
+                price: Number(opt.price) || 0,
+                arrival_day: opt.arrival_day || '',
             })),
             tipsOnFinding: formData.tipsOnFinding,
             logo: "",
@@ -78,6 +148,27 @@ const UpdateStore = () => {
 
     // Handle form submission
     const onSubmit = async (formData) => {
+        const errorsMap = {};
+        deliveryOptions.forEach((opt, idx) => {
+            if (!opt.country) {
+                errorsMap[idx] = "Please select a country";
+            } else if (opt.scope === "city" && !opt.city) {
+                errorsMap[idx] = "Please select a city";
+            } else if (opt.scope === "state" && !opt.state) {
+                errorsMap[idx] = "Please select a state";
+            } else if (opt.price === "" || opt.price === null || isNaN(Number(opt.price)) || Number(opt.price) < 0) {
+                errorsMap[idx] = "Please enter a valid rate/price";
+            } else if (!opt.arrival_day || !opt.arrival_day.trim()) {
+                errorsMap[idx] = "Please enter an estimated delivery timeline";
+            }
+        });
+
+        if (Object.keys(errorsMap).length > 0) {
+            setDeliveryErrors(errorsMap);
+            return;
+        }
+        setDeliveryErrors({});
+
         setIsSubmitting(true);
         try {
             const payload = transformPayload(formData);
@@ -161,12 +252,28 @@ const UpdateStore = () => {
 
                         // Initialize delivery options
                         if (store.deliveryOptions?.length) {
-                            store.deliveryOptions.forEach((option, index) => {
-                                setValue(`city${index}`, option.city);
-                                setValue(`price${index}`, option.price);
-                                setValue(`arrival_day${index}`, option.arrival_day);
-                            });
-                            setDeliveryOptions(store.deliveryOptions);
+                            const normalizedOptions = store.deliveryOptions.map((opt) => ({
+                                country: opt.country || store.location?.country || "Nigeria",
+                                countryCode: opt.countryCode || (opt.country === "United States" ? "US" : opt.country === "United Kingdom" ? "UK" : "NG"),
+                                state: opt.state || store.location?.state || "",
+                                stateCode: opt.stateCode || "",
+                                city: opt.city || "",
+                                scope: opt.scope || (opt.city ? "city" : opt.state ? "state" : "country"),
+                                price: opt.price ?? 0,
+                                arrival_day: opt.arrival_day || "",
+                            }));
+                            setDeliveryOptions(normalizedOptions);
+                        } else {
+                            setDeliveryOptions([{
+                                country: "Nigeria",
+                                countryCode: "NG",
+                                state: "",
+                                stateCode: "",
+                                city: "",
+                                scope: "city",
+                                price: "",
+                                arrival_day: "",
+                            }]);
                         }
                     }
                     setLoading(false);
@@ -228,14 +335,6 @@ const UpdateStore = () => {
         setSelectedCity(city);
     };
 
-    // Add new delivery option
-    const addDeliveryOption = () => {
-        const newIndex = deliveryOptions.length;
-        setDeliveryOptions([...deliveryOptions, {}]);
-        setValue(`city${newIndex}`, "");
-        setValue(`price${newIndex}`, 0);
-        setValue(`arrival_day${newIndex}`, "");
-    };
 
     if (loading) {
         return (
@@ -416,54 +515,89 @@ const UpdateStore = () => {
                             </div>
 
                             {/* Delivery Options */}
-                            <div className="mb-4">
-                                <p className="text-sm font-semibold mb-4 uppercase">Delivery Options</p>
-                                {deliveryOptions.map((_, index) => (
-                                    <div className="grid grid-cols-12 gap-3 mb-4" key={index}>
-                                        <div className="col-span-6 gap-1">
-                                            <label className="block text-md font-semibold mb-3">City</label>
-                                            <input
-                                                type="text"
-                                                {...register(`city${index}`, { required: "Delivery City is required" })}
-                                                placeholder="Enter delivery city"
-                                                className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="col-span-6 gap-1">
-                                            <label className="block text-md font-semibold mb-3">Price</label>
-                                            <input
-                                                type="number"
-                                                {...register(`price${index}`, { 
-                                                    required: "Price is required",
-                                                    valueAsNumber: true
-                                                })}
-                                                placeholder="Enter price"
-                                                className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="col-span-6 gap-1">
-                                            <label className="block text-md font-semibold mb-3">Arrival Day</label>
-                                            <input
-                                                type="text"
-                                                {...register(`arrival_day${index}`, { required: "Arrival day is required" })}
-                                                placeholder="Enter arrival day"
-                                                className="w-full px-4 py-4 bg-gray-100 border border-gray-100 rounded-lg focus:outline-hidden placeholder-gray-400 text-sm mb-3"
-                                                required
-                                            />
+                            <div className="mb-6 bg-gray-50/70 p-5 rounded-xl border border-gray-200/80">
+                                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                                    <div className="flex items-center gap-2">
+                                        <Truck className="w-5 h-5 text-kudu-orange" />
+                                        <div>
+                                            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-800">
+                                                Delivery Options & Coverage
+                                            </h3>
+                                            <p className="text-xs text-gray-500">
+                                                Configure shipping fees and expected delivery timelines by destination
+                                            </p>
                                         </div>
                                     </div>
-                                ))}
-                                <button
-                                    type="button"
-                                    onClick={addDeliveryOption}
-                                    className="bg-kudu-orange mt-2 hover:bg-blue-700 cursor-pointer text-white text-sm py-2 px-4 rounded-sm"
-                                >
-                                    + Add Delivery Option
-                                </button>
+                                    <button
+                                        type="button"
+                                        onClick={addDeliveryOption}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-kudu-orange bg-orange-50 hover:bg-orange-100 rounded-lg border border-orange-200 transition-colors cursor-pointer"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        Add Delivery Option
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {deliveryOptions.map((option, index) => (
+                                        <div
+                                            key={index}
+                                            className="p-4 bg-white rounded-lg border border-gray-200 shadow-xs space-y-3"
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                    Zone #{index + 1}
+                                                </span>
+                                                {deliveryOptions.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeDeliveryOption(index)}
+                                                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                                                        title="Remove delivery option"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <DeliveryAreaLocationFields
+                                                value={option}
+                                                error={deliveryErrors[index]}
+                                                onChange={(location) => handleDeliveryLocationChange(index, location)}
+                                            />
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">
+                                                        Rate / Price
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        value={option.price}
+                                                        onChange={(e) => handleDeliveryFieldChange(index, "price", e.target.value)}
+                                                        placeholder="e.g. 2500"
+                                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-kudu-orange/20 focus:border-kudu-orange"
+                                                        required
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-semibold text-gray-600 mb-1">
+                                                        Estimated Arrival Timeline
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={option.arrival_day}
+                                                        onChange={(e) => handleDeliveryFieldChange(index, "arrival_day", e.target.value)}
+                                                        placeholder="e.g. 1-2 business days"
+                                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-kudu-orange/20 focus:border-kudu-orange"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* Submit Button */}
