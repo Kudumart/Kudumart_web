@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -11,7 +11,6 @@ import {
   RefreshCcw,
   ShieldCheck,
   ShoppingBag,
-  Store,
   Truck,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -24,63 +23,74 @@ import { useResource } from '../hooks/useResource';
 import { money, plainText } from '../utils/format';
 import '../styles/home.css';
 
-function HeroIllustration3D() {
+const HERO_SLIDES = [
+  {
+    image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=1200&q=85',
+    label: 'Electronics & Gadgets',
+    caption: 'Laptops, audio, phones & everyday tech from verified stores',
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=85',
+    label: 'Fashion & Footwear',
+    caption: 'Standout sneakers, apparel & accessories for every style',
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=85',
+    label: 'Home & Living',
+    caption: 'Furniture, appliances & essentials to elevate your space',
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=85',
+    label: 'Curated Essentials',
+    caption: 'Brand new, refurbished & pre-loved finds at great value',
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=85',
+    label: 'One Marketplace for All',
+    caption: 'Shop fixed-price products, bid on auctions & book services',
+  },
+];
+
+function HeroImageShowcase() {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActive(current => (current + 1) % HERO_SLIDES.length);
+    }, 4200);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <div className="hero__visual" aria-hidden="true">
-      <div className="hero-3d-scene">
-        <div className="hero-3d-ring hero-3d-ring--outer" />
-        <div className="hero-3d-ring hero-3d-ring--inner" />
-
-        {/* Central 3D Isometric Platform & Cube */}
-        <div className="hero-3d-platform">
-          <div className="hero-3d-plinth">
-            <div className="hero-3d-plinth__top" />
-            <div className="hero-3d-plinth__left" />
-            <div className="hero-3d-plinth__right" />
-          </div>
-
-          <div className="hero-3d-cube">
-            <div className="hero-3d-cube__face hero-3d-cube__face--top">
-              <Store size={34} strokeWidth={1.8} />
-            </div>
-            <div className="hero-3d-cube__face hero-3d-cube__face--left">
-              <span>KUDU</span>
-            </div>
-            <div className="hero-3d-cube__face hero-3d-cube__face--right">
-              <ShoppingBag size={28} strokeWidth={1.8} />
+    <div className="hero__visual" aria-label="Featured marketplace categories">
+      <div className="hero-slider">
+        {HERO_SLIDES.map((slide, index) => (
+          <div
+            key={slide.image}
+            className={`hero-slide ${index === active ? 'is-active' : ''}`}
+            aria-hidden={index !== active}
+          >
+            <img src={slide.image} alt={slide.label} loading={index === 0 ? 'eager' : 'lazy'} />
+            <div className="hero-slide__shade" />
+            <div className="hero-slide__info">
+              <span className="hero-slide__tag">{slide.label}</span>
+              <p>{slide.caption}</p>
             </div>
           </div>
-        </div>
+        ))}
 
-        {/* Floating 3D Orbiting Nodes */}
-        <div className="hero-3d-node hero-3d-node--one">
-          <div className="hero-3d-node__icon">
-            <Package size={22} />
-          </div>
-          <div>
-            <strong>Fast Dispatch</strong>
-            <small>Tracked nationwide</small>
-          </div>
-        </div>
-
-        <div className="hero-3d-node hero-3d-node--two">
-          <div className="hero-3d-node__icon hero-3d-node__icon--orange">
-            <Gavel size={20} />
-          </div>
-          <div>
-            <strong>Live Bidding</strong>
-            <small>Real-time auctions</small>
-          </div>
-        </div>
-
-        <div className="hero-3d-node hero-3d-node--three">
-          <div className="hero-3d-node__icon hero-3d-node__icon--mint">
-            <ShieldCheck size={20} />
-          </div>
-          <div>
-            <strong>Verified Stores</strong>
-            <small>Protected checkout</small>
-          </div>
+        <div className="hero-slider__dots" role="tablist" aria-label="Showcase slides">
+          {HERO_SLIDES.map((slide, index) => (
+            <button
+              key={slide.label}
+              type="button"
+              role="tab"
+              aria-selected={index === active}
+              aria-label={`Show ${slide.label}`}
+              className={`hero-slider__dot ${index === active ? 'is-active' : ''}`}
+              onClick={() => setActive(index)}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -328,7 +338,7 @@ export default function Home() {
           </div>
         </div>
 
-        <HeroIllustration3D />
+        <HeroImageShowcase />
       </section>
 
       <section className="trust-strip">
