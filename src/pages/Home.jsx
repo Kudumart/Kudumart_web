@@ -346,11 +346,8 @@ export default function Home() {
 
   return (
     <>
-      <section className="hero container">
+      <section className="hero">
         <div className="hero__content">
-          <div className="eyebrow eyebrow--light">
-            <span className="eyebrow__dot" /> A MARKETPLACE FOR EVERY POSSIBILITY
-          </div>
           <h1>
             Good things
             <br />
