@@ -356,11 +356,18 @@
   }
 }
 @media (max-width: 800px) {
+  .hero {
+    min-height: 0 !important;
+    height: auto !important;
+  }
   .hero .hero__visual {
     display: none !important;
   }
   .hero__content {
-    padding: 38px 22px 34px !important;
+    padding: 34px 20px 28px !important;
+  }
+  .hero__proof {
+    margin-top: 24px !important;
   }
   .trending-subbar {
     margin-bottom: 18px;
@@ -373,8 +380,15 @@
   }
 }
 @media (max-width: 560px) {
+  .hero {
+    min-height: 0 !important;
+    height: auto !important;
+  }
   .hero__content {
-    padding: 30px 16px 26px !important;
+    padding: 26px 16px 22px !important;
+  }
+  .hero__proof {
+    margin-top: 20px !important;
   }
   .trending-carousel__track {
     grid-auto-columns: 78%;
