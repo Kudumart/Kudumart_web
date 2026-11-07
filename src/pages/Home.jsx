@@ -56,6 +56,8 @@ function HeroImageShowcase() {
   const [active, setActive] = useState(0);
 
   useEffect(() => {
+    // Only auto-switch carousel on desktop screens
+    if (typeof window !== 'undefined' && window.innerWidth <= 800) return;
     const timer = setInterval(() => {
       setActive(current => (current + 1) % HERO_SLIDES.length);
     }, 4200);

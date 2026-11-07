@@ -357,15 +357,10 @@
 }
 @media (max-width: 800px) {
   .hero .hero__visual {
-    min-height: 360px;
-    padding: 0 35px 35px;
+    display: none !important;
   }
-  .hero-slider {
-    min-height: 320px;
-    height: 320px;
-  }
-  .hero-slide__info p {
-    font-size: 14px;
+  .hero__content {
+    padding: 38px 22px 34px !important;
   }
   .trending-subbar {
     margin-bottom: 18px;
@@ -378,26 +373,8 @@
   }
 }
 @media (max-width: 560px) {
-  .hero .hero__visual {
-    min-height: 290px;
-    padding: 10px 25px 25px;
-  }
-  .hero-slider {
-    min-height: 255px;
-    height: 255px;
-    border-radius: 13px;
-  }
-  .hero-slide__info {
-    left: 16px;
-    right: 16px;
-    bottom: 38px;
-  }
-  .hero-slide__info p {
-    font-size: 13px;
-  }
-  .hero-slider__dots {
-    left: 16px;
-    bottom: 14px;
+  .hero__content {
+    padding: 30px 16px 26px !important;
   }
   .trending-carousel__track {
     grid-auto-columns: 78%;
