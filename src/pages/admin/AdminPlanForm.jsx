@@ -60,8 +60,21 @@ export default function AdminPlanForm({ plan, onClose, onSaved }) {
   };
 
   return (
-    <Modal title={plan ? "Edit subscription plan" : "New subscription plan"} onClose={onClose}>
-      <form className="offer-form" onSubmit={submit}>
+    <Modal
+      title={plan ? "Edit subscription plan" : "New subscription plan"}
+      onClose={onClose}
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+            Cancel
+          </Button>
+          <Button form="admin-plan-form" type="submit" loading={busy}>
+            {plan ? "Save changes" : "Create plan"}
+          </Button>
+        </>
+      }
+    >
+      <form id="admin-plan-form" className="offer-form" onSubmit={submit}>
         <TextField label="Plan name" name="name" required value={values.name} onChange={change} />
         <div className="form-row">
           <TextField label="Duration (days)" name="duration" type="number" min="1" required value={values.duration} onChange={change} />
@@ -86,10 +99,6 @@ export default function AdminPlanForm({ plan, onClose, onSaved }) {
           <TextField label="Advert duration (days)" name="adsDurationDays" type="number" min="1" required value={values.adsDurationDays} onChange={change} />
         </div>}
         {error && <div className="form-alert" role="alert">{error}</div>}
-        <div className="modal__actions">
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-          <Button type="submit" loading={busy}>{plan ? "Save changes" : "Create plan"}</Button>
-        </div>
       </form>
     </Modal>
   );

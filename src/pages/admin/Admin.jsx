@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -7,6 +7,7 @@ import {
   Box,
   ClipboardCheck,
   ChevronDown,
+  ChevronUp,
   CreditCard,
   FileText,
   Gavel,
@@ -17,10 +18,16 @@ import {
   Menu,
   Package,
   PackageSearch,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
   ReceiptText,
+  Search,
   SlidersHorizontal,
   Store,
+  Tag,
   Tags,
+  User,
   Users,
   Wallet,
   Wrench,
@@ -47,6 +54,7 @@ import {
 } from "../../components/ui";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useResource } from "../../hooks/useResource";
+import { useApp } from "../../contexts/AppContext";
 import AdminPlanForm from "./AdminPlanForm";
 import "./AdminNavigation.css";
 
@@ -68,6 +76,7 @@ const navigationSections = [
   ] },
   { id: "commerce", label: "Commerce", links: [
     { to: "/admin/orders", label: "Orders", icon: Package },
+    { to: "/admin/offers", label: "Offers", icon: Tag },
     { to: "/admin/transactions", label: "Transactions", icon: ArrowUpRight },
     { to: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },
     { to: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
@@ -78,6 +87,7 @@ const navigationSections = [
     { to: "/admin/content", label: "Content", icon: FileText },
   ] },
   { id: "settings", label: "Configuration", links: [
+    { to: "/admin/settings", label: "Profile & Enquiry", icon: User },
     { to: "/admin/configuration", label: "Charges & attributes", icon: SlidersHorizontal },
     { to: "/admin/payment-gateways", label: "Payment gateways", icon: CreditCard },
     { to: "/admin/access", label: "Team & permissions", icon: KeyRound },
@@ -98,6 +108,7 @@ const routePermissions = {
   "/admin/service-taxonomy": ["view-services"],
   "/admin/adverts": ["view-adverts"],
   "/admin/orders": ["view-orders"],
+  "/admin/offers": ["view-orders"],
   "/admin/transactions": ["view-transactions"],
   "/admin/withdrawals": ["view-withdrawals"],
   "/admin/content": ["view-pages", "view-jobs"],
@@ -202,6 +213,26 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("kuduAdminSidebarCollapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setCollapsed((previous) => {
+      const next = !previous;
+      try {
+        localStorage.setItem("kuduAdminSidebarCollapsed", String(next));
+      } catch {
+        // Storage unavailable
+      }
+      return next;
+    });
+  };
+
   const [openSections, setOpenSections] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("kuduAdminNavSections") || "{}");
@@ -231,20 +262,35 @@ export function AdminLayout() {
   const required = requiredFor(location.pathname);
   const blocked = required && !adminAccess.can(required);
   return (
-    <div className="admin-shell">
+    <div className={`admin-shell ${collapsed ? "admin-shell--collapsed" : ""}`}>
       <aside className={`admin-sidebar ${open ? "admin-sidebar--open" : ""}`}>
+        <button
+          className="admin-sidebar__collapse"
+          type="button"
+          aria-label={collapsed ? "Expand admin sidebar" : "Collapse admin sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          onClick={toggleSidebar}
+        >
+          {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+        </button>
         <div className="admin-sidebar__brand">
-          <Link to="/admin">
+          <Link to="/admin" title="KuduMart">
             <img src="/kudumart-logo.png" alt="KuduMart" />
-            <span>Admin Studio</span>
           </Link>
           <button aria-label="Close menu" onClick={() => setOpen(false)}>
             <X size={20} />
           </button>
         </div>
         <nav aria-label="Admin workspace" className="admin-navigation">
-          <NavLink to="/admin" end onClick={() => setOpen(false)} className={({ isActive }) => `admin-nav admin-nav--overview ${isActive ? "active" : ""}`}>
-            <BarChart3 size={19} /> Overview
+          <NavLink
+            to="/admin"
+            end
+            aria-label="Overview"
+            title="Overview"
+            onClick={() => setOpen(false)}
+            className={({ isActive }) => `admin-nav admin-nav--overview ${isActive ? "active" : ""}`}
+          >
+            <BarChart3 size={19} /> <span>Overview</span>
           </NavLink>
           {navigationSections.map((full) => ({ ...full, links: full.links.filter(linkAllowed) })).filter((section) => section.links.length).map((section) => {
             const sectionOpen = Boolean(openSections[section.id]);
@@ -253,9 +299,9 @@ export function AdminLayout() {
               <button type="button" className="admin-nav-section__toggle" aria-expanded={sectionOpen} onClick={() => setOpenSections((current) => ({ ...current, [section.id]: !sectionOpen }))}>
                 <span>{section.label}</span><ChevronDown size={15} />
               </button>
-              <div className="admin-nav-section__links" hidden={!sectionOpen}>
-                {section.links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setOpen(false)} className={({ isActive }) => `admin-nav ${isActive ? "active" : ""}`}>
-                  <Icon size={19} />{label}
+              <div className="admin-nav-section__links" hidden={!sectionOpen && !collapsed}>
+                {section.links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} aria-label={label} title={label} onClick={() => setOpen(false)} className={({ isActive }) => `admin-nav ${isActive ? "active" : ""}`}>
+                  <Icon size={19} /><span>{label}</span>
                 </NavLink>)}
               </div>
             </section>;
@@ -267,14 +313,16 @@ export function AdminLayout() {
               adminSession.clear();
               navigate("/auth/admin/login", { replace: true });
             }}
+            aria-label="Sign out"
+            title="Sign out"
           >
-            <LogOut size={18} /> Sign out
+            <LogOut size={18} /> <span>Sign out</span>
           </button>
           <div className="admin-topbar__actions">
-            <Link aria-label="Admin notifications" to="/admin/notifications">
+            <Link aria-label="Admin notifications" title="Notifications" to="/admin/notifications">
               <Bell size={18} />
             </Link>
-            <Link to="/">View marketplace ↗</Link>
+            <Link to="/" title="View marketplace"><span>View marketplace ↗</span></Link>
           </div>
         </div>
       </aside>
@@ -287,7 +335,7 @@ export function AdminLayout() {
           >
             <Menu size={22} />
           </button>
-          <strong>Admin Studio</strong>
+          <strong>Admin Workspace</strong>
           <Link to="/">View marketplace ↗</Link>
         </header>
         <main className="admin-content">
@@ -1046,13 +1094,11 @@ export function AdminSubscriptions() {
                   <li>{plan.maxAds || 0} adverts</li>
                 </ul>
                 <div className="admin-plan-card__footer">
-                  <span
-                    className={`admin-status ${plan.isFeeWaived ? "admin-status--good" : ""}`}
-                  >
-                    {plan.isFeeWaived
-                      ? "Fees waived globally"
-                      : "Normal pricing"}
-                  </span>
+                  {plan.isFeeWaived && (
+                    <span className="admin-status admin-status--good">
+                      Fees waived globally
+                    </span>
+                  )}
                   <Button variant="outline" onClick={() => setEditing(plan)}>
                     Edit plan
                   </Button>
@@ -1076,116 +1122,578 @@ export function AdminSubscriptions() {
 }
 
 export function AdminOrders() {
+  const { notify } = useApp();
+  const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
-  const resource = useResource(
-    (signal) => adminApi.orders(1, signal, { trackingNumber: query.trim() }),
-    [query],
+  const [orderStatus, setOrderStatus] = useState("");
+  const [revision, setRevision] = useState(0);
+  const [statusModal, setStatusModal] = useState(null);
+  const [deliveryCode, setDeliveryCode] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const allResource = useResource(
+    (signal) =>
+      tab === "all"
+        ? adminApi.orders(1, signal, { trackingNumber: query.trim() })
+        : Promise.resolve({ data: [] }),
+    [tab, query, revision],
   );
-  const rows = rowsFrom(resource.data);
-  const filtered = rows.filter(
-    (order) =>
-      !paymentStatus ||
-      String(order.payment?.status || "unpaid").toLowerCase() === paymentStatus,
+
+  const myResource = useResource(
+    (signal) =>
+      tab === "my"
+        ? adminApi.myOrders(signal)
+        : Promise.resolve({ data: [] }),
+    [tab, revision],
   );
+
+  const allRows = rowsFrom(allResource.data);
+  const myRows = rowsFrom(myResource.data);
+
+  const filteredAll = useMemo(() => {
+    return allRows.filter(
+      (order) =>
+        !paymentStatus ||
+        String(order.payment?.status || "unpaid").toLowerCase() === paymentStatus,
+    );
+  }, [allRows, paymentStatus]);
+
+  const filteredMy = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return myRows.filter((item) => {
+      const product =
+        typeof item.product === "string"
+          ? JSON.parse(item.product)
+          : item.product || {};
+      const order = item.order || {};
+      const user = order.user || {};
+      const matchesTerm =
+        !term ||
+        (product.name || item.productName || "").toLowerCase().includes(term) ||
+        (product.sku || item.sku || "").toLowerCase().includes(term) ||
+        (order.refId || "").toLowerCase().includes(term) ||
+        (order.trackingNumber || "").toLowerCase().includes(term) ||
+        (user.firstName || "").toLowerCase().includes(term) ||
+        (user.lastName || "").toLowerCase().includes(term) ||
+        (user.email || "").toLowerCase().includes(term);
+
+      const matchesStatus =
+        !orderStatus ||
+        String(item.status || "").toLowerCase() === orderStatus.toLowerCase();
+
+      return matchesTerm && matchesStatus;
+    });
+  }, [myRows, query, orderStatus]);
+
+  const handleStatusUpdate = async (e) => {
+    e.preventDefault();
+    if (!statusModal) return;
+    setBusy(true);
+    try {
+      await adminApi.updateOrderStatus(
+        statusModal.item.id,
+        statusModal.nextStatus,
+        statusModal.nextStatus === "delivered" ? deliveryCode.trim() : undefined,
+      );
+      notify("Order status updated successfully.", "success");
+      setStatusModal(null);
+      setDeliveryCode("");
+      setRevision((v) => v + 1);
+    } catch (err) {
+      notify(err.message || "Failed to update order status.", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <>
       <div className="admin-page-head">
         <div>
           <span className="eyebrow">ORDER OPERATIONS</span>
           <h1>Orders</h1>
-          <p>Monitor purchases, payments, fulfilment, and delivery.</p>
+          <p>
+            {tab === "all"
+              ? "Monitor all purchases, payments, fulfilment, and delivery across the marketplace."
+              : `${myRows.length} customer orders placed for products in your administrator stores.`}
+          </p>
         </div>
       </div>
+
+      <div className="admin-content-tabs">
+        <button
+          type="button"
+          className={tab === "all" ? "active" : ""}
+          onClick={() => {
+            setTab("all");
+            setQuery("");
+          }}
+        >
+          <ReceiptText size={16} /> All orders
+        </button>
+        <button
+          type="button"
+          className={tab === "my" ? "active" : ""}
+          onClick={() => {
+            setTab("my");
+            setQuery("");
+          }}
+        >
+          <ReceiptText size={16} /> My store orders ({myRows.length || 0})
+        </button>
+      </div>
+
       <section className="admin-card">
-        <div className="admin-product-toolbar">
-          <input
-            aria-label="Search order tracking number"
-            placeholder="Search tracking number"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <select
-            aria-label="Filter payment status"
-            value={paymentStatus}
-            onChange={(event) => setPaymentStatus(event.target.value)}
-          >
-            <option value="">All payment states</option>
-            <option value="success">Paid</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
-            <option value="unpaid">No payment record</option>
-          </select>
-        </div>
-        {resource.loading ? (
+        {tab === "all" ? (
+          <div className="admin-product-toolbar">
+            <input
+              aria-label="Search order tracking number"
+              placeholder="Search tracking number"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <select
+              aria-label="Filter payment status"
+              value={paymentStatus}
+              onChange={(event) => setPaymentStatus(event.target.value)}
+            >
+              <option value="">All payment states</option>
+              <option value="success">Paid</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Failed</option>
+              <option value="unpaid">No payment record</option>
+            </select>
+          </div>
+        ) : (
+          <div className="admin-product-toolbar">
+            <input
+              aria-label="Search my store orders"
+              placeholder="Search product, customer, or order reference"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            <select
+              aria-label="Filter order fulfillment status"
+              value={orderStatus}
+              onChange={(event) => setOrderStatus(event.target.value)}
+            >
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        )}
+
+        {tab === "all" ? (
+          allResource.loading ? (
+            <Skeleton className="admin-table-skeleton" />
+          ) : allResource.error ? (
+            <div className="admin-error">{allResource.error.message}</div>
+          ) : !filteredAll.length ? (
+            <EmptyState
+              title="No matching orders"
+              description="Try a different tracking number or payment status."
+            />
+          ) : (
+            <div className="admin-order-list">
+              {filteredAll.map((order) => (
+                <article
+                  className="admin-order-row"
+                  key={order.id}
+                  style={{
+                    gridTemplateColumns:
+                      "minmax(220px, 2.2fr) minmax(180px, 1.6fr) 45px 105px 75px 85px 70px",
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <span className="admin-product-label">Order reference</span>
+                    <strong
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "block",
+                      }}
+                      title={order.refId}
+                    >
+                      {order.refId}
+                    </strong>
+                    <small
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "block",
+                      }}
+                    >
+                      {order.trackingNumber || "Tracking not assigned"}
+                    </small>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <span className="admin-product-label">Customer</span>
+                    <strong
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "block",
+                      }}
+                    >
+                      {order.user
+                        ? [order.user.firstName, order.user.lastName]
+                            .filter(Boolean)
+                            .join(" ")
+                        : "Customer"}
+                    </strong>
+                    <small
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "block",
+                      }}
+                    >
+                      {order.user?.email || "—"}
+                    </small>
+                  </div>
+                  <div>
+                    <span className="admin-product-label">Items</span>
+                    <strong>{order.orderItemsCount || 0}</strong>
+                  </div>
+                  <div>
+                    <span className="admin-product-label">Total</span>
+                    <strong>
+                      {order.payment?.currency || "₦"}
+                      {Number(order.totalAmount).toLocaleString()}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="admin-product-label">Payment</span>
+                    <span
+                      className={`admin-status ${String(order.payment?.status).toLowerCase() === "success" ? "admin-status--good" : String(order.payment?.status).toLowerCase() === "failed" ? "admin-status--changes_requested" : ""}`}
+                      style={{
+                        justifySelf: "start",
+                        width: "fit-content",
+                        padding: "3px 8px",
+                      }}
+                    >
+                      {order.payment?.status || "No record"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="admin-product-label">Created</span>
+                    <strong>
+                      {order.createdAt
+                        ? new Date(order.createdAt).toLocaleDateString()
+                        : "—"}
+                    </strong>
+                  </div>
+                  <Link
+                    className="admin-row-action"
+                    to={`/admin/orders/${order.id}`}
+                  >
+                    Open →
+                  </Link>
+                </article>
+              ))}
+            </div>
+          )
+        ) : myResource.loading ? (
           <Skeleton className="admin-table-skeleton" />
-        ) : resource.error ? (
-          <div className="admin-error">{resource.error.message}</div>
-        ) : !filtered.length ? (
+        ) : myResource.error ? (
+          <div className="admin-error">{myResource.error.message}</div>
+        ) : !filteredMy.length ? (
           <EmptyState
-            title="No matching orders"
-            description="Try a different tracking number or payment status."
+            title="No orders for your products yet"
+            description="When customers buy items listed in your admin stores, they will appear here."
           />
         ) : (
           <div className="admin-order-list">
-            {filtered.map((order) => (
-              <article className="admin-order-row" key={order.id}>
-                <div>
-                  <span className="admin-product-label">Order reference</span>
-                  <strong>{order.refId}</strong>
-                  <small>
-                    {order.trackingNumber || "Tracking not assigned"}
-                  </small>
-                </div>
-                <div>
-                  <span className="admin-product-label">Customer</span>
-                  <strong>
-                    {order.user
-                      ? [order.user.firstName, order.user.lastName]
-                          .filter(Boolean)
-                          .join(" ")
-                      : "Customer"}
-                  </strong>
-                  <small>{order.user?.email || "—"}</small>
-                </div>
-                <div>
-                  <span className="admin-product-label">Items</span>
-                  <strong>{order.orderItemsCount || 0}</strong>
-                </div>
-                <div>
-                  <span className="admin-product-label">Total</span>
-                  <strong>
-                    {order.payment?.currency || "₦"}
-                    {Number(order.totalAmount).toLocaleString()}
-                  </strong>
-                </div>
-                <div>
-                  <span className="admin-product-label">Payment</span>
-                  <span
-                    className={`admin-status ${String(order.payment?.status).toLowerCase() === "success" ? "admin-status--good" : String(order.payment?.status).toLowerCase() === "failed" ? "admin-status--changes_requested" : ""}`}
-                  >
-                    {order.payment?.status || "No record"}
-                  </span>
-                </div>
-                <div>
-                  <span className="admin-product-label">Created</span>
-                  <strong>
-                    {order.createdAt
-                      ? new Date(order.createdAt).toLocaleDateString()
-                      : "—"}
-                  </strong>
-                </div>
-                <Link
-                  className="admin-row-action"
-                  to={`/admin/orders/${order.id}`}
+            {filteredMy.map((item) => {
+              const product =
+                typeof item.product === "string"
+                  ? JSON.parse(item.product)
+                  : item.product || {};
+              const order = item.order || {};
+              const user = order.user || item.user || {};
+              const currencySymbol =
+                product.store?.currency?.symbol || item.currency || "₦";
+
+              return (
+                <article
+                  className="admin-order-row"
+                  key={item.id}
+                  style={{
+                    gridTemplateColumns:
+                      "minmax(260px, 2.2fr) minmax(170px, 1.4fr) 45px 105px 75px 85px 135px",
+                    alignItems: "center",
+                  }}
                 >
-                  Open →
-                </Link>
-              </article>
-            ))}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 8,
+                        background: "#edf1f3",
+                        overflow: "hidden",
+                        display: "grid",
+                        placeItems: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {product.image_url || product.image ? (
+                        <img
+                          src={product.image_url || product.image}
+                          alt=""
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        <Box size={18} />
+                      )}
+                    </div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <span
+                        className="admin-product-label"
+                        style={{
+                          display: "block",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          maxWidth: "100%",
+                        }}
+                        title={product.sku || item.sku || order.refId || "ITEM"}
+                      >
+                        {product.sku || item.sku || order.refId || "ITEM"}
+                      </span>
+                      <strong
+                        style={{
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "block",
+                        }}
+                        title={product.name || item.productName || "Product"}
+                      >
+                        {product.name || item.productName || "Product"}
+                      </strong>
+                      <small
+                        style={{
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "block",
+                          color: "#8593a5",
+                        }}
+                      >
+                        {product.store?.name || item.storeName || "Admin Store"}
+                      </small>
+                    </div>
+                  </div>
+
+                  <div style={{ minWidth: 0 }}>
+                    <span className="admin-product-label">Customer</span>
+                    <strong
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "block",
+                      }}
+                    >
+                      {[user.firstName, user.lastName]
+                        .filter(Boolean)
+                        .join(" ") || "Customer"}
+                    </strong>
+                    <small
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "block",
+                      }}
+                    >
+                      {user.email || user.phoneNumber || "—"}
+                    </small>
+                  </div>
+
+                  <div>
+                    <span className="admin-product-label">Qty</span>
+                    <strong>{item.quantity || 1}</strong>
+                  </div>
+
+                  <div>
+                    <span className="admin-product-label">Total</span>
+                    <strong>
+                      {currencySymbol}
+                      {(
+                        Number(item.price || 0) * Number(item.quantity || 1)
+                      ).toLocaleString()}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span className="admin-product-label">Status</span>
+                    <span
+                      className={`admin-status ${
+                        item.status === "delivered"
+                          ? "admin-status--good"
+                          : item.status === "cancelled"
+                            ? "admin-status--changes_requested"
+                            : ""
+                      }`}
+                      style={{
+                        justifySelf: "start",
+                        width: "fit-content",
+                        padding: "3px 8px",
+                      }}
+                    >
+                      {item.status || "pending"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="admin-product-label">Date</span>
+                    <strong>
+                      {item.createdAt
+                        ? new Date(item.createdAt).toLocaleDateString()
+                        : "—"}
+                    </strong>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    {!["delivered", "cancelled"].includes(item.status) && (
+                      <Button
+                        variant="outline"
+                        style={{
+                          minHeight: 30,
+                          padding: "0 10px",
+                          fontSize: 11,
+                          fontWeight: 600,
+                        }}
+                        onClick={() =>
+                          setStatusModal({
+                            item,
+                            nextStatus:
+                              item.status === "pending"
+                                ? "processing"
+                                : item.status === "processing"
+                                  ? "shipped"
+                                  : "delivered",
+                          })
+                        }
+                      >
+                        Update
+                      </Button>
+                    )}
+                    <Link
+                      className="admin-row-action"
+                      to={`/admin/orders/${item.orderId || order.id || item.id}`}
+                    >
+                      Open →
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
+
+      {statusModal && (
+        <Modal
+          title={`Update Status: ${statusModal.item.product?.name || statusModal.item.productName || "Product"}`}
+          onClose={() => {
+            if (!busy) {
+              setStatusModal(null);
+              setDeliveryCode("");
+            }
+          }}
+        >
+          <form className="admin-content-form" onSubmit={handleStatusUpdate}>
+            <p style={{ margin: 0, color: "#64748b", fontSize: 13 }}>
+              Current status:{" "}
+              <strong style={{ color: "#172541" }}>
+                {statusModal.item.status || "pending"}
+              </strong>
+            </p>
+
+            <label>
+              Next status
+              <select
+                value={statusModal.nextStatus}
+                onChange={(e) =>
+                  setStatusModal({
+                    ...statusModal,
+                    nextStatus: e.target.value,
+                  })
+                }
+                required
+              >
+                {orderStatuses.map((st) => (
+                  <option key={st} value={st}>
+                    {st.charAt(0).toUpperCase() + st.slice(1)}
+                  </option>
+                ))}
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </label>
+
+            {statusModal.nextStatus === "delivered" && (
+              <label>
+                Delivery confirmation code
+                <input
+                  type="text"
+                  value={deliveryCode}
+                  onChange={(e) => setDeliveryCode(e.target.value)}
+                  placeholder="Enter customer delivery code"
+                  required
+                />
+              </label>
+            )}
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 14,
+              }}
+            >
+              <Button
+                variant="outline"
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setStatusModal(null);
+                  setDeliveryCode("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" loading={busy}>
+                Update status
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </>
   );
 }
@@ -1578,30 +2086,71 @@ function DropshipMonitor({ item, onClose }) {
 }
 
 export function AdminProducts() {
+  const { notify } = useApp();
+  const [tab, setTab] = useState("all");
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [revision, setRevision] = useState(0);
+  const [productModal, setProductModal] = useState(null);
+  const [productModalError, setProductModalError] = useState("");
+  const [deletingProduct, setDeletingProduct] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState("");
+
   const debouncedQuery = useDebouncedValue(query.trim(), 350);
   const categoriesResource = useResource(
-    (signal) => adminApi.categories(signal),
+    (signal) => adminApi.categoryTree(signal),
     [],
   );
   const categories = [...rowsFrom(categoriesResource.data)].sort((a, b) =>
     a.name.localeCompare(b.name),
   );
-  const resource = useResource(
+
+  const allResource = useResource(
     (signal) =>
-      adminApi.products(page, signal, {
-        name: debouncedQuery,
-        status,
-        categoryId,
-        limit: 20,
-      }),
-    [page, debouncedQuery, status, categoryId],
+      tab === "all"
+        ? adminApi.products(page, signal, {
+            name: debouncedQuery,
+            status,
+            categoryId,
+            limit: 20,
+          })
+        : Promise.resolve({ data: [] }),
+    [tab, page, debouncedQuery, status, categoryId],
   );
-  const rows = rowsFrom(resource.data);
-  const pagination = resource.data?.pagination || {};
+
+  const myResource = useResource(
+    (signal) =>
+      tab === "my"
+        ? adminApi.myProducts(signal)
+        : Promise.resolve({ data: [] }),
+    [tab, revision],
+  );
+
+  const resource = tab === "all" ? allResource : myResource;
+  const rawRows = rowsFrom(resource.data);
+
+  const rows = useMemo(() => {
+    if (tab === "all") return rawRows;
+    const term = debouncedQuery.toLowerCase();
+    return rawRows.filter((item) => {
+      const matchName = !term || (item.name || "").toLowerCase().includes(term);
+      const matchStatus = !status || item.status === status;
+      const matchCat =
+        !categoryId ||
+        item.categoryId === categoryId ||
+        item.category?.id === categoryId ||
+        item.sub_category?.categoryId === categoryId;
+      return matchName && matchStatus && matchCat;
+    });
+  }, [tab, rawRows, debouncedQuery, status, categoryId]);
+
+  const pagination =
+    tab === "all"
+      ? allResource.data?.pagination || {}
+      : { total: rows.length, pages: 1 };
   const hasFilters = Boolean(query || status || categoryId);
   const clearFilters = () => {
     setQuery("");
@@ -1609,6 +2158,69 @@ export function AdminProducts() {
     setCategoryId("");
     setPage(1);
   };
+
+  const handleSaveProduct = async (formValues) => {
+    setBusy(true);
+    setProductModalError("");
+    setFeedback("");
+    try {
+      const payload = {
+        storeId: formValues.storeId,
+        categoryId: formValues.categoryId,
+        name: formValues.name.trim(),
+        price: Number(formValues.price),
+        discountPrice: formValues.discountPrice ? Number(formValues.discountPrice) : 0,
+        discount_price: formValues.discountPrice ? Number(formValues.discountPrice) : 0,
+        quantity: Number(formValues.quantity || 1),
+        condition: formValues.condition || "brand_new",
+        description: formValues.description.trim(),
+        specification: formValues.specification || "",
+        specifications: formValues.specification || "",
+        warranty: formValues.warranty || "No warranty",
+        return_policy: formValues.return_policy || "7 days return policy",
+        photos: formValues.image ? [formValues.image] : [],
+        additional_images: formValues.image ? [formValues.image] : [],
+        image_url: formValues.image || "",
+        image: formValues.image || "",
+      };
+
+      if (productModal?.item?.id) {
+        await adminApi.updateProduct({ ...payload, productId: productModal.item.id });
+        notify("Product updated successfully.", "success");
+      } else {
+        await adminApi.createProduct(payload);
+        notify("Product created successfully.", "success");
+      }
+      setProductModal(null);
+      setProductModalError("");
+      setRevision((v) => v + 1);
+    } catch (err) {
+      const msg = err.message || "Failed to save product.";
+      setProductModalError(msg);
+      notify(msg, "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deletingProduct) return;
+    setBusy(true);
+    setFeedback("");
+    try {
+      await adminApi.deleteMyProduct(deletingProduct.id);
+      notify("Product deleted successfully.", "success");
+      setDeletingProduct(null);
+      setRevision((v) => v + 1);
+    } catch (err) {
+      const msg = err.message || "Failed to delete product.";
+      notify(msg, "error");
+      setFeedback(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <>
       <div className="admin-page-head">
@@ -1618,10 +2230,56 @@ export function AdminProducts() {
           <p>
             {resource.error
               ? "Products could not be loaded."
-              : `${Number(pagination.total || rows.length).toLocaleString()} matching products`}
+              : tab === "all"
+                ? `${Number(pagination.total || rows.length).toLocaleString()} matching marketplace products`
+                : `${rows.length} products owned by administrator`}
           </p>
         </div>
+        <Button
+          icon={Plus}
+          onClick={() => {
+            setProductModalError("");
+            setProductModal({ open: true, item: null });
+          }}
+        >
+          Add a product
+        </Button>
       </div>
+
+      {feedback && (
+        <div
+          className={
+            feedback.includes("successfully") ? "admin-success" : "admin-error"
+          }
+          style={{ marginBottom: 18 }}
+        >
+          {feedback}
+        </div>
+      )}
+
+      <div className="admin-content-tabs">
+        <button
+          type="button"
+          className={tab === "all" ? "active" : ""}
+          onClick={() => {
+            setTab("all");
+            setPage(1);
+          }}
+        >
+          <Package size={16} /> All products
+        </button>
+        <button
+          type="button"
+          className={tab === "my" ? "active" : ""}
+          onClick={() => {
+            setTab("my");
+            setPage(1);
+          }}
+        >
+          <Package size={16} /> My products ({rowsFrom(myResource.data).length || 0})
+        </button>
+      </div>
+
       <section className="admin-card">
         <div className="admin-product-toolbar">
           <input
@@ -1695,8 +2353,8 @@ export function AdminProducts() {
             {rows.map((product) => (
               <article className="admin-product-row" key={product.id}>
                 <div className="admin-product-row__image">
-                  {product.image_url ? (
-                    <img src={product.image_url} alt="" />
+                  {product.image_url || product.image ? (
+                    <img src={product.image_url || product.image} alt="" />
                   ) : (
                     <Box size={22} />
                   )}
@@ -1712,7 +2370,7 @@ export function AdminProducts() {
                   </span>
                 </div>
                 <div>
-                  <span className="admin-product-label">Vendor</span>
+                  <span className="admin-product-label">Owner</span>
                   <strong>
                     {product.vendor
                       ? [product.vendor.firstName, product.vendor.lastName]
@@ -1737,37 +2395,406 @@ export function AdminProducts() {
                       ? "Unpublished"
                       : "Draft"}
                 </span>
-                <Link
-                  className="admin-row-action"
-                  to={`/admin/products/${product.id}`}
-                >
-                  Review →
-                </Link>
+                <div className="admin-ops-actions">
+                  {tab === "my" ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          setProductModalError("");
+                          setProductModal({ open: true, item: product });
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="danger"
+                        onClick={() => setDeletingProduct(product)}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      className="admin-row-action"
+                      to={`/admin/products/${product.id}`}
+                    >
+                      Review →
+                    </Link>
+                  )}
+                </div>
               </article>
             ))}
           </div>
         )}
-        <div className="admin-pagination">
-          <span>
-            {pagination.total ? `Page ${page} of ${pagination.pages || 1}` : ""}
-          </span>
+        {tab === "all" && (
+          <div className="admin-pagination">
+            <span>
+              {pagination.total ? `Page ${page} of ${pagination.pages || 1}` : ""}
+            </span>
+            <Button
+              variant="outline"
+              disabled={page === 1 || resource.loading}
+              onClick={() => setPage((value) => value - 1)}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              disabled={resource.loading || page >= (pagination.pages || 1)}
+              onClick={() => setPage((value) => value + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </section>
+
+      {productModal && (
+        <AdminProductModal
+          item={productModal.item}
+          busy={busy}
+          categories={categories}
+          error={productModalError}
+          onClose={() => {
+            setProductModal(null);
+            setProductModalError("");
+          }}
+          onSave={handleSaveProduct}
+        />
+      )}
+
+      {deletingProduct && (
+        <ConfirmModal
+          title={`Delete “${deletingProduct.name}”?`}
+          description="This product will be permanently removed from your catalog."
+          confirmLabel="Delete product"
+          tone="danger"
+          loading={busy}
+          onClose={() => setDeletingProduct(null)}
+          onConfirm={handleDeleteProduct}
+        />
+      )}
+    </>
+  );
+}
+
+function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
+  const storesResource = useResource((signal) => adminApi.myStores(signal), []);
+  const myStores = rowsFrom(storesResource.data);
+
+  const [mainCategoryId, setMainCategoryId] = useState(() => {
+    if (item?.categoryId || item?.sub_category?.id) {
+      const subId = item?.categoryId || item?.sub_category?.id;
+      const found = categories.find((c) =>
+        (c.subCategories || []).some((s) => s.id === subId),
+      );
+      if (found) return found.id;
+    }
+    return item?.category?.id || item?.sub_category?.categoryId || "";
+  });
+
+  const [form, setForm] = useState({
+    storeId: item?.storeId || item?.store?.id || "",
+    categoryId: item?.categoryId || item?.sub_category?.id || "",
+    name: item?.name || "",
+    price: item?.price || "",
+    discountPrice: item?.discountPrice || item?.discount_price || "",
+    quantity: item?.quantity || "1",
+    condition: item?.condition || "brand_new",
+    warranty: item?.warranty || "No warranty",
+    return_policy: item?.return_policy || "7 days return policy",
+    description: item?.description || "",
+    specification: item?.specification || item?.specifications || "",
+    image: item?.image_url || item?.image || "",
+  });
+
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    if (!form.storeId && myStores.length) {
+      setForm((f) => ({ ...f, storeId: myStores[0].id }));
+    }
+  }, [myStores]);
+
+  const selectedCategory = categories.find((c) => c.id === mainCategoryId);
+  const availableSubcategories = selectedCategory?.subCategories || [];
+
+  const handleMainCategoryChange = (catId) => {
+    setMainCategoryId(catId);
+    setForm((f) => ({ ...f, categoryId: "" }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploading(true);
+      const url = await uploadImage(file);
+      setForm((f) => ({ ...f, image: url }));
+    } catch (err) {
+      alert(err.message || "Failed to upload image.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.categoryId) {
+      alert("Please select a subcategory for this product.");
+      return;
+    }
+    onSave(form);
+  };
+
+  return (
+    <Modal
+      className="modal--wide"
+      title={item ? "Edit product" : "Add a product"}
+      onClose={onClose}
+    >
+      <form className="admin-content-form" onSubmit={handleSubmit}>
+        {error && (
+          <div
+            className="admin-error"
+            role="alert"
+            style={{
+              background: "#fee2e2",
+              border: "1px solid #f87171",
+              color: "#b91c1c",
+              padding: "10px 14px",
+              borderRadius: "8px",
+              fontSize: "13px",
+              fontWeight: "600",
+              marginBottom: 12,
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {!myStores.length && !storesResource.loading && (
+          <div className="admin-error">
+            You must create an admin store first before adding products. Go to{" "}
+            <strong>Stores</strong> and click <strong>Create a store</strong>.
+          </div>
+        )}
+
+        <label>
+          Admin store *
+          <select
+            value={form.storeId}
+            onChange={(e) => setForm({ ...form, storeId: e.target.value })}
+            required
+            disabled={!myStores.length}
+          >
+            <option value="">Select store</option>
+            {myStores.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="admin-form-row">
+          <label>
+            Category *
+            <select
+              value={mainCategoryId}
+              onChange={(e) => handleMainCategoryChange(e.target.value)}
+              required
+            >
+              <option value="">Select category</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Subcategory *
+            <select
+              value={form.categoryId}
+              onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+              required
+              disabled={!mainCategoryId || !availableSubcategories.length}
+            >
+              <option value="">
+                {!mainCategoryId
+                  ? "Select a category first"
+                  : availableSubcategories.length
+                    ? "Select subcategory"
+                    : "No subcategories found"}
+              </option>
+              {availableSubcategories.map((sub) => (
+                <option key={sub.id} value={sub.id}>
+                  {sub.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <label>
+          Product name *
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Official product name"
+            required
+          />
+        </label>
+
+        <div className="admin-form-row">
+          <label>
+            Price (₦) *
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={form.price}
+              onChange={(e) => setForm({ ...form, price: e.target.value })}
+              placeholder="0.00"
+              required
+            />
+          </label>
+          <label>
+            Discount price (₦, optional)
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={form.discountPrice}
+              onChange={(e) =>
+                setForm({ ...form, discountPrice: e.target.value })
+              }
+              placeholder="0.00"
+            />
+          </label>
+        </div>
+
+        <div className="admin-form-row">
+          <label>
+            Stock quantity *
+            <input
+              type="number"
+              min="0"
+              value={form.quantity}
+              onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+              required
+            />
+          </label>
+          <label>
+            Condition *
+            <select
+              value={form.condition}
+              onChange={(e) => setForm({ ...form, condition: e.target.value })}
+            >
+              <option value="brand_new">Brand new</option>
+              <option value="fairly_used">Fairly used</option>
+              <option value="refurbished">Refurbished</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="admin-form-row">
+          <label>
+            Warranty *
+            <input
+              value={form.warranty}
+              onChange={(e) => setForm({ ...form, warranty: e.target.value })}
+              placeholder="e.g. 1 year or No warranty"
+              required
+            />
+          </label>
+          <label>
+            Return policy *
+            <input
+              value={form.return_policy}
+              onChange={(e) =>
+                setForm({ ...form, return_policy: e.target.value })
+              }
+              placeholder="e.g. 7 days return policy"
+              required
+            />
+          </label>
+        </div>
+
+        <label>
+          Description *
+          <textarea
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Detailed description of the product"
+            rows={3}
+            required
+          />
+        </label>
+
+        <label>
+          Specifications (optional)
+          <textarea
+            value={form.specification}
+            onChange={(e) =>
+              setForm({ ...form, specification: e.target.value })
+            }
+            placeholder="Key technical specifications, dimensions, features..."
+            rows={2}
+          />
+        </label>
+
+        <label>
+          Product image *
+          {form.image && (
+            <img
+              src={form.image}
+              alt="Preview"
+              style={{
+                width: 100,
+                height: 100,
+                objectFit: "cover",
+                borderRadius: 8,
+                marginBottom: 8,
+              }}
+            />
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            disabled={uploading}
+          />
+        </label>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 10,
+            marginTop: 14,
+          }}
+        >
           <Button
             variant="outline"
-            disabled={page === 1 || resource.loading}
-            onClick={() => setPage((value) => value - 1)}
+            type="button"
+            onClick={onClose}
+            disabled={busy}
           >
-            Previous
+            Cancel
           </Button>
           <Button
-            variant="outline"
-            disabled={resource.loading || page >= (pagination.pages || 1)}
-            onClick={() => setPage((value) => value + 1)}
+            type="submit"
+            loading={busy || uploading}
+            disabled={!myStores.length}
           >
-            Next
+            {item ? "Update product" : "Save product"}
           </Button>
         </div>
-      </section>
-    </>
+      </form>
+    </Modal>
   );
 }
 
@@ -1777,11 +2804,61 @@ export function AdminCategories() {
   const [deleting, setDeleting] = useState(null);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [search, setSearch] = useState("");
+  const [collapsedCategories, setCollapsedCategories] = useState({});
+
   const resource = useResource(
     (signal) => adminApi.categoryTree(signal),
     [revision],
   );
   const categories = rowsFrom(resource.data);
+
+  const toggleCategory = (id) => {
+    setCollapsedCategories((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const allCollapsed =
+    categories.length > 0 &&
+    categories.every((cat) => Boolean(collapsedCategories[cat.id]));
+
+  const toggleAll = () => {
+    if (allCollapsed) {
+      setCollapsedCategories({});
+    } else {
+      const next = {};
+      categories.forEach((cat) => {
+        next[cat.id] = true;
+      });
+      setCollapsedCategories(next);
+    }
+  };
+
+  const filteredCategories = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return categories;
+    return categories
+      .map((cat) => {
+        const catMatches = cat.name?.toLowerCase().includes(term);
+        const matchingSubs = (cat.subCategories || []).filter((sub) =>
+          sub.name?.toLowerCase().includes(term)
+        );
+        if (catMatches) {
+          return cat;
+        }
+        if (matchingSubs.length > 0) {
+          return {
+            ...cat,
+            subCategories: matchingSubs,
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+  }, [categories, search]);
+
   const save = async ({ name, file }) => {
     setBusy(true);
     setFeedback(null);
@@ -1860,89 +2937,186 @@ export function AdminCategories() {
       ) : resource.error ? (
         <div className="admin-error">{resource.error.message}</div>
       ) : (
-        <div className="admin-taxonomy-grid">
-          {categories.map((category) => (
-            <section
-              className="admin-card admin-taxonomy-card"
-              key={category.id}
-            >
-              <header>
-                <span className="admin-taxonomy-image">
-                  {category.image ? (
-                    <img src={category.image} alt="" />
-                  ) : (
-                    <Box size={22} />
-                  )}
-                </span>
-                <div>
-                  <h2>{category.name}</h2>
-                  <p>{category.subCategories?.length || 0} subcategories</p>
-                </div>
-                <div className="admin-taxonomy-actions">
-                  <button
-                    onClick={() =>
-                      setEditing({ kind: "category", item: category })
-                    }
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() =>
-                      setDeleting({ kind: "category", item: category })
-                    }
-                  >
-                    Delete
-                  </button>
-                </div>
-              </header>
-              <div className="admin-subcategory-list">
-                {category.subCategories?.map((item) => (
-                  <div key={item.id}>
-                    <span className="admin-taxonomy-image admin-taxonomy-image--small">
-                      {item.image ? (
-                        <img src={item.image} alt="" />
-                      ) : (
-                        <Box size={15} />
-                      )}
-                    </span>
-                    <strong>{item.name}</strong>
-                    <button
-                      onClick={() =>
-                        setEditing({
-                          kind: "subcategory",
-                          categoryId: category.id,
-                          item,
-                        })
-                      }
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setDeleting({ kind: "subcategory", item })}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))}
-                {!category.subCategories?.length && (
-                  <p>No subcategories yet.</p>
-                )}
-              </div>
+        <>
+          <div className="admin-taxonomy-toolbar">
+            <div className="admin-taxonomy-search">
+              <Search size={18} />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search categories or subcategories…"
+                aria-label="Search categories or subcategories"
+              />
+              {search && (
+                <button
+                  type="button"
+                  className="admin-taxonomy-search__clear"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            <div className="admin-taxonomy-toolbar__actions">
+              <span className="admin-taxonomy-count">
+                {filteredCategories.length === categories.length
+                  ? `${categories.length} categories`
+                  : `${filteredCategories.length} of ${categories.length} categories`}
+              </span>
               <Button
                 variant="outline"
-                onClick={() =>
-                  setEditing({
-                    kind: "subcategory",
-                    categoryId: category.id,
-                    item: null,
-                  })
-                }
+                size="sm"
+                onClick={toggleAll}
               >
-                Add subcategory
+                {allCollapsed ? "Expand all" : "Collapse all"}
               </Button>
-            </section>
-          ))}
-        </div>
+            </div>
+          </div>
+
+          {!filteredCategories.length ? (
+            <EmptyState
+              title="No categories found"
+              description={
+                search
+                  ? `No categories or subcategories match “${search}”.`
+                  : "No categories have been created yet."
+              }
+            />
+          ) : (
+            <div className="admin-taxonomy-grid">
+              {filteredCategories.map((category) => {
+                const isCollapsed = search.trim()
+                  ? false
+                  : Boolean(collapsedCategories[category.id]);
+                return (
+                  <section
+                    className={`admin-card admin-taxonomy-card ${isCollapsed ? "admin-taxonomy-card--collapsed" : ""}`}
+                    key={category.id}
+                  >
+                    <header>
+                      <span className="admin-taxonomy-image">
+                        {category.image ? (
+                          <img src={category.image} alt="" />
+                        ) : (
+                          <Box size={22} />
+                        )}
+                      </span>
+                      <div
+                        className="admin-taxonomy-card__title"
+                        onClick={() => toggleCategory(category.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            toggleCategory(category.id);
+                          }
+                        }}
+                        title={isCollapsed ? "Click to expand" : "Click to collapse"}
+                      >
+                        <h2>{category.name}</h2>
+                        <p>
+                          {category.subCategories?.length || 0} subcategories
+                          {isCollapsed ? " · Click to expand" : ""}
+                        </p>
+                      </div>
+                      <div className="admin-taxonomy-actions">
+                        <button
+                          onClick={() =>
+                            setEditing({ kind: "category", item: category })
+                          }
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() =>
+                            setDeleting({ kind: "category", item: category })
+                          }
+                        >
+                          Delete
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-taxonomy-toggle-btn"
+                          onClick={() => toggleCategory(category.id)}
+                          aria-expanded={!isCollapsed}
+                          aria-label={
+                            isCollapsed
+                              ? `Expand ${category.name}`
+                              : `Collapse ${category.name}`
+                          }
+                          title={
+                            isCollapsed
+                              ? "Expand subcategories"
+                              : "Collapse subcategories"
+                          }
+                        >
+                          <ChevronDown
+                            size={18}
+                            className={`admin-taxonomy-chevron ${isCollapsed ? "admin-taxonomy-chevron--collapsed" : ""}`}
+                          />
+                        </button>
+                      </div>
+                    </header>
+                    {!isCollapsed && (
+                      <>
+                        <div className="admin-subcategory-list">
+                          {category.subCategories?.map((item) => (
+                            <div key={item.id}>
+                              <span className="admin-taxonomy-image admin-taxonomy-image--small">
+                                {item.image ? (
+                                  <img src={item.image} alt="" />
+                                ) : (
+                                  <Box size={15} />
+                                )}
+                              </span>
+                              <strong>{item.name}</strong>
+                              <button
+                                onClick={() =>
+                                  setEditing({
+                                    kind: "subcategory",
+                                    categoryId: category.id,
+                                    item,
+                                  })
+                                }
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() =>
+                                  setDeleting({ kind: "subcategory", item })
+                                }
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ))}
+                          {!category.subCategories?.length && (
+                            <p>No subcategories yet.</p>
+                          )}
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            setEditing({
+                              kind: "subcategory",
+                              categoryId: category.id,
+                              item: null,
+                            })
+                          }
+                        >
+                          Add subcategory
+                        </Button>
+                      </>
+                    )}
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
       {editing && (
         <TaxonomyModal

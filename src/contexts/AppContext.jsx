@@ -22,14 +22,38 @@ export function AppProvider({ children }) {
   const [cartCount, setCartCount] = useState(0);
   const [savedIds, setSavedIds] = useState(() => new Set());
   useEffect(() => {
-    if (!user?.id) { setSavedIds(new Set()); return; }
-    const controller = new AbortController();
+    if (!user?.id) {
+      setCartCount(0);
+      setSavedIds(new Set());
+      return;
+    }
+    const savedController = new AbortController();
+    const cartController = new AbortController();
     setSavedIds(new Set());
-    accountApi.savedProducts(controller.signal).then(result => {
+
+    accountApi.savedProducts(savedController.signal).then(result => {
       const items = Array.isArray(result) ? result : result?.data || [];
-      if (!controller.signal.aborted) setSavedIds(new Set(items.map(item => item.productId || item.product?.id || item.id).filter(Boolean)));
+      if (!savedController.signal.aborted) setSavedIds(new Set(items.map(item => item.productId || item.product?.id || item.id).filter(Boolean)));
     }).catch(() => {});
-    return () => controller.abort();
+
+    const fetchCart = () => {
+      accountApi.cart(cartController.signal).then(result => {
+        if (!cartController.signal.aborted) {
+          const list = Array.isArray(result) ? result : result?.data || [];
+          const total = list.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+          setCartCount(total);
+        }
+      }).catch(() => {});
+    };
+
+    fetchCart();
+    window.addEventListener('kudu:cart-changed', fetchCart);
+
+    return () => {
+      savedController.abort();
+      cartController.abort();
+      window.removeEventListener('kudu:cart-changed', fetchCart);
+    };
   }, [user?.id]);
   const markSaved = productId => setSavedIds(ids => new Set([...ids, productId]));
   const markUnsaved = productId => setSavedIds(ids => { const next = new Set(ids); next.delete(productId); return next; });

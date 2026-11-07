@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CheckCircle2, CreditCard, MapPin, PackageCheck, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, CreditCard, MapPin, MessageCircle, PackageCheck, Phone, ShieldCheck } from 'lucide-react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import PaystackPop from '@paystack/inline-js';
@@ -15,7 +15,7 @@ import { imageFor, money } from '../utils/format';
 import './Checkout.css';
 
 export default function Checkout() {
-  const { user, country, setCartCount } = useApp();
+  const { user, country, setCartCount, notify } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showAddress, setShowAddress] = useState(false);
@@ -25,6 +25,9 @@ export default function Checkout() {
   const [confirming, setConfirming] = useState(false);
   const [confirmationError, setConfirmationError] = useState('');
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [messageModal, setMessageModal] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
   const [pendingPayment, setPendingPayment] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('kuduPendingCheckout') || 'null'); }
     catch { return null; }
@@ -42,6 +45,32 @@ export default function Checkout() {
   const deliveryFees = useResource(signal => user && items.length && mode === 'NGN' && needsDelivery && hasAddress ? checkoutApi.deliveryFees(countryCode, signal) : Promise.resolve(null), [user?.id, items.length, mode, needsDelivery, hasAddress, countryCode, location?.city, location?.zipCode]);
   const deliveryError = needsDelivery ? deliveryFees.error : null;
   const quoteError = charges.error || deliveryError;
+  const supportPhone = items.find(i => i.product?.admin?.phoneNumber)?.product?.admin?.phoneNumber || '+2348133059324';
+  const supportPhoneDisplay = supportPhone.replace(/^(\+234|0)(\d{3})(\d{3})(\d{4})$/, '+234 $2 $3 $4');
+  const sellerVendor = items.find(i => i.product?.vendor?.id || i.product?.vendorId)?.product?.vendor;
+  const sellerVendorId = sellerVendor?.id || items.find(i => i.product?.vendorId)?.product?.vendorId;
+  const sellerStoreName = items[0]?.product?.store?.name || [sellerVendor?.firstName, sellerVendor?.lastName].filter(Boolean).join(' ') || 'the seller';
+  const sellerProductId = items[0]?.productId || items[0]?.product?.id;
+
+  const handleSendMessage = async (event) => {
+    event.preventDefault();
+    if (!sellerVendorId || !messageText.trim()) return;
+    setSendingMessage(true);
+    try {
+      await accountApi.sendMessage({
+        productId: sellerProductId,
+        receiverId: sellerVendorId,
+        content: messageText.trim()
+      });
+      notify(`Message sent to ${sellerStoreName}. Their reply will appear in your messages.`, 'success');
+      setMessageText('');
+      setMessageModal(false);
+    } catch (error) {
+      notify(error.message, 'error');
+    } finally {
+      setSendingMessage(false);
+    }
+  };
   const chargeQuote = useMemo(() => {
     if (mode !== 'NGN' || charges.error) return null;
     try { return calculateNairaQuote(items, Array.isArray(charges.data) ? charges.data : charges.data?.data || [], 0); }
@@ -139,6 +168,29 @@ export default function Checkout() {
     finally { setPreparing(false); }
   };
 
+  useEffect(() => {
+    if (mode === 'NGN' || !user || !items.length || (needsDelivery && !hasAddress) || stockIssues.length > 0 || paymentReady) return;
+    let active = true;
+    setPreparing(true);
+    setConfirmationError('');
+    checkoutApi.prepareDollar(addressText)
+      .then(prepared => {
+        if (!active) return;
+        if (!prepared?.clientSecret || !Number.isFinite(Number(prepared.totalAmount)) || Number(prepared.totalAmount) <= 0) {
+          throw new Error('The payment quote was incomplete.');
+        }
+        setPaymentReady(prepared);
+      })
+      .catch(err => {
+        if (!active) return;
+        setConfirmationError(err.message || 'Failed to calculate payment quote.');
+      })
+      .finally(() => {
+        if (active) setPreparing(false);
+      });
+    return () => { active = false; };
+  }, [mode, user?.id, items.length, hasAddress, needsDelivery, addressText, stockIssues.length, paymentReady]);
+
   if (!user) return <Navigate to="/login" replace state={{ from: '/checkout' }}/>;
   return <div className="container checkout-page">
     <Link to="/cart" className="back-link"><ArrowLeft size={16}/> Back to cart</Link>
@@ -157,16 +209,18 @@ export default function Checkout() {
           {mode === 'NGN' && (hasAddress || !needsDelivery) && !quote && !charges.loading && !deliveryFees.loading && <div className="form-alert" role="alert">We couldn’t calculate a valid total. Review your cart before paying.</div>}
           {pendingPayment ? <div className="checkout-warning"><strong>Payment verification pending</strong><p>{confirmationError || `Checking reference ${pendingPayment.refId} with the payment provider. Do not pay again.`}</p><Button variant="outline" loading={confirming} onClick={() => completeOrder(pendingPayment)}>Retry verification</Button></div>
             : needsDelivery && !hasAddress ? <div className="checkout-warning"><MapPin size={20}/><div><strong>Add a delivery address to continue</strong><p>We’ll show the final delivery cost and unlock payment once your address is saved.</p></div></div>
-            : mode === 'NGN' ? quoteError ? <div className="checkout-warning"><div><strong>{deliveryError ? 'Delivery is unavailable for this address' : 'We couldn’t verify the current product charges'}</strong><p>{quoteError.message || 'Please try again before continuing to payment.'}</p>{deliveryError && canPickup && <Button variant="outline" size="sm" onClick={() => { setDeliveryOption('store'); setPaymentReady(null); }}>Use pickup instead</Button>}</div></div> : <Button className="checkout-pay-button" type="button" icon={CreditCard} onClick={startNaira} disabled={!canPay} loading={preparing}>Continue to secure payment</Button>
+            : mode === 'NGN' ? quoteError ? <div className="checkout-warning"><div><strong>{deliveryError ? 'Delivery is unavailable for this address' : 'We couldn’t verify the current product charges'}</strong><p>{(quoteError.message || 'Please try again before continuing to payment.').replace(/contact the seller\.?/i, 'choose contact options.')}</p><div className="checkout-warning__actions">{deliveryError && canPickup && <Button variant="outline" size="sm" onClick={() => { setDeliveryOption('store'); setPaymentReady(null); }}>Use pickup instead</Button>}{sellerVendorId && <Button variant="outline" size="sm" icon={MessageCircle} onClick={() => { setMessageText(`Hi ${sellerStoreName}, I'd like to order "${items[0]?.product?.name || 'items in my cart'}", but delivery to ${location?.city || 'my location'} is unavailable. Could you provide a delivery rate?`); setMessageModal(true); }}>Message seller</Button>}<a className="button button--outline button--sm checkout-support-btn" href={`tel:${supportPhone}`}><Phone size={14}/> Contact support ({supportPhoneDisplay})</a></div></div></div> : <Button className="checkout-pay-button" type="button" icon={CreditCard} onClick={startNaira} disabled={!canPay} loading={preparing}>Continue to secure payment</Button>
             : paymentReady ? <StripePayment clientSecret={paymentReady.clientSecret} publicKey={paymentReady.publicKey} amount={money(paymentReady.totalAmount, '$')} onPaid={completeOrder} onError={setConfirmationError}/>
-            : <Button loading={preparing} disabled={!canPay} onClick={startDollar} icon={CreditCard}>Continue to secure payment</Button>}
+            : preparing ? <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 0', color: '#64748b', fontSize: 13 }}><span className="spinner" /><span>Calculating quote and preparing payment options…</span></div>
+            : <div><Button loading={preparing} disabled={!canPay} onClick={startDollar} icon={CreditCard}>Proceed to payment options</Button><small style={{ display: 'block', marginTop: 8, color: '#64748b', fontSize: 12 }}>You will review your final quote and enter payment details before any charge is made.</small></div>}
           {confirmationError && !pendingPayment && <div className="form-alert" role="alert">{confirmationError}</div>}
         </section>
       </div><aside className="checkout-summary"><h2>Order summary</h2><div className="checkout-summary__items">{items.map(item => <div className="checkout-summary__item" key={item.id}><div className="checkout-summary__image">{imageFor(item.product) && <img src={imageFor(item.product)} alt=""/>}</div><div><strong>{item.product?.name}</strong><span>Qty {item.quantity}</span></div></div>)}</div>
         {mode === 'NGN' ? quote ? <><div className="checkout-summary__row"><span>Items</span><strong>{money(quote.subtotal)}</strong></div><div className="checkout-summary__row"><span>Product charges</span><strong>{money(quote.charges)}</strong></div><div className="checkout-summary__row"><span>Delivery</span><strong>{needsDelivery && deliveryFees.loading ? 'Checking…' : money(quote.delivery)}</strong></div><div className="checkout-summary__total"><span>Total</span><strong>{charges.loading || (needsDelivery && deliveryFees.loading) ? 'Checking…' : money(quote.total)}</strong></div></> : quoteError ? <><div className="checkout-summary__row"><span>Items</span><strong>{chargeQuote ? money(chargeQuote.subtotal) : '—'}</strong></div><div className="checkout-summary__row"><span>Product charges</span><strong>{chargeQuote ? money(chargeQuote.charges) : '—'}</strong></div><div className="checkout-summary__row"><span>Delivery</span><strong>Unavailable</strong></div><div className="checkout-summary__total"><span>Total</span><strong>—</strong></div></> : <p className="checkout-summary__hint">{needsDelivery && !hasAddress ? 'Add a delivery address to see your final total.' : 'Calculating your total…'}</p>
-          : paymentReady ? <><div className="checkout-summary__row"><span>Items</span><strong>{money(paymentReady.paymentBreakdown?.subtotal, '$')}</strong></div><div className="checkout-summary__row"><span>Charges</span><strong>{money(paymentReady.paymentBreakdown?.chargeAmount, '$')}</strong></div><div className="checkout-summary__total"><span>Total</span><strong>{money(paymentReady.totalAmount, '$')}</strong></div></> : <p className="checkout-summary__hint">{needsDelivery && !hasAddress ? 'Add a delivery address to see your final total.' : 'Your final dollar total comes from the payment quote before you pay.'}</p>}
+          : paymentReady ? <><div className="checkout-summary__row"><span>Items</span><strong>{money(paymentReady.paymentBreakdown?.subtotal, '$')}</strong></div><div className="checkout-summary__row"><span>Product charges</span><strong>{money(paymentReady.paymentBreakdown?.chargeAmount, '$')}</strong></div><div className="checkout-summary__total"><span>Total</span><strong>{money(paymentReady.totalAmount, '$')}</strong></div></> : preparing ? <p className="checkout-summary__hint">Calculating your payment quote…</p> : <p className="checkout-summary__hint">{needsDelivery && !hasAddress ? 'Add a delivery address to see your final total.' : 'Your final dollar total comes from the payment quote before you pay.'}</p>}
         <p className="checkout-summary__assurance"><ShieldCheck size={17}/> Your order is confirmed only after payment is verified.</p></aside></div>}
     {showAddress && <Modal title="Delivery address" onClose={() => setShowAddress(false)}><AddressForm onSaved={() => { setShowAddress(false); setPaymentReady(null); }} onCancel={() => setShowAddress(false)}/></Modal>}
+    {messageModal && <Modal title={`Message ${sellerStoreName}`} onClose={() => setMessageModal(false)}><form className="offer-form" onSubmit={handleSendMessage}><p>Ask <strong>{sellerStoreName}</strong> about delivery to your address or alternative options. Their reply will appear in your messages.</p><label className="field" htmlFor="checkoutMessage"><span className="field__label">Message</span><textarea id="checkoutMessage" className="field__input" rows="4" maxLength="2000" required value={messageText} onChange={event => setMessageText(event.target.value)} placeholder="What would you like to ask the seller?"/></label><Button type="submit" loading={sendingMessage} disabled={!messageText.trim()}>Send message</Button></form></Modal>}
     {orderSuccess && <Modal title="Order confirmed" icon={<CheckCircle2 size={20}/>} onClose={() => navigate('/account/orders', { replace: true })} footer={<Button icon={PackageCheck} onClick={() => navigate('/account/orders', { replace: true })}>View my orders</Button>}><div className="checkout-success"><span className="checkout-success__icon"><CheckCircle2 size={38}/></span><h3>Thank you for your order!</h3><p>Your payment was verified and your order has been placed successfully. You can follow its progress from your orders page.</p></div></Modal>}
   </div>;
 }

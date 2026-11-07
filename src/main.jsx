@@ -145,9 +145,19 @@ const AdminPaymentGateways = lazy(() =>
     default: module.AdminPaymentGateways,
   })),
 );
+const AdminSettings = lazy(() =>
+  import("./pages/admin/AdminSettings").then((module) => ({
+    default: module.AdminSettings,
+  })),
+);
 const AdminDropshipping = lazy(() =>
   import("./pages/admin/AdminSpecialists").then((module) => ({
     default: module.AdminDropshipping,
+  })),
+);
+const AdminOffers = lazy(() =>
+  import("./pages/admin/AdminOffers").then((module) => ({
+    default: module.AdminOffers,
   })),
 );
 const AliExpressCallback = lazy(() =>
@@ -381,6 +391,7 @@ function App() {
               path="payment-gateways"
               element={deferred(<AdminPaymentGateways />)}
             />
+            <Route path="settings" element={deferred(<AdminSettings />)} />
             <Route
               path="dropshipping"
               element={deferred(<AdminDropshipping />)}
@@ -391,6 +402,7 @@ function App() {
             />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="orders/:orderId" element={<AdminOrderDetail />} />
+            <Route path="offers" element={deferred(<AdminOffers />)} />
             <Route path="transactions" element={<AdminTransactions />} />
             <Route path="withdrawals" element={<AdminWithdrawals />} />
             <Route path="verification" element={<AdminVerification />} />

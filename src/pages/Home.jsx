@@ -522,27 +522,38 @@ export default function Home() {
           </div>
           <Link to={`/auction/product/${featuredAuction.id}`} className="auction-spotlight">
             <div className="auction-spotlight__image">
-              {(featuredAuction.image || featuredAuction.image_url) && (
+              {(featuredAuction.image || featuredAuction.image_url) ? (
                 <img
                   src={featuredAuction.image || featuredAuction.image_url}
                   alt={featuredAuction.name || 'Auction product'}
                   loading="lazy"
                 />
+              ) : (
+                <Package size={48} />
               )}
+              <span className="auction-spotlight__badge">
+                <Gavel size={13} />{' '}
+                {featuredAuction.auctionStatus === 'ongoing' ? 'Live bidding' : 'Upcoming'}
+              </span>
             </div>
             <div className="auction-spotlight__content">
               <span className="auction-spotlight__label">
-                <Gavel size={16} />{' '}
+                <Gavel size={15} />{' '}
                 {featuredAuction.auctionStatus === 'ongoing' ? 'Ongoing auction' : 'Upcoming auction'}
               </span>
               <h3>{featuredAuction.name}</h3>
-              <p>See the listing details and its starting price.</p>
-              <strong>
-                {money(featuredAuction.price, featuredAuction.store?.currency?.symbol || country.symbol)}
-              </strong>
-              <span className="auction-spotlight__link">
-                View auction <ArrowUpRight size={18} />
-              </span>
+              <p>Explore live bidding and see the opening price on this listing.</p>
+              <div className="auction-spotlight__footer">
+                <div className="auction-spotlight__price-row">
+                  <span className="auction-spotlight__price-label">Starting bid</span>
+                  <strong>
+                    {money(featuredAuction.price, featuredAuction.store?.currency?.symbol || country.symbol)}
+                  </strong>
+                </div>
+                <span className="auction-spotlight__link">
+                  View auction <ArrowUpRight size={17} />
+                </span>
+              </div>
             </div>
           </Link>
         </section>

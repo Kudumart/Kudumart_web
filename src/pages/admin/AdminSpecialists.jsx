@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   CreditCard,
   ExternalLink,
   PackageSearch,
   Plus,
+  RefreshCw,
   Trash2,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -242,13 +244,44 @@ export function AdminDropshipping() {
   const items = useMemo(() => rows(products.data), [products.data]);
   const connection = credentials.data?.data || credentials.data || {};
   const isConnected = Boolean(connection.isConnected || connection.connected);
+  const statusBadge =
+    connection.statusBadge ||
+    (connection.status ? String(connection.status) : isConnected ? "Active" : "Not connected");
+  const statusColor =
+    connection.statusColor ||
+    (statusBadge.toLowerCase().includes("expired") ? "red" : isConnected ? "green" : "red");
+  const isExpired =
+    statusColor === "red" ||
+    statusBadge.toLowerCase().includes("expired") ||
+    Boolean(connection.showReconnectButton) ||
+    Boolean(connection.expiryInfo?.accessToken?.isExpired);
+  const showReconnect = Boolean(connection.showReconnectButton || isExpired);
+  const accountEmail =
+    connection.account?.email ||
+    connection.accountEmail ||
+    (typeof connection.account === "string" ? connection.account : "") ||
+    "";
+  const timestamps = connection.timestamps || {};
+  const message =
+    connection.message ||
+    (isExpired
+      ? "Your AliExpress connection has expired. Please reconnect your account to continue dropshipping."
+      : "");
+  const hasAccount = Boolean(isConnected || accountEmail);
+  const cleanStatusBadge = String(statusBadge || "")
+    .replace(/^[^a-zA-Z0-9]+/, "")
+    .trim();
+  const badgeText =
+    cleanStatusBadge ||
+    (isExpired ? "Expired" : isConnected ? "Active" : "Not connected");
+
   const connect = async () => {
     try {
-      if (!isConnected) {
+      setFeedback({ busy: true, error: "", success: "" });
+      if (!isConnected && !accountEmail) {
         if (!account.trim()) {
           throw new Error("Enter the AliExpress account email before connecting.");
         }
-        setFeedback({ busy: true, error: "", success: "" });
         await adminApi.registerDropshipAccount(account.trim());
       }
       const result = await adminApi.dropshipAuth();
@@ -279,46 +312,121 @@ export function AdminDropshipping() {
             products into a KuduMart store.
           </p>
         </div>
-        <Button
-          variant="outline"
-          icon={ExternalLink}
-          loading={feedback.busy}
-          onClick={connect}
-        >
-          {isConnected ? "Reconnect AliExpress" : "Connect AliExpress"}
-        </Button>
       </div>
       {feedback.error && <p className="admin-error">{feedback.error}</p>}
       {feedback.success && <p className="admin-success">{feedback.success}</p>}
-      <section className="admin-card">
-        <div className="admin-specialist-status">
-          <strong>Connection status</strong>
-          <span>
-            {credentials.loading
-              ? "Checking…"
-              : credentials.error
-                ? "Unavailable"
-                : isConnected
-                  ? "Connected"
-                  : "Connection required"}
-          </span>
+
+      <section className="admin-card admin-dropship-card">
+        <div className="admin-card__head">
+          <h2>AliExpress Account Details</h2>
+          {hasAccount && showReconnect ? (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={RefreshCw}
+              loading={feedback.busy}
+              onClick={connect}
+            >
+              Reconnect Account
+            </Button>
+          ) : !isConnected && !hasAccount ? (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={ExternalLink}
+              loading={feedback.busy}
+              onClick={connect}
+            >
+              Add Account
+            </Button>
+          ) : null}
         </div>
-        {!isConnected && !credentials.loading && (
-          <label className="admin-specialist-account">
-            AliExpress account email
-            <input
-              type="email"
-              value={account}
-              onChange={(event) => setAccount(event.target.value)}
-              placeholder="account@example.com"
-              autoComplete="email"
-            />
-            <small>
-              This must match the AliExpress account you authorize on the next
-              screen.
-            </small>
-          </label>
+
+        {credentials.loading ? (
+          <Skeleton className="admin-table-skeleton" style={{ height: 140 }} />
+        ) : hasAccount ? (
+          <div className="admin-dropship-details">
+            {accountEmail && (
+              <div className="admin-dropship-line">
+                <span className="admin-dropship-label">Account Email:</span>
+                <span className="admin-dropship-value">{accountEmail}</span>
+              </div>
+            )}
+            <div className="admin-dropship-line">
+              <span className="admin-dropship-label">Status:</span>
+              <span className={`admin-dropship-badge admin-dropship-badge--${statusColor}`}>
+                {badgeText}
+              </span>
+            </div>
+            {message && <p className="admin-dropship-message">{message}</p>}
+
+            {(timestamps.connectedAt || timestamps.lastUpdated) && (
+              <>
+                <div className="admin-dropship-divider">
+                  <span>Timestamps</span>
+                </div>
+                <div className="admin-dropship-timestamps">
+                  <div>
+                    <span className="admin-dropship-sublabel">Connected At:</span>
+                    <span className="admin-dropship-subvalue">
+                      {timestamps.connectedAt || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="admin-dropship-sublabel">Last Updated:</span>
+                    <span className="admin-dropship-subvalue">
+                      {timestamps.lastUpdated || "—"}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="admin-dropship-empty">
+            <div className="admin-dropship-info-box">
+              <AlertCircle size={20} />
+              <span>
+                No AliExpress account connected. Please add an account to get started.
+              </span>
+            </div>
+            <label className="admin-specialist-account">
+              AliExpress account email
+              <input
+                type="email"
+                value={account}
+                onChange={(event) => setAccount(event.target.value)}
+                placeholder="account@example.com"
+                autoComplete="email"
+              />
+              <small>
+                This must match the AliExpress account you authorize on the next
+                screen.
+              </small>
+            </label>
+          </div>
         )}
+      </section>
+
+      <section className="admin-card">
+        <div className="admin-card__head">
+          <div>
+            <h2>Supplier catalog</h2>
+            <p style={{ color: "#7c8ca3", fontSize: "14px", margin: "4px 0 0" }}>
+              Search the supplier catalog and import products into a KuduMart store.
+            </p>
+          </div>
+        </div>
+
+        {isExpired && (
+          <div className="admin-dropship-warning-callout">
+            <AlertTriangle size={18} />
+            <span>
+              Your AliExpress connection has expired. Please reconnect your account above to search live products and import them.
+            </span>
+          </div>
+        )}
+
         <form
           className="admin-filter-bar"
           onSubmit={(e) => {

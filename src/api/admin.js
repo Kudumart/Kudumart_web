@@ -4,12 +4,22 @@ const BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || "https://api.kudumart.com/api"
 ).replace(/\/$/, "");
 const ADMIN_TOKEN = "kuduAdminToken";
+const ADMIN_USER = "kuduAdminUser";
 
 export const adminSession = {
   get: () => sessionStorage.getItem(ADMIN_TOKEN),
   set: (token) => sessionStorage.setItem(ADMIN_TOKEN, token),
+  getUser: () => {
+    try {
+      return JSON.parse(sessionStorage.getItem(ADMIN_USER) || "null");
+    } catch {
+      return null;
+    }
+  },
+  setUser: (user) => sessionStorage.setItem(ADMIN_USER, JSON.stringify(user)),
   clear: () => {
     sessionStorage.removeItem(ADMIN_TOKEN);
+    sessionStorage.removeItem(ADMIN_USER);
     sessionStorage.removeItem(ADMIN_ACCESS);
   },
 };
@@ -98,6 +108,7 @@ export const adminApi = {
       );
     adminSession.set(token);
     const profile = response?.data?.data || response?.data || {};
+    adminSession.setUser(profile);
     const roleId = profile.roleId || profile.role?.id;
     if (!roleId || profile.role?.name === "superadmin") {
       adminAccess.set({ full: true, permissions: [] });
@@ -526,5 +537,77 @@ export const adminApi = {
     adminRequest(`/admin/service/categories/${categoryId}/attributes`, {
       method: "DELETE",
       body: { attributeId },
+    }),
+
+  // Admin Profile & Settings
+  profile: async (signal) => {
+    try {
+      const resp = await adminRequest("/admin/profile", { signal });
+      const user = resp?.data?.data || resp?.data || resp;
+      if (user && typeof user === "object") {
+        adminSession.setUser(user);
+        return user;
+      }
+    } catch {
+      // fallback
+    }
+    return adminSession.getUser() || {};
+  },
+  updateProfile: async (values) => {
+    const response = await adminRequest("/admin/profile/update", {
+      method: "PUT",
+      body: values,
+    });
+    const updated = response?.data?.data || response?.data || values;
+    const current = adminSession.getUser() || {};
+    adminSession.setUser({ ...current, ...updated });
+    return response;
+  },
+  updatePassword: (values) =>
+    adminRequest("/admin/profile/update/password", {
+      method: "PUT",
+      body: values,
+    }),
+
+  // Admin-owned stores
+  myStores: (signal) => adminRequest("/admin/store", { signal }),
+  createStore: (values) =>
+    adminRequest("/admin/store", { method: "POST", body: values }),
+  updateStore: (values) =>
+    adminRequest("/admin/store", { method: "PUT", body: values }),
+  deleteStore: (storeId) =>
+    adminRequest("/admin/store", { method: "DELETE", params: { storeId } }),
+
+  // Admin-owned products
+  myProducts: (signal) => adminRequest("/admin/products", { signal }),
+  createProduct: (values) =>
+    adminRequest("/admin/products", { method: "POST", body: values }),
+  updateProduct: (values) =>
+    adminRequest("/admin/products", { method: "PUT", body: values }),
+  deleteMyProduct: (productId) =>
+    adminRequest("/admin/products", { method: "DELETE", params: { productId } }),
+
+  // Admin-owned store orders (customer orders for admin products)
+  myOrders: (signal) => adminRequest("/admin/order/items", { signal }),
+  myOrderItem: (orderItemId, signal) =>
+    adminRequest("/admin/order/item", { params: { orderItemId }, signal }),
+
+  // Offers (marketplace-wide vendor offers and admin store offers)
+  offers: (params = {}, signal) =>
+    adminRequest("/admin/offers", { params, signal }),
+  myOffers: (params = {}, signal) =>
+    adminRequest("/admin/offers", {
+      params: { ownerType: "admin", ...params },
+      signal,
+    }),
+  respondOffer: (offerId, status, counterPrice) =>
+    adminRequest(`/admin/offers/${offerId}`, {
+      method: "PUT",
+      body: {
+        status,
+        ...(status === "countered" && counterPrice !== undefined
+          ? { counterPrice: Number(counterPrice) }
+          : {}),
+      },
     }),
 };

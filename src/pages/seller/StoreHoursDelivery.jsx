@@ -9,8 +9,8 @@ const schedules = [
   { key: 'sunday', label: 'Sunday', start: '10:00', end: '16:00' },
 ];
 
-const arrivalOptions = ['Same day', 'Next day', '2–3 days', '3–5 days', '5–7 days'];
-const countries = [{ code: 'NG', name: 'Nigeria' }, { code: 'US', name: 'United States' }, { code: 'UK', name: 'United Kingdom' }];
+export const arrivalOptions = ['Same day', 'Next day', '2–3 days', '3–5 days', '5–7 days'];
+export const countries = [{ code: 'NG', name: 'Nigeria' }, { code: 'US', name: 'United States' }, { code: 'UK', name: 'United Kingdom' }];
 
 function toTwentyFourHour(time, period) {
   const [hours, minutes] = time.split(':').map(Number);
@@ -52,7 +52,7 @@ function HoursRow({ config, value, onChange }) {
 }
 
 
-function DeliveryRuleFields({ option, onPatch }) {
+export function DeliveryRuleFields({ option, onPatch }) {
   const scope = option.scope || 'city';
   const country = countries.find(item => item.code === option.countryCode || item.name === option.country);
   const regions = useResource(signal => country ? checkoutApi.shippingRegions(country.code, signal) : Promise.resolve(null), [country?.code]);

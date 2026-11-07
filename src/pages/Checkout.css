@@ -28,3 +28,37 @@
   color: #6f7d90;
   line-height: 1.7;
 }
+
+/* Margin between stacked alerts and checkout warning panels */
+.checkout-panel .form-alert + .checkout-warning,
+.checkout-panel .checkout-warning {
+  margin-top: 16px;
+}
+
+.checkout-warning__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.checkout-warning__actions .button {
+  margin-top: 0 !important;
+}
+
+.checkout-support-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #724c16;
+  border-color: #d8c28b;
+  background: #fffdf7;
+  text-decoration: none;
+}
+
+.checkout-support-btn:hover {
+  background: #fdf3dc;
+  border-color: #c9ab65;
+  color: #55370c;
+}

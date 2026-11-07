@@ -30,3 +30,241 @@
 .admin-nav-section__toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
 .admin-nav-section__links { display: grid; gap: 5px; }
 .admin-nav-section__links[hidden] { display: none; }
+
+@media (min-width: 801px) {
+  .admin-shell {
+    transition: grid-template-columns 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .admin-shell.admin-shell--collapsed {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .admin-sidebar {
+    position: sticky;
+    top: 0;
+    transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), padding 0.22s ease;
+  }
+
+  .admin-sidebar__collapse {
+    position: absolute;
+    top: 24px;
+    right: -13px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #233550;
+    color: #b8c6d8;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    z-index: 100;
+    padding: 0;
+    transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+  }
+
+  .admin-sidebar__collapse:hover {
+    background: #f36b31;
+    color: #fff;
+    transform: scale(1.08);
+  }
+
+  .admin-sidebar__collapse:focus-visible {
+    outline: 3px solid #f6ae8d;
+    outline-offset: 2px;
+  }
+
+  .admin-shell--collapsed .admin-sidebar {
+    padding: 18px 8px 14px;
+    align-items: center;
+  }
+
+  .admin-shell--collapsed .admin-sidebar__brand {
+    padding: 0 0 14px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .admin-shell--collapsed .admin-sidebar__brand a {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .admin-shell--collapsed .admin-sidebar__brand img {
+    width: 36px;
+    height: auto;
+    max-width: 36px;
+    padding: 3px;
+  }
+
+  .admin-shell--collapsed .admin-sidebar__label,
+  .admin-shell--collapsed .admin-nav-section__toggle,
+  .admin-shell--collapsed .admin-nav span,
+  .admin-shell--collapsed .admin-sidebar__bottom button span,
+  .admin-shell--collapsed .admin-sidebar__bottom .admin-topbar__actions a span {
+    display: none;
+  }
+
+  .admin-shell--collapsed .admin-navigation {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 4px 0;
+  }
+
+  .admin-shell--collapsed .admin-navigation::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-shell--collapsed .admin-nav-section {
+    width: 100%;
+  }
+
+  .admin-shell--collapsed .admin-nav-section + .admin-nav-section {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .admin-shell--collapsed .admin-nav-section__links {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .admin-shell--collapsed .admin-nav {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    position: relative;
+    color: #b8c6d8;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease;
+  }
+
+  .admin-shell--collapsed .admin-nav:hover {
+    background: #233550;
+    color: #fff;
+    transform: scale(1.05);
+  }
+
+  .admin-shell--collapsed .admin-nav.active {
+    background: var(--orange);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(243, 107, 49, 0.35);
+  }
+
+  .admin-shell--collapsed .admin-nav::after {
+    content: attr(aria-label);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%) scale(0.92);
+    background: #0f1c30;
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    padding: 6px 11px;
+    border-radius: 7px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 120;
+  }
+
+  .admin-shell--collapsed .admin-nav:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+
+  .admin-shell--collapsed .admin-sidebar__bottom {
+    width: 100%;
+    padding: 10px 0 0;
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .admin-shell--collapsed .admin-sidebar__bottom button,
+  .admin-shell--collapsed .admin-topbar__actions a {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    position: relative;
+    color: #b8c6d8;
+    transition: background 0.18s, color 0.18s, transform 0.15s;
+    padding: 0;
+  }
+
+  .admin-shell--collapsed .admin-sidebar__bottom button:hover,
+  .admin-shell--collapsed .admin-topbar__actions a:hover {
+    background: #233550;
+    color: #fff;
+    transform: scale(1.05);
+  }
+
+  .admin-shell--collapsed .admin-sidebar__bottom button::after {
+    content: "Sign out";
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%) scale(0.92);
+    background: #0f1c30;
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    padding: 6px 11px;
+    border-radius: 7px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 120;
+  }
+
+  .admin-shell--collapsed .admin-sidebar__bottom button:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+
+  .admin-shell--collapsed .admin-topbar__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+  }
+}
+
+@media (max-width: 800px) {
+  .admin-sidebar__collapse {
+    display: none;
+  }
+}
+

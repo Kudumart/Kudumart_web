@@ -60,7 +60,7 @@ export default function AIProductCreator({ onClose }) {
     }
   };
 
-  return <Modal title="Create a listing with AI" icon={Sparkles} onClose={() => !busy && onClose()} footer={type ? <><Button variant="ghost" disabled={busy} onClick={() => { setType(''); setFile(null); setPreview(''); }}>Back</Button><Button loading={busy} disabled={!file} onClick={analyse}>{busy ? 'Analysing…' : 'Analyse image'}</Button></> : null}>
+  return <Modal title="Create a listing with AI" icon={<Sparkles size={20}/>} onClose={() => !busy && onClose()} footer={type ? <><Button variant="ghost" disabled={busy} onClick={() => { setType(''); setFile(null); setPreview(''); }}>Back</Button><Button loading={busy} disabled={!file} onClick={analyse}>{busy ? 'Analysing…' : 'Analyse image'}</Button></> : null}>
     {!type ? <div className="seller-ai-types">
       <p>Upload a product photo and AI will fill in the listing for you. What are you listing?</p>
       <button type="button" onClick={() => setType('regular')}><Package size={22}/><strong>Fixed-price product</strong><small>Sell at a set price</small></button>

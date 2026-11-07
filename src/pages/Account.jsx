@@ -15,6 +15,7 @@ import {
   Store,
   Tag,
   UserRound,
+  MapPinned,
 } from "lucide-react";
 import { sellerApi, sellerList } from "../api/seller";
 import { useResource } from "../hooks/useResource";
@@ -23,6 +24,8 @@ import { Link, Navigate } from "react-router-dom";
 import { Button } from "../components/ui";
 import { useApp } from "../contexts/AppContext";
 import { isKycRecord, kycStatus } from "../utils/kyc";
+import { parseLocation, hasDeliveryAddress } from "../utils/checkout";
+import DeliveryZoneNotice from "./seller/DeliveryZoneNotice";
 function VendorOnboarding({ user }) {
   const progress = useResource(
     async (signal) => {
@@ -171,6 +174,8 @@ export default function Account() {
   const { user, signOut } = useApp();
   if (!user) return <Navigate to="/login" replace />;
   const vendor = user.accountType?.toLowerCase() === "vendor";
+  const location = parseLocation(user?.location);
+  const hasAddress = hasDeliveryAddress(location);
   return (
     <div className="container account-page">
       <div className="page-intro">
@@ -178,6 +183,17 @@ export default function Account() {
         <h1>Welcome, {user.firstName || "friend"}.</h1>
         <p>Make your next move from here.</p>
       </div>
+      {vendor && <DeliveryZoneNotice />}
+      {!vendor && !hasAddress && (
+        <div className="seller-purchase-notice" role="status">
+          <MapPinned size={20} />
+          <div>
+            <strong>Add your delivery address</strong>
+            <p>Save your delivery street, city and state to calculate shipping automatically when you shop.</p>
+          </div>
+          <Link className="button button--primary button--sm" to="/account/settings">Add address</Link>
+        </div>
+      )}
       {vendor && <VendorOnboarding user={user} />}
       <div className="account-grid">
         <div className="account-card account-card--welcome">

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { isValidElement, useEffect, useRef } from 'react';
 import { AlertCircle, Check, Info, Trash2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
@@ -9,28 +9,32 @@ export function IconButton({ label, icon: Icon, className = '', ...props }) { re
 export function Badge({ children, tone = 'neutral' }) { return <span className={`badge badge--${tone}`}>{children}</span>; }
 export function TextField({ label, error, hint, ...props }) { const id = props.id || props.name; return <label className="field" htmlFor={id}><span className="field__label">{label}</span><input id={id} className={`field__input ${error ? 'field__input--error' : ''}`} aria-invalid={!!error} aria-describedby={error ? `${id}-error` : undefined} {...props}/>{error && <span id={`${id}-error`} className="field__error">{error}</span>}{hint && !error && <span className="field__hint">{hint}</span>}</label>; }
 export function SelectField({ label, children, ...props }) { const id = props.id || props.name; return <label className="field" htmlFor={id}><span className="field__label">{label}</span><select id={id} className="field__input" {...props}>{children}</select></label>; }
-export function Skeleton({ className = '', label = 'Loading' }) {
+export function Skeleton({ className = '', label = 'Loading...' }) {
   return (
     <div className={`kudu-loader ${className}`} role="status" aria-live="polite" aria-label={label}>
-      <div className="kudu-loader__orbital" aria-hidden="true">
-        <span className="kudu-loader__ring kudu-loader__ring--outer" />
-        <span className="kudu-loader__ring kudu-loader__ring--inner" />
-        <span className="kudu-loader__core" />
+      <div className="kudu-loader__stage" aria-hidden="true">
+        <span className="kudu-loader__dot kudu-loader__dot--1" />
+        <span className="kudu-loader__dot kudu-loader__dot--2" />
+        <span className="kudu-loader__dot kudu-loader__dot--3" />
+        <span className="kudu-loader__dot kudu-loader__dot--4" />
+        <span className="kudu-loader__dot kudu-loader__dot--5" />
       </div>
-      <div className="kudu-loader__text" aria-hidden="true">
-        <span>{label}</span>
-        <span className="kudu-loader__dots"><i /><i /><i /></span>
-      </div>
+      {label && (
+        <span className="kudu-loader__caption" aria-hidden="true">
+          {label}
+        </span>
+      )}
     </div>
   );
 }
 export function EmptyState({ icon: Icon = AlertCircle, title, description, action }) { return <div className="empty-state"><div className="empty-state__icon"><Icon size={27}/></div><h3>{title}</h3><p>{description}</p>{action}</div>; }
-export function Modal({ title, icon, children, footer, onClose }) {
+export function Modal({ title, icon, children, footer, onClose, className = '' }) {
   const closeRef = useRef(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   useEffect(() => { closeRef.current?.focus(); const onKey = event => { if (event.key === 'Escape') onCloseRef.current(); }; document.addEventListener('keydown', onKey); document.body.style.overflow = 'hidden'; return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; }; }, []);
-  return <div className="modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section className="modal" role="dialog" aria-modal="true" aria-label={title}><div className="modal__head"><div className="modal__title">{icon && <span className="modal__icon">{icon}</span>}<h2>{title}</h2></div><button ref={closeRef} className="icon-button" aria-label="Close dialog" onClick={onClose}><X size={20}/></button></div><div className="modal__body">{children}</div>{footer && <div className="modal__footer">{footer}</div>}</section></div>;
+  const iconNode = icon ? (isValidElement(icon) ? icon : (() => { const Comp = icon; return <Comp size={20}/>; })()) : null;
+  return <div className="modal-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}><section className={`modal ${className}`.trim()} role="dialog" aria-modal="true" aria-label={title}><div className="modal__head"><div className="modal__title">{iconNode && <span className="modal__icon">{iconNode}</span>}<h2>{title}</h2></div><button ref={closeRef} className="icon-button" aria-label="Close dialog" onClick={onClose}><X size={20}/></button></div><div className="modal__body">{children}</div>{footer && <div className="modal__footer">{footer}</div>}</section></div>;
 }
 export function ConfirmModal({ title, description, confirmLabel = 'Confirm', cancelLabel = 'Cancel', tone = 'danger', loading = false, onConfirm, onClose }) {
   const Icon = tone === 'danger' ? Trash2 : AlertCircle;

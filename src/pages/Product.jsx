@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImageOff, MessageCircle, Minus, Phone, Plus, ShieldCheck, ShoppingBag, Truck } from 'lucide-react';
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImageOff, MessageCircle, Minus, Phone, Plus, ShieldCheck, ShoppingBag, Truck, Zap } from 'lucide-react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { accountApi } from '../api/account';
 import { catalogApi } from '../api/catalog';
@@ -49,6 +49,18 @@ export default function Product() {
     try { await accountApi.addToCart(id, quantity, action === 'details' ? product.variants[Number(selectedVariant)] : undefined); setCartCount(value => value + quantity); notify('Added to your cart.', 'success'); }
     catch (error) { notify(error.message, 'error'); } finally { setBusy(false); }
   };
+  const buyNow = async () => {
+    if (!user) { navigate('/login', { state: { from: `/product/${id}` } }); return; }
+    setBusy(true);
+    try {
+      await accountApi.addToCart(id, quantity, action === 'details' ? product.variants[Number(selectedVariant)] : undefined);
+      setCartCount(value => value + quantity);
+      navigate('/checkout');
+    } catch (error) {
+      notify(error.message, 'error');
+      setBusy(false);
+    }
+  };
   const submitOffer = async (event) => {
     event.preventDefault(); const amount = Number(offerPrice);
     if (!Number.isFinite(amount) || amount <= 0) { notify('Enter a valid offer amount.', 'error'); return; }
@@ -82,8 +94,8 @@ export default function Product() {
     {action === 'sold-out' && <div className="product-detail__purchase"><Button disabled>Sold out</Button></div>}
     {action === 'contact' && <div className="product-detail__purchase"><Button onClick={() => openDialog('contact')}>Contact seller</Button></div>}
     {action === 'offer' && <div className="product-detail__purchase"><Button onClick={() => openDialog('offer')}>{offer ? 'View your offer' : 'Request an offer'}</Button></div>}
-    {action === 'details' && <div className="product-detail__variant"><p>Select an option to see availability and add this item to your cart.</p>{variants.length ? <div className="product-detail__variant-list">{variants.map((variant, index) => <button key={variant.sku_id || index} className={selectedVariant === String(index) ? 'active' : ''} onClick={() => { setSelectedVariant(String(index)); setQuantity(1); }}>{variantLabel(variant)}</button>)}</div> : <p>Available options are not listed yet. Contact the seller for details.</p>}{variant && <div className="product-detail__variant-summary"><span>{variantSoldOut ? 'This option is sold out' : `${variant.sku_available_stock ?? product.quantity} available`}</span><strong>{money(displayPrice * quantity, displaySymbol)}</strong></div>}{variant && !variantSoldOut && <div className="product-detail__purchase"><div className="quantity-picker"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label="Decrease quantity"><Minus size={17}/></button><span>{quantity}</span><button onClick={() => setQuantity(Math.min(Number(variant.sku_available_stock) || 99, quantity + 1))} aria-label="Increase quantity"><Plus size={17}/></button></div><Button icon={ShoppingBag} loading={busy} onClick={add}>Add to cart</Button></div>}</div>}
-    {action === 'cart' && <div className="product-detail__purchase"><div className="quantity-picker"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label="Decrease quantity"><Minus size={17}/></button><span>{quantity}</span><button onClick={() => setQuantity(Math.min(Number(product.quantity) || 99, quantity + 1))} aria-label="Increase quantity"><Plus size={17}/></button></div><Button icon={ShoppingBag} loading={busy} onClick={add}>Add to cart</Button></div>}
+    {action === 'details' && <div className="product-detail__variant"><p>Select an option to see availability and add this item to your cart.</p>{variants.length ? <div className="product-detail__variant-list">{variants.map((variant, index) => <button key={variant.sku_id || index} className={selectedVariant === String(index) ? 'active' : ''} onClick={() => { setSelectedVariant(String(index)); setQuantity(1); }}>{variantLabel(variant)}</button>)}</div> : <p>Available options are not listed yet. Contact the seller for details.</p>}{variant && <div className="product-detail__variant-summary"><span>{variantSoldOut ? 'This option is sold out' : `${variant.sku_available_stock ?? product.quantity} available`}</span><strong>{money(displayPrice * quantity, displaySymbol)}</strong></div>}{variant && !variantSoldOut && <div className="product-detail__purchase"><div className="quantity-picker"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label="Decrease quantity"><Minus size={17}/></button><span>{quantity}</span><button onClick={() => setQuantity(Math.min(Number(variant.sku_available_stock) || 99, quantity + 1))} aria-label="Increase quantity"><Plus size={17}/></button></div><Button icon={ShoppingBag} variant="outline" loading={busy} onClick={add}>Add to cart</Button><Button icon={Zap} loading={busy} onClick={buyNow}>Buy now</Button></div>}</div>}
+    {action === 'cart' && <div className="product-detail__purchase"><div className="quantity-picker"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label="Decrease quantity"><Minus size={17}/></button><span>{quantity}</span><button onClick={() => setQuantity(Math.min(Number(product.quantity) || 99, quantity + 1))} aria-label="Increase quantity"><Plus size={17}/></button></div><Button icon={ShoppingBag} variant="outline" loading={busy} onClick={add}>Add to cart</Button><Button icon={Zap} loading={busy} onClick={buyNow}>Buy now</Button></div>}
     {product.admin && !product.vendor && product.admin.phoneNumber && <a className="button button--outline product-enquiry" href={`tel:${product.admin.phoneNumber}`}><Phone size={18}/> Call / Enquire: {product.admin.phoneNumber}</a>}
     <div className="product-detail__secondary"><SaveHeart productId={product.id} showText/>{canMessageVendor && action !== 'contact' && <button type="button" className="product-message" onClick={() => openDialog('contact')}><MessageCircle size={18}/> Message vendor</button>}<ShareProduct product={product}/></div><div className="product-detail__benefits"><span><ShieldCheck size={20}/> Shop with confidence</span><span><Truck size={20}/> Delivery options at checkout</span>{product.return_policy && <span>Returns: {product.return_policy}</span>}</div><SellerProfile product={product}/></div></div>
     <div className="product-information-grid"><ProductFacts product={product}/><ProductReviews reviews={product.reviews}/></div>
