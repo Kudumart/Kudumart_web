@@ -9,7 +9,21 @@ export function IconButton({ label, icon: Icon, className = '', ...props }) { re
 export function Badge({ children, tone = 'neutral' }) { return <span className={`badge badge--${tone}`}>{children}</span>; }
 export function TextField({ label, error, hint, ...props }) { const id = props.id || props.name; return <label className="field" htmlFor={id}><span className="field__label">{label}</span><input id={id} className={`field__input ${error ? 'field__input--error' : ''}`} aria-invalid={!!error} aria-describedby={error ? `${id}-error` : undefined} {...props}/>{error && <span id={`${id}-error`} className="field__error">{error}</span>}{hint && !error && <span className="field__hint">{hint}</span>}</label>; }
 export function SelectField({ label, children, ...props }) { const id = props.id || props.name; return <label className="field" htmlFor={id}><span className="field__label">{label}</span><select id={id} className="field__input" {...props}>{children}</select></label>; }
-export function Skeleton({ className = '' }) { return <div className={`skeleton ${className}`} aria-hidden="true"/>; }
+export function Skeleton({ className = '', label = 'Loading' }) {
+  return (
+    <div className={`kudu-loader ${className}`} role="status" aria-live="polite" aria-label={label}>
+      <div className="kudu-loader__orbital" aria-hidden="true">
+        <span className="kudu-loader__ring kudu-loader__ring--outer" />
+        <span className="kudu-loader__ring kudu-loader__ring--inner" />
+        <span className="kudu-loader__core" />
+      </div>
+      <div className="kudu-loader__text" aria-hidden="true">
+        <span>{label}</span>
+        <span className="kudu-loader__dots"><i /><i /><i /></span>
+      </div>
+    </div>
+  );
+}
 export function EmptyState({ icon: Icon = AlertCircle, title, description, action }) { return <div className="empty-state"><div className="empty-state__icon"><Icon size={27}/></div><h3>{title}</h3><p>{description}</p>{action}</div>; }
 export function Modal({ title, icon, children, footer, onClose }) {
   const closeRef = useRef(null);

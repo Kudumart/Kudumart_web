@@ -2234,6 +2234,14 @@ export function AdminProductDetail() {
               <dt>Return policy</dt>
               <dd>{product.return_policy || "None"}</dd>
             </div>
+            <div>
+              <dt>Trending status</dt>
+              <dd>
+                <span className={`admin-status ${product.isTrending ? "admin-status--good" : ""}`}>
+                  {product.isTrending ? "Trending" : "Standard"}
+                </span>
+              </dd>
+            </div>
           </dl>
           <div className="admin-product-actions">
             <Button onClick={() => setConfirm("publication")}>
