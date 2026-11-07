@@ -15,7 +15,7 @@ This checklist records the refined frontend's functional coverage against the le
 
 - [x] Seller onboarding and KYC review/correction states
 - [x] Stores, ordinary and dropship products, auctions and bids, services and dynamic attributes, adverts, orders, offers, finance, subscriptions, and profile
-- [x] Publishing limits and vendor/customer checkout guardrails
+- [x] Publishing limits and seller purchasing flow
 
 ## Administration
 
