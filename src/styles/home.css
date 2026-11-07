@@ -179,10 +179,28 @@
 }
 
 /* =========================================================
-   TRENDING SECTION (CLEAN, UNIFORM CARDS + FILTER PILLS)
+   TRENDING SECTION (1-LINE HORIZONTAL SCROLL + 5 PER ROW + COMPACT CARDS)
    ========================================================= */
+.eyebrow--trending {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--orange);
+}
+.trending-fire-icon {
+  color: #ff5722;
+  fill: #ff7043;
+  flex-shrink: 0;
+  animation: trendingFlamePulse 2.2s ease-in-out infinite alternate;
+}
+@keyframes trendingFlamePulse {
+  0% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 87, 34, 0.35)); }
+  100% { transform: scale(1.18); filter: drop-shadow(0 0 7px rgba(255, 87, 34, 0.65)); }
+}
+
 .trending-head {
   align-items: flex-end;
+  margin-bottom: 20px;
 }
 .trending-head__actions {
   display: flex;
@@ -195,20 +213,36 @@
   gap: 8px;
 }
 .trending-arrow {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 1px solid #dce1e6;
   background: #fff;
   color: var(--navy);
   display: grid;
   place-items: center;
-  transition: background 0.18s, color 0.18s, border-color 0.18s;
+  transition: background 0.18s, color 0.18s, border-color 0.18s, transform 0.18s;
 }
 .trending-arrow:hover {
   background: var(--navy);
   border-color: var(--navy);
   color: #fff;
+  transform: translateY(-1px);
+}
+.trending-arrow:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Sub-bar below title: Filter Pills on left, trust/confidence tags on right */
+.trending-subbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px 20px;
+  margin: 0 0 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf1f4;
 }
 
 .trending-pills {
@@ -216,17 +250,19 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin: -14px 0 24px;
+  margin: 0;
 }
 .trending-pill {
-  padding: 7px 14px;
+  padding: 6px 14px;
   border-radius: 999px;
   border: 1px solid #e1e5e9;
   background: #fff;
   color: #536175;
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
   transition: all 0.18s;
+  white-space: nowrap;
 }
 .trending-pill:hover {
   border-color: var(--navy);
@@ -238,22 +274,37 @@
   color: #fff;
 }
 
+.trending-highlights {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.trending-highlight-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6c7c91;
+}
+.trending-highlight-tag svg {
+  color: var(--orange);
+}
+
 .trending-carousel {
   position: relative;
 }
+/* 1 line horizontal scroll, exactly 5 cards per row on standard desktop screens */
 .trending-carousel__track {
   display: grid;
-  grid-template-rows: repeat(2, auto);
+  grid-template-rows: 1fr;
   grid-auto-flow: column;
-  grid-auto-columns: calc((100% - 3 * 20px) / 4);
-  gap: 20px;
+  grid-auto-columns: calc((100% - 4 * 16px) / 5);
+  gap: 16px;
   overflow-x: auto;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
-  padding-bottom: 4px;
-}
-.trending-carousel__track:has(.trending-carousel__item:nth-child(-n+4):last-child) {
-  grid-template-rows: 1fr;
+  padding-bottom: 6px;
 }
 .trending-carousel__track::-webkit-scrollbar {
   display: none;
@@ -263,13 +314,45 @@
   min-width: 0;
 }
 
+/* Compact card sizing inside trending */
+.trending-carousel .product-card {
+  height: 100%;
+}
+.trending-carousel .product-card__image {
+  height: 185px;
+}
+.trending-carousel .product-card__body {
+  padding: 12px 14px 14px;
+}
+.trending-carousel .product-card__name {
+  font-size: 13px;
+  min-height: 36px;
+  margin: 5px 0 10px;
+}
+.trending-carousel .product-card__price strong {
+  font-size: 15px;
+}
+.trending-carousel .product-card__add {
+  padding: 7px 10px;
+  font-size: 10px;
+}
+
+@media (max-width: 1280px) {
+  .trending-carousel__track {
+    grid-auto-columns: calc((100% - 3 * 16px) / 4);
+    gap: 16px;
+  }
+}
 @media (max-width: 1023px) {
   .hero .hero__visual {
     padding: 28px 28px 28px 8px;
   }
   .trending-carousel__track {
-    grid-auto-columns: calc((100% - 2 * 16px) / 3);
-    gap: 16px;
+    grid-auto-columns: calc((100% - 2 * 14px) / 3);
+    gap: 14px;
+  }
+  .trending-highlights {
+    display: none;
   }
 }
 @media (max-width: 800px) {
@@ -283,6 +366,9 @@
   }
   .hero-slide__info p {
     font-size: 14px;
+  }
+  .trending-subbar {
+    margin-bottom: 18px;
   }
 }
 @media (max-width: 719px) {
@@ -312,5 +398,11 @@
   .hero-slider__dots {
     left: 16px;
     bottom: 14px;
+  }
+  .trending-carousel__track {
+    grid-auto-columns: 78%;
+  }
+  .trending-carousel .product-card__image {
+    height: 160px;
   }
 }

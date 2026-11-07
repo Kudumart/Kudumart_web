@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   ChevronLeft,
   ChevronRight,
+  Flame,
   Gavel,
   Headphones,
   Package,
@@ -99,7 +100,7 @@ function HeroImageShowcase() {
 
 function TrendingSection({ products }) {
   const track = useRef(null);
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [filterMode, setFilterMode] = useState('all');
   const items = products.data || [];
 
   const categoryTabs = useMemo(() => {
@@ -111,30 +112,43 @@ function TrendingSection({ products }) {
     return Array.from(map.values()).slice(0, 6);
   }, [items]);
 
+  const hasVerified = useMemo(
+    () => items.some(item => item?.vendor?.isVerified || item?.store?.isVerified || item?.admin),
+    [items],
+  );
+
   const filtered = useMemo(() => {
-    if (activeCategory === 'all') return items;
+    if (filterMode === 'all') return items;
+    if (filterMode === 'verified') {
+      return items.filter(
+        item => item?.vendor?.isVerified || item?.store?.isVerified || item?.admin,
+      );
+    }
     return items.filter(
-      item => (item?.sub_category?.name || item?.category?.name) === activeCategory,
+      item => (item?.sub_category?.name || item?.category?.name) === filterMode,
     );
-  }, [items, activeCategory]);
+  }, [items, filterMode]);
 
   const scroll = direction =>
     track.current?.scrollBy({
-      left: direction * Math.max(track.current.clientWidth * 0.85, 280),
+      left: direction * Math.max(track.current.clientWidth * 0.75, 260),
       behavior: 'smooth',
     });
 
   return (
-    <section className="section section--products">
+    <section className="section section--products trending-section">
       <div className="container">
         <div className="section__head trending-head">
           <div>
-            <div className="eyebrow">TRENDING PRODUCTS</div>
+            <div className="eyebrow eyebrow--trending">
+              <Flame size={15} className="trending-fire-icon" />
+              <span>TRENDING PRODUCTS</span>
+            </div>
             <h2>The finds everyone’s noticing.</h2>
-            <p>Explore products handpicked by KuduMart and trending right now.</p>
+            <p>Popular picks and rising discoveries across verified KuduMart sellers.</p>
           </div>
           <div className="trending-head__actions">
-            {filtered.length > 4 && (
+            {filtered.length > 5 && (
               <div className="trending-arrows">
                 <button
                   type="button"
@@ -160,31 +174,51 @@ function TrendingSection({ products }) {
           </div>
         </div>
 
-        {categoryTabs.length > 1 && (
+        <div className="trending-subbar">
           <div className="trending-pills" role="tablist" aria-label="Filter trending products">
             <button
               type="button"
               role="tab"
-              aria-selected={activeCategory === 'all'}
-              className={`trending-pill ${activeCategory === 'all' ? 'active' : ''}`}
-              onClick={() => setActiveCategory('all')}
+              aria-selected={filterMode === 'all'}
+              className={`trending-pill ${filterMode === 'all' ? 'active' : ''}`}
+              onClick={() => setFilterMode('all')}
             >
-              All trending
+              All trending {items.length ? `(${items.length})` : ''}
             </button>
+            {hasVerified && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={filterMode === 'verified'}
+                className={`trending-pill ${filterMode === 'verified' ? 'active' : ''}`}
+                onClick={() => setFilterMode('verified')}
+              >
+                Verified stores
+              </button>
+            )}
             {categoryTabs.map(cat => (
               <button
                 type="button"
                 key={cat}
                 role="tab"
-                aria-selected={activeCategory === cat}
-                className={`trending-pill ${activeCategory === cat ? 'active' : ''}`}
-                onClick={() => setActiveCategory(cat)}
+                aria-selected={filterMode === cat}
+                className={`trending-pill ${filterMode === cat ? 'active' : ''}`}
+                onClick={() => setFilterMode(cat)}
               >
                 {cat}
               </button>
             ))}
           </div>
-        )}
+
+          <div className="trending-highlights">
+            <span className="trending-highlight-tag">
+              <BadgeCheck size={14} /> Verified merchants
+            </span>
+            <span className="trending-highlight-tag">
+              <ShieldCheck size={14} /> Protected checkout
+            </span>
+          </div>
+        </div>
 
         {products.loading ? (
           <Skeleton className="product-skeleton" label="Loading trending products" />
@@ -206,8 +240,13 @@ function TrendingSection({ products }) {
           </div>
         ) : (
           <EmptyState
-            title="Trending products are on their way"
-            description="Check back soon for more finds."
+            title="No matching trending products"
+            description="Try switching categories or explore the full catalog."
+            action={
+              <Button variant="outline" onClick={() => setFilterMode('all')}>
+                Show all trending
+              </Button>
+            }
           />
         )}
       </div>
