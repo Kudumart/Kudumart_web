@@ -121,9 +121,14 @@ export default function SellerFinance() {
           <div className="seller-panel__head"><div><span className="eyebrow">PAYOUTS</span><h2>Bank accounts</h2></div></div>
           {data.banks?.length ? <div className="seller-bank-list">{data.banks.map(bank => <div className="seller-bank-card" key={bank.id}>
             <span className="seller-bank-card__icon"><Landmark size={20}/></span>
-            <span className="seller-bank-card__details"><strong>{bank.bankName || bank.bankInfo?.bankName}</strong><small>{bank.accountHolderName || bank.bankInfo?.accountName}</small></span>
-            <span className="seller-bank-card__number">•••• {String(bank.accountNumber || bank.bankInfo?.accountNumber || '').slice(-4)}</span>
-            <span className="seller-bank-card__verified"><CheckCircle2 size={15}/> Saved</span>
+            <div className="seller-bank-card__details">
+              <strong>{bank.bankName || bank.bankInfo?.bankName}</strong>
+              <small>{bank.accountHolderName || bank.bankInfo?.accountName}</small>
+              <div className="seller-bank-card__meta">
+                <span className="seller-bank-card__number">•••• {String(bank.accountNumber || bank.bankInfo?.accountNumber || '').slice(-4)}</span>
+                <span className="seller-bank-card__verified"><CheckCircle2 size={13}/> Saved</span>
+              </div>
+            </div>
             <button type="button" className="seller-bank-card__delete" aria-label={`Delete ${bank.bankName || bank.bankInfo?.bankName} payout account`} title="Delete payout account" onClick={() => setBankToDelete(bank)}><Trash2 size={17}/></button>
           </div>)}</div> : <EmptyState icon={Landmark} title="No payout account" description={user?.isVerified ? 'Add the account where withdrawals should be paid.' : 'Your KYC must be approved before adding a payout account.'}/>}
           {user?.isVerified && <form className="seller-form seller-bank-form" onSubmit={addBank}>
@@ -149,7 +154,7 @@ export default function SellerFinance() {
           <p className="seller-muted">Funds become available after an order is confirmed as delivered. Withdrawal requests are reviewed before transfer.</p>
         </section>
       </div>
-      <section className="seller-panel">
+      <section className="seller-panel seller-panel--payout">
         <div className="seller-panel__head"><div><span className="eyebrow">WITHDRAWALS</span><h2>Request a payout</h2><p>Only delivered-order funds in your available balance can be withdrawn.</p></div></div>
         {user?.isVerified && data.banks?.length ? <form className="seller-form" onSubmit={requestWithdrawal}>
           <div className="seller-form-grid seller-form-grid--three">

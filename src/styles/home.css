@@ -44,8 +44,82 @@
 .home-advert-card__action svg{transition:transform .2s}
 .home-advert-card--no-image{background:radial-gradient(circle at 82% 18%,#f5a479 0,transparent 32%),#172642}
 .home-advert-card--no-image .home-advert-card__media{display:grid;place-items:center;color:#ffffff14;font:900 clamp(120px,20vw,280px)/1 Manrope,sans-serif}
-@media(max-width:900px){.home-adverts__grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"lead lead" "wide wide" "small-a small-b";grid-template-rows:390px 240px 235px}}
-@media(max-width:600px){.home-adverts__intro{align-items:flex-start;flex-direction:column}.home-adverts__all{min-height:39px}.home-adverts__grid{display:flex;gap:13px;min-height:0;margin-inline:calc((100vw - 100%)/-2);padding-inline:calc((100vw - 100%)/2);overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.home-adverts__grid::-webkit-scrollbar{display:none}.home-advert-card{flex:0 0 82vw;height:390px;scroll-snap-align:center}.home-advert-card--2 .home-advert-card__shade,.home-adverts__grid>.home-advert-card--2>.home-advert-card__shade{background:linear-gradient(180deg,transparent 22%,rgba(12,24,43,.16) 47%,rgba(12,24,43,.94) 100%)}.home-advert-card--2 .home-advert-card__content{top:auto;right:0;display:block}.home-advert-card--3 p,.home-advert-card--4 p{display:-webkit-box}.home-advert-card h3,.home-advert-card--1 h3{font-size:25px}}
+@media (max-width: 900px) and (min-width: 801px) {
+  .home-adverts__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-areas: none !important;
+    grid-template-rows: auto !important;
+    grid-auto-rows: 270px !important;
+    gap: 16px !important;
+  }
+  .home-advert-card {
+    grid-area: auto !important;
+    height: 100% !important;
+  }
+  .home-advert-card--2 .home-advert-card__content {
+    top: auto !important;
+    right: 0 !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .home-adverts__intro {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .home-adverts__all {
+    min-height: 38px;
+  }
+  .home-adverts__grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    min-height: 0 !important;
+    margin-inline: 0 !important;
+    padding-inline: 0 !important;
+    overflow: visible !important;
+  }
+  .home-adverts__grid > .home-advert-card {
+    grid-area: auto !important;
+    width: 100% !important;
+    height: 270px !important;
+    min-height: 270px !important;
+    border-radius: 16px !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  .home-advert-card__shade,
+  .home-adverts__grid > .home-advert-card--2 > .home-advert-card__shade {
+    background: linear-gradient(180deg, transparent 20%, rgba(12, 24, 43, 0.38) 50%, rgba(12, 24, 43, 0.95) 100%) !important;
+  }
+  .home-advert-card__content,
+  .home-advert-card--1 .home-advert-card__content,
+  .home-advert-card--2 .home-advert-card__content {
+    top: auto !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    display: block !important;
+    padding: 20px !important;
+  }
+  .home-advert-card h3,
+  .home-advert-card--1 h3 {
+    font-size: 20px !important;
+  }
+  .home-advert-card p,
+  .home-advert-card--3 p,
+  .home-advert-card--4 p {
+    display: -webkit-box !important;
+    font-size: 11px !important;
+    margin: 6px 0 0 !important;
+  }
+  .home-advert-card__action {
+    margin-top: 10px !important;
+    font-size: 11px !important;
+  }
+}
 
 /* =========================================================
    HERO SHOWCASE SLIDER (RIGHT COLUMN)
