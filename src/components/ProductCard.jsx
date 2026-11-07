@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ArrowUpRight, BadgeCheck, Flame, ImageOff, LoaderCircle, ShoppingBag, Store } from 'lucide-react';
+import { BadgeCheck, ImageOff, LoaderCircle } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { accountApi } from '../api/account';
 import { useApp } from '../contexts/AppContext';
@@ -9,7 +9,7 @@ import SaveHeart from './SaveHeart';
 import { imageFor, money, priceFor } from '../utils/format';
 import { productAction, productActionLabel } from '../utils/productAction';
 
-export default function ProductCard({ product, savedOverride = false, onRemoved, rank }) {
+export default function ProductCard({ product, savedOverride = false, onRemoved }) {
   const { user, notify, setCartCount } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,7 +26,6 @@ export default function ProductCard({ product, savedOverride = false, onRemoved,
       ? Math.round(((price.original - price.current) / price.original) * 100)
       : 0;
   const isVerified = Boolean(product?.vendor?.isVerified || product?.store?.isVerified || product?.admin);
-  const categoryName = product?.sub_category?.name || product?.category?.name;
   const conditionText = product?.condition ? String(product.condition).replaceAll('_', ' ') : '';
 
   const routeAction = kind => {
@@ -57,7 +56,7 @@ export default function ProductCard({ product, savedOverride = false, onRemoved,
   return (
     <article
       ref={cardRef}
-      className={`product-card ${action === 'sold-out' ? 'product-card--sold-out' : ''} ${product.isTrending ? 'product-card--trending' : ''}`}
+      className={`product-card ${action === 'sold-out' ? 'product-card--sold-out' : ''}`}
     >
       <div className="product-card__media">
         <Link to={`/product/${product.id}`} className="product-card__image" aria-label={`View ${product.name}`}>
@@ -68,25 +67,15 @@ export default function ProductCard({ product, savedOverride = false, onRemoved,
           )}
           {action === 'sold-out' && <span className="product-card__sold-out">Sold out</span>}
           <div className="product-card__badges">
-            {rank && <span className="product-card__rank">#{String(rank).padStart(2, '0')}</span>}
-            {product.isTrending && !rank && (
-              <span className="product-card__pill product-card__pill--trending">
-                <Flame size={12} /> Hot
-              </span>
-            )}
-            {discountPct > 0 && (
-              <span className="product-card__pill product-card__pill--discount">-{discountPct}%</span>
-            )}
             {conditionText && (
               <span className="product-card__badge">
                 <Badge tone="light">{conditionText}</Badge>
               </span>
             )}
+            {discountPct > 0 && (
+              <span className="product-card__pill product-card__pill--discount">-{discountPct}%</span>
+            )}
           </div>
-          <span className="product-card__quick-view">
-            <span>View details</span>
-            <ArrowUpRight size={15} />
-          </span>
         </Link>
         <div className="product-card__save">
           <SaveHeart productId={product.id} savedOverride={savedOverride} onRemoved={onRemoved} />
@@ -96,11 +85,9 @@ export default function ProductCard({ product, savedOverride = false, onRemoved,
       <div className="product-card__body">
         <div className="product-card__meta">
           <span className="product-card__store">
-            <Store size={12} />
             <span>{product?.store?.name || 'KuduMart seller'}</span>
             {isVerified && <BadgeCheck size={13} className="product-card__verified" aria-label="Verified seller" />}
           </span>
-          {categoryName && <span className="product-card__category">{categoryName}</span>}
         </div>
 
         <Link to={`/product/${product.id}`} className="product-card__name">
@@ -123,10 +110,7 @@ export default function ProductCard({ product, savedOverride = false, onRemoved,
                 <LoaderCircle className="product-card__button-spinner" size={13} /> Checking
               </>
             ) : (
-              <>
-                {action === 'cart' ? <ShoppingBag size={13} /> : <ArrowUpRight size={13} />}
-                <span>{productActionLabel[action]}</span>
-              </>
+              productActionLabel[action]
             )}
           </button>
         </div>
