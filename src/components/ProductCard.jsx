@@ -16,6 +16,7 @@ export default function ProductCard({ product, savedOverride = false, onRemoved 
   const location = useLocation();
   const cardRef = useRef(null);
   const [busy, setBusy] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
   const canonical = useCanonicalProduct(product.id, cardRef);
   // Listing/search responses can disagree with the product detail. Until checked,
   // only offer navigation to the detail page; never show an unverified cart action.
@@ -67,8 +68,13 @@ export default function ProductCard({ product, savedOverride = false, onRemoved 
           className="product-card__image"
           aria-label={`View ${product.name}`}
         >
-          {imageFor(product) ? (
-            <img src={imageFor(product)} alt={product.name || 'Product'} loading="lazy" />
+          {imageFor(product) && !imgFailed ? (
+            <img
+              src={imageFor(product)}
+              alt={product.name || 'Product'}
+              loading="lazy"
+              onError={() => setImgFailed(true)}
+            />
           ) : (
             <span className="image-fallback"><ImageOff size={30} /></span>
           )}
