@@ -8,6 +8,7 @@ import {
   Flame,
   Gavel,
   Headphones,
+  History,
   Package,
   RefreshCcw,
   ShieldCheck,
@@ -22,6 +23,7 @@ import { Button, EmptyState, Skeleton } from '../components/ui';
 import { useApp } from '../contexts/AppContext';
 import { useResource } from '../hooks/useResource';
 import { money, plainText } from '../utils/format';
+import { clearRecentlyViewed, getRecentlyViewed } from '../utils/recentlyViewed';
 import '../styles/home.css';
 
 const HERO_SLIDES = [
@@ -254,6 +256,82 @@ function TrendingSection({ products }) {
   );
 }
 
+function RecentlyViewedSection() {
+  const [items, setItems] = useState(() => getRecentlyViewed());
+  const track = useRef(null);
+
+  useEffect(() => {
+    const update = () => setItems(getRecentlyViewed());
+    window.addEventListener('kudu:recently-viewed-changed', update);
+    return () => window.removeEventListener('kudu:recently-viewed-changed', update);
+  }, []);
+
+  if (!items.length) return null;
+
+  const scroll = direction =>
+    track.current?.scrollBy({
+      left: direction * Math.max(track.current.clientWidth * 0.75, 260),
+      behavior: 'smooth',
+    });
+
+  return (
+    <section className="section section--products recently-viewed-section">
+      <div className="container">
+        <div className="section__head">
+          <div>
+            <div className="eyebrow eyebrow--recent">
+              <History size={15} />
+              <span>RECENTLY VIEWED</span>
+            </div>
+            <h2>Pick up where you left off.</h2>
+            <p>Products and finds you recently checked out.</p>
+          </div>
+          <div className="recently-viewed-head__actions">
+            {items.length > 5 && (
+              <div className="trending-arrows">
+                <button
+                  type="button"
+                  className="trending-arrow"
+                  aria-label="Scroll recently viewed products left"
+                  onClick={() => scroll(-1)}
+                >
+                  <ChevronLeft size={19} />
+                </button>
+                <button
+                  type="button"
+                  className="trending-arrow"
+                  aria-label="Scroll recently viewed products right"
+                  onClick={() => scroll(1)}
+                >
+                  <ChevronRight size={19} />
+                </button>
+              </div>
+            )}
+            <button
+              type="button"
+              className="recent-clear-btn"
+              onClick={clearRecentlyViewed}
+              title="Clear recently viewed history"
+            >
+              Clear history
+            </button>
+          </div>
+        </div>
+
+        <div className="trending-carousel">
+          <div className="trending-carousel__track" ref={track}>
+            {items.map(product => (
+              <div className="trending-carousel__item" key={product.id}>
+                <ProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ProductFeed({ eyebrow, title, description, link, products, emptyTitle }) {
   return (
     <section className="section section--products">
@@ -409,6 +487,8 @@ export default function Home() {
       </section>
 
       <TrendingSection products={popular} />
+
+      <RecentlyViewedSection />
 
       {adverts.data?.length > 0 && (
         <section className="section container home-adverts">

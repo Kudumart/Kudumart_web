@@ -8,6 +8,7 @@ import { Badge } from './ui';
 import SaveHeart from './SaveHeart';
 import { imageFor, money, priceFor } from '../utils/format';
 import { productAction, productActionLabel } from '../utils/productAction';
+import { recordRecentlyViewed } from '../utils/recentlyViewed';
 
 export default function ProductCard({ product, savedOverride = false, onRemoved }) {
   const { user, notify, setCartCount } = useApp();
@@ -30,6 +31,7 @@ export default function ProductCard({ product, savedOverride = false, onRemoved 
 
   const routeAction = kind => {
     if (kind === 'sold-out') { notify('This item is sold out.', 'info'); return; }
+    recordRecentlyViewed(product);
     if (kind === 'details') { navigate(`/product/${product.id}`); return; }
     if (kind === 'offer' || kind === 'contact') {
       const destination = `/product/${product.id}?${kind}=1`;
@@ -59,7 +61,12 @@ export default function ProductCard({ product, savedOverride = false, onRemoved 
       className={`product-card ${action === 'sold-out' ? 'product-card--sold-out' : ''}`}
     >
       <div className="product-card__media">
-        <Link to={`/product/${product.id}`} className="product-card__image" aria-label={`View ${product.name}`}>
+        <Link
+          to={`/product/${product.id}`}
+          onClick={() => recordRecentlyViewed(product)}
+          className="product-card__image"
+          aria-label={`View ${product.name}`}
+        >
           {imageFor(product) ? (
             <img src={imageFor(product)} alt={product.name || 'Product'} loading="lazy" />
           ) : (
@@ -90,7 +97,11 @@ export default function ProductCard({ product, savedOverride = false, onRemoved 
           </span>
         </div>
 
-        <Link to={`/product/${product.id}`} className="product-card__name">
+        <Link
+          to={`/product/${product.id}`}
+          onClick={() => recordRecentlyViewed(product)}
+          className="product-card__name"
+        >
           {product.name}
         </Link>
 

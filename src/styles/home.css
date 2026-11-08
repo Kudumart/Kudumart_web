@@ -926,3 +926,52 @@
     font-size: 19px !important;
   }
 }
+
+/* =========================================================
+   RECENTLY VIEWED SECTION
+   ========================================================= */
+.recently-viewed-section {
+  padding-top: 10px;
+  padding-bottom: 20px;
+}
+
+.eyebrow--recent {
+  color: #2b70c9 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.recently-viewed-head__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.recent-clear-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.recent-clear-btn:hover {
+  background: #fff;
+  border-color: #d0d7de;
+  color: #c92a2a;
+  box-shadow: 0 2px 8px rgba(20, 34, 60, 0.06);
+}
+
+@media (max-width: 800px) {
+  .recently-viewed-section {
+    padding-top: 5px;
+    padding-bottom: 15px;
+  }
+}
+

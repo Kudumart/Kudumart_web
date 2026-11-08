@@ -9,6 +9,7 @@ import { useResource } from '../hooks/useResource';
 import { imageFor, money, priceFor, plainText } from '../utils/format';
 import { productAction } from '../utils/productAction';
 import { variantDisplayPrice, variantLabel } from '../utils/productVariant';
+import { recordRecentlyViewed } from '../utils/recentlyViewed';
 import ProductCard from '../components/ProductCard';
 import SaveHeart from '../components/SaveHeart';
 import { ProductFacts, ProductReviews, SellerProfile, ShareProduct } from '../components/ProductDetailSections';
@@ -21,6 +22,7 @@ export default function Product() {
   const [selectedVariant, setSelectedVariant] = useState('');
   useEffect(() => { window.scrollTo(0, 0); setActiveImage(''); setSelectedVariant(''); }, [id]);
   const { data: product, loading, error } = useResource(signal => catalogApi.product(id, signal), [id]);
+  useEffect(() => { if (product?.id) recordRecentlyViewed(product); }, [product]);
   const vendorId = product?.vendor?.id || product?.vendorId;
   const canMessageVendor = !!vendorId && String(vendorId) !== String(user?.id || '');
   const categoryId = product?.categoryId || product?.category?.id;
