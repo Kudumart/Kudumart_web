@@ -57,6 +57,8 @@ export const accountApi = {
     ),
   profile: async (signal) =>
     unwrap(await request("/user/profile", { authenticated: true, signal })),
+  wallet: async (signal) =>
+    unwrap(await request("/user/wallet", { authenticated: true, signal })),
   updateProfile: async (values) =>
     unwrap(
       await request("/user/profile/update", {

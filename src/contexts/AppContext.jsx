@@ -7,7 +7,7 @@ const COUNTRIES = [
   { name: 'United States', code: 'US', currency: 'USD', symbol: '$' },
   { name: 'United Kingdom', code: 'GB', currency: 'GBP', symbol: '£' },
 ];
-const PROFILE_FIELDS = ['id', 'firstName', 'lastName', 'email', 'phoneNumber', 'accountType', 'isVerified', 'trackingId', 'location', 'photo', 'dateOfBirth', 'gender'];
+const PROFILE_FIELDS = ['id', 'firstName', 'lastName', 'email', 'phoneNumber', 'accountType', 'isVerified', 'trackingId', 'location', 'photo', 'dateOfBirth', 'gender', 'wallet'];
 const profileFrom = data => Object.fromEntries(PROFILE_FIELDS.filter(key => data?.[key] !== undefined).map(key => [key, data[key]]));
 export function AppProvider({ children }) {
   const [country, setCountry] = useState(() => COUNTRIES.find(item => item.name === localStorage.getItem('kuduCountry')) || COUNTRIES[0]);

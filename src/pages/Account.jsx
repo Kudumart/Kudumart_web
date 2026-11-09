@@ -17,15 +17,18 @@ import {
   Tag,
   UserRound,
   MapPinned,
+  Wallet,
 } from "lucide-react";
+import { useState } from "react";
+import { accountApi } from "../api/account";
 import { sellerApi, sellerList } from "../api/seller";
 import { useResource } from "../hooks/useResource";
-import { Skeleton } from "../components/ui";
+import { Button, EmptyState, Modal, Skeleton } from "../components/ui";
 import { Link, Navigate } from "react-router-dom";
-import { Button } from "../components/ui";
 import { useApp } from "../contexts/AppContext";
 import { isKycRecord, kycStatus } from "../utils/kyc";
 import { parseLocation, hasDeliveryAddress } from "../utils/checkout";
+import { money } from "../utils/format";
 import DeliveryZoneNotice from "./seller/DeliveryZoneNotice";
 function VendorOnboarding({ user }) {
   const progress = useResource(
@@ -173,6 +176,12 @@ function VendorOnboarding({ user }) {
 }
 export default function Account() {
   const { user, signOut } = useApp();
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const walletResource = useResource((signal) => accountApi.wallet(signal), [user?.id]);
+  const walletData = walletResource.data?.data || walletResource.data;
+  const balance = Number(walletData?.balance ?? user?.wallet ?? 0);
+  const transactions = walletData?.transactions || [];
+
   if (!user) return <Navigate to="/login" replace />;
   const vendor = user.accountType?.toLowerCase() === "vendor";
   const location = parseLocation(user?.location);
@@ -209,6 +218,26 @@ export default function Account() {
           <span className="account-role">
             {user.accountType || "Customer"} account
           </span>
+        </div>
+        <div
+          className="account-card account-card--link"
+          style={{ cursor: "pointer" }}
+          onClick={() => setWalletModalOpen(true)}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
+            <Wallet size={28} color="#059669" />
+            <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 8px", borderRadius: "12px", background: "#ecfdf5", color: "#059669" }}>
+              Available
+            </span>
+          </div>
+          <h3 style={{ marginTop: "10px", marginBottom: "2px" }}>KuduMart Wallet</h3>
+          <div style={{ fontSize: "22px", fontWeight: 800, color: "#0f172a", margin: "2px 0 6px 0" }}>
+            {money(balance)}
+          </div>
+          <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
+            Refunds & store credits. Tap to view transaction history.
+          </p>
+          <ArrowRight size={20} />
         </div>
         <Link
           to="/account/settings"
@@ -331,6 +360,78 @@ export default function Account() {
           </>
         )}
       </div>
+
+      {walletModalOpen && (
+        <Modal
+          title="KuduMart Wallet & Credits"
+          icon={<Wallet size={20} color="#059669" />}
+          onClose={() => setWalletModalOpen(false)}
+          footer={<Button variant="ghost" onClick={() => setWalletModalOpen(false)}>Close</Button>}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+            <div style={{ background: "linear-gradient(135deg, #064e3b 0%, #047857 100%)", borderRadius: "12px", padding: "22px", color: "#ffffff", boxShadow: "0 4px 14px rgba(4, 120, 87, 0.2)" }}>
+              <div style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.9 }}>
+                Available Balance
+              </div>
+              <div style={{ fontSize: "32px", fontWeight: 800, margin: "6px 0" }}>
+                {money(balance)}
+              </div>
+              <div style={{ fontSize: "12px", opacity: 0.85 }}>
+                Funds are immediately usable on KuduMart purchases and installment milestone settlements.
+              </div>
+            </div>
+
+            <div>
+              <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", fontWeight: 700, color: "#1e293b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Recent Wallet Activity
+              </h4>
+              {walletResource.loading ? (
+                <Skeleton style={{ height: "120px", borderRadius: "8px" }} />
+              ) : transactions.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "300px", overflowY: "auto" }}>
+                  {transactions.map((tx) => (
+                    <div
+                      key={tx.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "12px 14px",
+                        background: "#f8fafc",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                      }}
+                    >
+                      <div>
+                        <strong style={{ fontSize: "13px", color: "#0f172a", textTransform: "capitalize" }}>
+                          {tx.transactionType?.replaceAll("_", " ") || "Credit"}
+                        </strong>
+                        <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                          {new Date(tx.createdAt).toLocaleDateString("en-NG", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <strong style={{ fontSize: "14px", color: "#059669" }}>
+                          +{money(tx.amount)}
+                        </strong>
+                        <div style={{ fontSize: "11px", color: "#16a34a", textTransform: "uppercase", fontWeight: 600 }}>
+                          {tx.status}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title="No wallet transactions yet"
+                  description="When a layaway plan is cancelled or store credit is issued, your refunds will appear here."
+                />
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
+
       <Button variant="outline" icon={LogOut} onClick={signOut}>
         Sign out
       </Button>
