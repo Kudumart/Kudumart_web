@@ -219,44 +219,24 @@ export default function Account() {
             {user.accountType || "Customer"} account
           </span>
         </div>
-        <div
-          className="account-card account-card--link"
-          style={{ cursor: "pointer" }}
-          onClick={() => setWalletModalOpen(true)}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%" }}>
-            <Wallet size={28} color="#059669" />
-            <span style={{ fontSize: "11px", fontWeight: 700, padding: "3px 8px", borderRadius: "12px", background: "#ecfdf5", color: "#059669" }}>
-              Available
-            </span>
-          </div>
-          <h3 style={{ marginTop: "10px", marginBottom: "2px" }}>KuduMart Wallet</h3>
-          <div style={{ fontSize: "22px", fontWeight: 800, color: "#0f172a", margin: "2px 0 6px 0" }}>
-            {money(balance)}
-          </div>
-          <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>
-            Refunds & store credits. Tap to view transaction history.
-          </p>
-          <ArrowRight size={20} />
-        </div>
-        <Link
-          to="/account/settings"
-          className="account-card account-card--link"
-        >
-          <Settings size={28} />
-          <h3>Profile & security</h3>
-          <p>
-            Update your personal details, contact information, password and
-            address.
-          </p>
-          <ArrowRight size={20} />
-        </Link>
         {vendor ? (
           <>
             <Link to="/seller" className="account-card account-card--link">
               <Store size={28} />
               <h3>Seller workspace</h3>
               <p>Manage stores, listings, orders, offers, and earnings.</p>
+              <ArrowRight size={20} />
+            </Link>
+            <Link
+              to="/account/settings"
+              className="account-card account-card--link"
+            >
+              <Settings size={28} />
+              <h3>Profile & security</h3>
+              <p>
+                Update your personal details, contact information, password and
+                address.
+              </p>
               <ArrowRight size={20} />
             </Link>
             <Link
@@ -286,6 +266,29 @@ export default function Account() {
               <ShoppingBag size={28} />
               <h3>Keep exploring</h3>
               <p>Find your next favorite thing in the marketplace.</p>
+              <ArrowRight size={20} />
+            </Link>
+            <button
+              type="button"
+              className="account-card account-card--link"
+              style={{ textAlign: "left", width: "100%", background: "none", border: "1px solid var(--line)", font: "inherit", cursor: "pointer" }}
+              onClick={() => setWalletModalOpen(true)}
+            >
+              <Wallet size={28} />
+              <h3>KuduMart Wallet</h3>
+              <p>Balance: {money(balance)}. Track refunds and credits.</p>
+              <ArrowRight size={20} />
+            </button>
+            <Link
+              to="/account/settings"
+              className="account-card account-card--link"
+            >
+              <Settings size={28} />
+              <h3>Profile & security</h3>
+              <p>
+                Update your personal details, contact information, password and
+                address.
+              </p>
               <ArrowRight size={20} />
             </Link>
             <Link
@@ -364,20 +367,20 @@ export default function Account() {
       {walletModalOpen && (
         <Modal
           title="KuduMart Wallet & Credits"
-          icon={<Wallet size={20} color="#059669" />}
+          icon={<Wallet size={20} />}
           onClose={() => setWalletModalOpen(false)}
           footer={<Button variant="ghost" onClick={() => setWalletModalOpen(false)}>Close</Button>}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-            <div style={{ background: "linear-gradient(135deg, #064e3b 0%, #047857 100%)", borderRadius: "12px", padding: "22px", color: "#ffffff", boxShadow: "0 4px 14px rgba(4, 120, 87, 0.2)" }}>
-              <div style={{ fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", opacity: 0.9 }}>
-                Available Balance
+            <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "20px", border: "1px solid #e2e8f0" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748b" }}>
+                Current Wallet Balance
               </div>
-              <div style={{ fontSize: "32px", fontWeight: 800, margin: "6px 0" }}>
+              <div style={{ fontSize: "30px", fontWeight: 800, margin: "4px 0", color: "#0f172a" }}>
                 {money(balance)}
               </div>
-              <div style={{ fontSize: "12px", opacity: 0.85 }}>
-                Funds are immediately usable on KuduMart purchases and installment milestone settlements.
+              <div style={{ fontSize: "12px", color: "#64748b" }}>
+                Store credit from layaway refunds and account adjustments.
               </div>
             </div>
 
@@ -397,7 +400,7 @@ export default function Account() {
                         justifyContent: "space-between",
                         alignItems: "center",
                         padding: "12px 14px",
-                        background: "#f8fafc",
+                        background: "#ffffff",
                         border: "1px solid #e2e8f0",
                         borderRadius: "8px",
                       }}
@@ -411,10 +414,10 @@ export default function Account() {
                         </div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <strong style={{ fontSize: "14px", color: "#059669" }}>
+                        <strong style={{ fontSize: "14px", color: "#0f172a" }}>
                           +{money(tx.amount)}
                         </strong>
-                        <div style={{ fontSize: "11px", color: "#16a34a", textTransform: "uppercase", fontWeight: 600 }}>
+                        <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>
                           {tx.status}
                         </div>
                       </div>
