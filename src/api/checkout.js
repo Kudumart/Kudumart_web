@@ -6,9 +6,9 @@ export const checkoutApi = {
   deliveryFees: async (countryCode, signal) => unwrap(await request('/user/delivery-fees', { authenticated: true, params: { shipToCountryCode: countryCode }, signal })),
   shippingRegions: async (countryCode, signal) => unwrap(await request('/user/shipping/addresses', { authenticated: true, params: { shipToCountryCode: countryCode }, signal })),
   updateAddress: async (user, location) => unwrap(await request('/user/profile/update', { method: 'PUT', authenticated: true, body: { firstName: user.firstName, lastName: user.lastName, email: user.email, location } })),
-  prepareNaira: async (deliveryMethod = 'delivery', cartItemIds) => unwrap(await request('/user/checkout/naira/prepare', { method: 'POST', authenticated: true, body: { deliveryMethod, ...(cartItemIds?.length ? { cartItemIds } : {}) } })),
+  prepareNaira: async (deliveryMethod = 'delivery', cartItemIds, useWallet = false) => unwrap(await request('/user/checkout/naira/prepare', { method: 'POST', authenticated: true, body: { deliveryMethod, useWallet, ...(cartItemIds?.length ? { cartItemIds } : {}) } })),
   prepareDollar: async (shippingAddress, cartItemIds) => unwrap(await request('/user/checkout/dollar/prepare', { method: 'POST', authenticated: true, body: { shippingAddress, ...(cartItemIds?.length ? { cartItemIds } : {}) } })),
-  confirmNaira: async ({ refId, shippingAddress, shippingAddressZipCode, deliveryMethod = 'delivery', cartItemIds }) => unwrap(await request('/user/checkout', { method: 'POST', authenticated: true, body: { refId, shippingAddress, shippingAddressZipCode, deliveryMethod, ...(cartItemIds?.length ? { cartItemIds } : {}) } })),
+  confirmNaira: async ({ refId, shippingAddress, shippingAddressZipCode, deliveryMethod = 'delivery', cartItemIds, useWallet = false }) => unwrap(await request('/user/checkout', { method: 'POST', authenticated: true, body: { refId, shippingAddress, shippingAddressZipCode, deliveryMethod, useWallet, ...(cartItemIds?.length ? { cartItemIds } : {}) } })),
   confirmDollar: async ({ refId, shippingAddress, shippingAddressZipCode, cartItemIds }) => unwrap(await request('/user/checkout/dollar', { method: 'POST', authenticated: true, body: { refId, shippingAddress, shippingAddressZipCode, ...(cartItemIds?.length ? { cartItemIds } : {}) } })),
   orders: async signal => {
     try { return unwrap(await request('/user/orders', { authenticated: true, signal })); }
@@ -24,7 +24,7 @@ export const checkoutApi = {
   confirmInstallment: async payload => unwrap(await request('/user/installments/confirm', { method: 'POST', authenticated: true, body: payload })),
   installmentPlans: async (params, signal) => unwrap(await request('/user/installments/plans', { authenticated: true, params, signal })),
   installmentPlanDetail: async (planId, signal) => unwrap(await request(`/user/installments/plans/${planId}`, { authenticated: true, signal })),
-  prepareMilestonePayment: async milestoneId => unwrap(await request(`/user/installments/milestones/${milestoneId}/prepare`, { method: 'POST', authenticated: true })),
+  prepareMilestonePayment: async (milestoneId, useWallet = false) => unwrap(await request(`/user/installments/milestones/${milestoneId}/prepare`, { method: 'POST', authenticated: true, body: { useWallet } })),
   confirmMilestonePayment: async (milestoneId, refId) => unwrap(await request(`/user/installments/milestones/${milestoneId}/confirm`, { method: 'POST', authenticated: true, body: { refId } })),
   cancelInstallmentPlan: async planId => unwrap(await request(`/user/installments/plans/${planId}/cancel`, { method: 'POST', authenticated: true })),
 };

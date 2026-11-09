@@ -59,6 +59,24 @@ export const accountApi = {
     unwrap(await request("/user/profile", { authenticated: true, signal })),
   wallet: async (signal) =>
     unwrap(await request("/user/wallet", { authenticated: true, signal })),
+  banks: async (signal) =>
+    unwrap(await request("/user/banks", { authenticated: true, signal })),
+  resolveBank: async (accountNumber, bankCode, signal) =>
+    unwrap(
+      await request("/user/bank/resolve", {
+        authenticated: true,
+        params: { accountNumber, bankCode },
+        signal,
+      }),
+    ),
+  withdrawWallet: async (payload) =>
+    unwrap(
+      await request("/user/wallet/withdraw", {
+        method: "POST",
+        authenticated: true,
+        body: payload,
+      }),
+    ),
   updateProfile: async (values) =>
     unwrap(
       await request("/user/profile/update", {

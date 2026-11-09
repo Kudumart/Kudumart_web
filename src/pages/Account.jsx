@@ -18,8 +18,11 @@ import {
   UserRound,
   MapPinned,
   Wallet,
+  Building2,
+  CheckCircle2,
+  ArrowDownToLine,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { accountApi } from "../api/account";
 import { sellerApi, sellerList } from "../api/seller";
 import { useResource } from "../hooks/useResource";
@@ -175,12 +178,102 @@ function VendorOnboarding({ user }) {
   );
 }
 export default function Account() {
-  const { user, signOut } = useApp();
+  const { user, signOut, notify } = useApp();
   const [walletModalOpen, setWalletModalOpen] = useState(false);
-  const walletResource = useResource((signal) => accountApi.wallet(signal), [user?.id]);
+  const [walletRevision, setWalletRevision] = useState(0);
+  const walletResource = useResource((signal) => accountApi.wallet(signal), [user?.id, walletRevision]);
   const walletData = walletResource.data?.data || walletResource.data;
   const balance = Number(walletData?.balance ?? user?.wallet ?? 0);
   const transactions = walletData?.transactions || [];
+
+  // Withdrawal form states
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const [banksList, setBanksList] = useState([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
+  const [selectedBankCode, setSelectedBankCode] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [resolvingAccount, setResolvingAccount] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [submittingWithdrawal, setSubmittingWithdrawal] = useState(false);
+  const [withdrawalError, setWithdrawalError] = useState("");
+
+  useEffect(() => {
+    if (showWithdraw && banksList.length === 0) {
+      setLoadingBanks(true);
+      accountApi
+        .banks()
+        .then((res) => {
+          const list = res?.data || res || [];
+          setBanksList(Array.isArray(list) ? list : []);
+        })
+        .catch((err) => {
+          setWithdrawalError(err?.message || "Failed to load bank list.");
+        })
+        .finally(() => setLoadingBanks(false));
+    }
+  }, [showWithdraw, banksList.length]);
+
+  useEffect(() => {
+    if (selectedBankCode && accountNumber.trim().length === 10) {
+      setResolvingAccount(true);
+      setWithdrawalError("");
+      accountApi
+        .resolveBank(accountNumber.trim(), selectedBankCode)
+        .then((res) => {
+          const info = res?.data || res;
+          setAccountName(info?.accountName || "");
+        })
+        .catch((err) => {
+          setAccountName("");
+          setWithdrawalError(err?.message || "Could not resolve bank account details.");
+        })
+        .finally(() => setResolvingAccount(false));
+    } else {
+      setAccountName("");
+    }
+  }, [selectedBankCode, accountNumber]);
+
+  const handleWithdrawSubmit = async (e) => {
+    e.preventDefault();
+    setWithdrawalError("");
+    const amt = Number(withdrawAmount);
+    if (!amt || amt <= 0) {
+      setWithdrawalError("Please enter a valid withdrawal amount.");
+      return;
+    }
+    if (amt > balance) {
+      setWithdrawalError(`Requested amount (${money(amt)}) exceeds your available balance (${money(balance)}).`);
+      return;
+    }
+    const chosenBank = banksList.find((b) => String(b.code) === String(selectedBankCode));
+    if (!chosenBank || !accountName) {
+      setWithdrawalError("Please verify your bank and account details before submitting.");
+      return;
+    }
+
+    setSubmittingWithdrawal(true);
+    try {
+      await accountApi.withdrawWallet({
+        amount: amt,
+        accountNumber: accountNumber.trim(),
+        bankCode: selectedBankCode,
+        bankName: chosenBank.name,
+        accountName,
+      });
+      notify(`Withdrawal request of ${money(amt)} submitted for review!`, "success");
+      setWithdrawAmount("");
+      setAccountNumber("");
+      setAccountName("");
+      setSelectedBankCode("");
+      setShowWithdraw(false);
+      setWalletRevision((r) => r + 1);
+    } catch (err) {
+      setWithdrawalError(err?.message || "Failed to submit withdrawal request.");
+    } finally {
+      setSubmittingWithdrawal(false);
+    }
+  };
 
   if (!user) return <Navigate to="/login" replace />;
   const vendor = user.accountType?.toLowerCase() === "vendor";
@@ -368,21 +461,191 @@ export default function Account() {
         <Modal
           title="KuduMart Wallet & Credits"
           icon={<Wallet size={20} />}
-          onClose={() => setWalletModalOpen(false)}
-          footer={<Button variant="ghost" onClick={() => setWalletModalOpen(false)}>Close</Button>}
+          onClose={() => {
+            setWalletModalOpen(false);
+            setShowWithdraw(false);
+            setWithdrawalError("");
+          }}
+          footer={
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setWalletModalOpen(false);
+                setShowWithdraw(false);
+                setWithdrawalError("");
+              }}
+            >
+              Close
+            </Button>
+          }
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
             <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "20px", border: "1px solid #e2e8f0" }}>
-              <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748b" }}>
-                Current Wallet Balance
-              </div>
-              <div style={{ fontSize: "30px", fontWeight: 800, margin: "4px 0", color: "#0f172a" }}>
-                {money(balance)}
-              </div>
-              <div style={{ fontSize: "12px", color: "#64748b" }}>
-                Store credit from layaway refunds and account adjustments.
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
+                <div>
+                  <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748b" }}>
+                    Current Wallet Balance
+                  </div>
+                  <div style={{ fontSize: "32px", fontWeight: 800, margin: "4px 0", color: "#0f172a" }}>
+                    {money(balance)}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#64748b", maxWidth: "340px", lineHeight: 1.4 }}>
+                    Usable directly during checkout or withdrawable to your Nigerian bank account.
+                  </div>
+                </div>
+
+                {balance > 0 && (
+                  <Button
+                    variant={showWithdraw ? "outline" : "primary"}
+                    size="small"
+                    icon={showWithdraw ? Wallet : ArrowDownToLine}
+                    onClick={() => {
+                      setShowWithdraw(!showWithdraw);
+                      setWithdrawalError("");
+                    }}
+                  >
+                    {showWithdraw ? "Cancel" : "Withdraw to Bank"}
+                  </Button>
+                )}
               </div>
             </div>
+
+            {showWithdraw && (
+              <form
+                onSubmit={handleWithdrawSubmit}
+                style={{
+                  background: "#ffffff",
+                  borderRadius: "12px",
+                  padding: "18px",
+                  border: "1.5px solid #cbd5e1",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "14px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", borderBottom: "1px solid #f1f5f9", paddingBottom: "10px" }}>
+                  <Building2 size={18} color="#0f172a" />
+                  <strong style={{ fontSize: "14px", color: "#0f172a" }}>Withdraw Funds to Bank</strong>
+                </div>
+
+                {withdrawalError && (
+                  <div style={{ background: "#fef2f2", color: "#b91c1c", padding: "10px 12px", borderRadius: "6px", fontSize: "12px", border: "1px solid #fecaca" }}>
+                    {withdrawalError}
+                  </div>
+                )}
+
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
+                    Select Destination Bank
+                  </label>
+                  <select
+                    value={selectedBankCode}
+                    onChange={(e) => setSelectedBankCode(e.target.value)}
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "13px",
+                      color: "#0f172a",
+                      background: "#fff",
+                    }}
+                  >
+                    <option value="">{loadingBanks ? "Loading banks list…" : "Choose your Nigerian bank…"}</option>
+                    {banksList.map((bank) => (
+                      <option key={`${bank.code}-${bank.name}`} value={bank.code}>
+                        {bank.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
+                    Account Number (10 digits)
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={10}
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    placeholder="e.g. 0123456789"
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "13px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  {resolvingAccount && (
+                    <div style={{ fontSize: "12px", color: "#64748b", marginTop: "6px" }}>
+                      Verifying account details with Paystack…
+                    </div>
+                  )}
+                  {accountName && !resolvingAccount && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", color: "#16a34a", fontSize: "12px", fontWeight: 600 }}>
+                      <CheckCircle2 size={16} />
+                      <span>Verified: {accountName}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#334155" }}>
+                      Withdrawal Amount (₦)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setWithdrawAmount(String(balance))}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#2563eb",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        padding: 0,
+                      }}
+                    >
+                      Withdraw All ({money(balance)})
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    min="100"
+                    max={balance}
+                    step="any"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    placeholder="Enter amount"
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #cbd5e1",
+                      fontSize: "13px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  loading={submittingWithdrawal}
+                  disabled={!accountName || !withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > balance}
+                  icon={ArrowDownToLine}
+                >
+                  Confirm Withdrawal {withdrawAmount ? `(${money(Number(withdrawAmount))})` : ""}
+                </Button>
+              </form>
+            )}
 
             <div>
               <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", fontWeight: 700, color: "#1e293b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -392,42 +655,52 @@ export default function Account() {
                 <Skeleton style={{ height: "120px", borderRadius: "8px" }} />
               ) : transactions.length > 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "300px", overflowY: "auto" }}>
-                  {transactions.map((tx) => (
-                    <div
-                      key={tx.id}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        padding: "12px 14px",
-                        background: "#ffffff",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <div>
-                        <strong style={{ fontSize: "13px", color: "#0f172a", textTransform: "capitalize" }}>
-                          {tx.transactionType?.replaceAll("_", " ") || "Credit"}
-                        </strong>
-                        <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
-                          {new Date(tx.createdAt).toLocaleDateString("en-NG", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  {transactions.map((tx) => {
+                    const isDebit = tx.transactionType === "withdrawal" || String(tx.transactionType).startsWith("purchase_wallet");
+                    return (
+                      <div
+                        key={tx.id}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "12px 14px",
+                          background: "#ffffff",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                        }}
+                      >
+                        <div>
+                          <strong style={{ fontSize: "13px", color: "#0f172a", textTransform: "capitalize" }}>
+                            {tx.transactionType?.replaceAll("_", " ") || "Transaction"}
+                          </strong>
+                          <div style={{ fontSize: "11px", color: "#64748b", marginTop: "2px" }}>
+                            {new Date(tx.createdAt).toLocaleDateString("en-NG", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <strong style={{ fontSize: "14px", color: isDebit ? "#b91c1c" : "#15803d" }}>
+                            {isDebit ? "-" : "+"}{money(tx.amount)}
+                          </strong>
+                          <div
+                            style={{
+                              fontSize: "10px",
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              color: tx.status === "completed" ? "#16a34a" : tx.status === "pending" ? "#d97706" : "#dc2626",
+                            }}
+                          >
+                            {tx.status}
+                          </div>
                         </div>
                       </div>
-                      <div style={{ textAlign: "right" }}>
-                        <strong style={{ fontSize: "14px", color: "#0f172a" }}>
-                          +{money(tx.amount)}
-                        </strong>
-                        <div style={{ fontSize: "11px", color: "#64748b", textTransform: "uppercase", fontWeight: 600 }}>
-                          {tx.status}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <EmptyState
                   title="No wallet transactions yet"
-                  description="When a layaway plan is cancelled or store credit is issued, your refunds will appear here."
+                  description="When a layaway plan is cancelled or store credit is issued, your refunds and withdrawal history will appear here."
                 />
               )}
             </div>

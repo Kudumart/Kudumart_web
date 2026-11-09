@@ -11,10 +11,12 @@ import {
   Layers,
   ChevronRight,
   ExternalLink,
+  Wallet,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PaystackPop from '@paystack/inline-js';
 import { checkoutApi } from '../api/checkout';
+import { accountApi } from '../api/account';
 import { Button, Badge, Modal, ConfirmModal, EmptyState, Skeleton } from '../components/ui';
 import { useResource } from '../hooks/useResource';
 import { useApp } from '../contexts/AppContext';
@@ -40,13 +42,37 @@ export default function CustomerInstallments() {
       ? resource.data
       : [];
 
-  const handlePayMilestone = async (milestone, plan) => {
+  const walletResource = useResource(
+    (signal) => (user ? accountApi.wallet(signal) : Promise.resolve(null)),
+    [user?.id, revision],
+  );
+  const walletData = walletResource.data?.data || walletResource.data;
+  const walletBalance = Number(walletData?.balance ?? user?.wallet ?? 0);
+
+  const handlePayMilestone = async (milestone, plan, useWallet = false) => {
     setPayingMilestoneId(milestone.id);
     setPaymentError('');
     try {
-      const prepared = await checkoutApi.prepareMilestonePayment(milestone.id);
-      const accessCode = prepared?.paystackDetails?.access_code;
-      const refId = prepared?.refId;
+      const prepared = await checkoutApi.prepareMilestonePayment(milestone.id, useWallet);
+      const isPureWallet = prepared?.paidWithWallet || prepared?.data?.paidWithWallet;
+      const refId = prepared?.refId || prepared?.data?.refId;
+
+      if (isPureWallet && refId) {
+        // Pure wallet settlement
+        const res = await checkoutApi.confirmMilestonePayment(milestone.id, refId);
+        notify('Milestone payment settled from your KuduMart Wallet!', 'success');
+        setRevision((r) => r + 1);
+        if (res?.data?.plan?.status === 'completed') {
+          setSuccessModal({
+            title: 'Layaway 100% Completed!',
+            message: `Congratulations! Your installment plan for "${plan.product?.name}" is now fully settled. Your order has been dispatched for fulfillment.`,
+          });
+        }
+        setPayingMilestoneId(null);
+        return;
+      }
+
+      const accessCode = prepared?.paystackDetails?.access_code || prepared?.data?.paystackDetails?.access_code;
 
       if (!accessCode || !refId) {
         throw new Error('Payment gateway could not generate a secure checkout session.');
@@ -274,14 +300,28 @@ export default function CustomerInstallments() {
                             {isPaid ? (
                               <Badge tone="success">Paid</Badge>
                             ) : isNext ? (
-                              <Button
-                                size="sm"
-                                icon={CreditCard}
-                                loading={isPaying}
-                                onClick={() => handlePayMilestone(milestone, plan)}
-                              >
-                                Pay Now
-                              </Button>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                {walletBalance >= Number(milestone.amount) && (
+                                  <Button
+                                    size="sm"
+                                    variant="primary"
+                                    icon={Wallet}
+                                    loading={isPaying}
+                                    onClick={() => handlePayMilestone(milestone, plan, true)}
+                                  >
+                                    Pay with Wallet
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant={walletBalance >= Number(milestone.amount) ? 'outline' : 'primary'}
+                                  icon={CreditCard}
+                                  loading={isPaying}
+                                  onClick={() => handlePayMilestone(milestone, plan, false)}
+                                >
+                                  {walletBalance >= Number(milestone.amount) ? 'Pay with Card' : 'Pay Now'}
+                                </Button>
+                              </div>
                             ) : (
                               <Badge tone="neutral">Upcoming</Badge>
                             )}

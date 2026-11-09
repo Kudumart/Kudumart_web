@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CalendarClock, CheckCircle2, Clock, CreditCard, Info, MapPin, MessageCircle, PackageCheck, Phone, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CalendarClock, CheckCircle2, Clock, CreditCard, Info, MapPin, MessageCircle, PackageCheck, Phone, ShieldCheck, Wallet } from 'lucide-react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import PaystackPop from '@paystack/inline-js';
@@ -42,6 +42,14 @@ export default function Checkout() {
     (signal) => checkoutApi.installmentConfig(signal),
     [],
   );
+
+  const [applyWallet, setApplyWallet] = useState(false);
+  const walletResource = useResource(
+    (signal) => (user ? accountApi.wallet(signal) : Promise.resolve(null)),
+    [user?.id],
+  );
+  const walletData = walletResource.data?.data || walletResource.data;
+  const walletBalance = Number(walletData?.balance ?? user?.wallet ?? 0);
 
   const cart = useResource(signal => user ? accountApi.cart(signal) : Promise.resolve([]), [user?.id]);
   const items = Array.isArray(cart.data) ? cart.data : cart.data?.data || [];
@@ -230,17 +238,33 @@ export default function Checkout() {
     setConfirmationError('');
     try {
       const method = needsDelivery ? 'delivery' : 'pickup';
-      const prepared = await checkoutApi.prepareNaira(method);
-      const accessCode = prepared?.paystackDetails?.access_code;
-      if (!prepared?.refId || !accessCode) throw new Error('Paystack did not return a secure payment session.');
-      const pending = { refId: prepared.refId, mode: 'NGN', shippingAddress: addressText, shippingAddressZipCode: location?.zipCode, deliveryMethod: method };
+      const prepared = await checkoutApi.prepareNaira(method, undefined, applyWallet);
+      const isPureWallet = prepared?.paidWithWallet || prepared?.data?.paidWithWallet;
+      const refId = prepared?.refId || prepared?.data?.refId;
+      const pending = {
+        refId,
+        mode: 'NGN',
+        shippingAddress: addressText,
+        shippingAddressZipCode: location?.zipCode,
+        deliveryMethod: method,
+        useWallet: applyWallet,
+      };
+
+      if (isPureWallet && refId) {
+        // 100% paid from customer wallet balance!
+        await completeOrder(pending);
+        return;
+      }
+
+      const accessCode = prepared?.paystackDetails?.access_code || prepared?.data?.paystackDetails?.access_code;
+      if (!refId || !accessCode) throw new Error('Paystack did not return a secure payment session.');
       sessionStorage.setItem('kuduPendingCheckout', JSON.stringify(pending));
       const paystack = new PaystackPop();
       paystack.resumeTransaction(accessCode, {
         onLoad: () => setPreparing(false),
-        onSuccess: result => completeOrder({ ...pending, refId: result?.reference || pending.refId }),
+        onSuccess: (result) => completeOrder({ ...pending, refId: result?.reference || pending.refId }),
         onCancel: () => { sessionStorage.removeItem('kuduPendingCheckout'); setPreparing(false); },
-        onError: error => { sessionStorage.removeItem('kuduPendingCheckout'); setConfirmationError(error?.message || 'Paystack could not open the payment session.'); setPreparing(false); },
+        onError: (error) => { sessionStorage.removeItem('kuduPendingCheckout'); setConfirmationError(error?.message || 'Paystack could not open the payment session.'); setPreparing(false); },
       });
     } catch (error) {
       setConfirmationError(error.message);
@@ -263,14 +287,29 @@ export default function Checkout() {
         shippingAddress: addressText,
         deliveryMethod: method,
         deliveryFee: needsDelivery ? Number(deliveryFees.data?.totalDeliveryFee || 0) : 0,
+        useWallet: applyWallet,
       };
 
       const prepared = await checkoutApi.prepareInstallment(payload);
       const info = prepared?.data || prepared;
-      const accessCode = info?.paystackDetails?.access_code || info?.paystackDetails?.data?.access_code;
+      const isPureWallet = info?.paidWithWallet;
       const refId = info?.refId;
 
-      if (!accessCode || !refId) throw new Error('Paystack did not return a valid checkout session.');
+      if (isPureWallet && refId) {
+        // Initial deposit paid entirely with wallet balance!
+        setConfirming(true);
+        await checkoutApi.confirmInstallment({
+          ...payload,
+          refId,
+          useWallet: true,
+        });
+        setCartCount(0);
+        setInstallmentSuccess(true);
+        return;
+      }
+
+      const accessCode = info?.paystackDetails?.access_code || info?.paystackDetails?.data?.access_code;
+      if (!accessCode || !refId) throw new Error('Payment provider did not return a valid checkout session.');
 
       const paystack = new PaystackPop();
       paystack.resumeTransaction(accessCode, {
@@ -282,6 +321,7 @@ export default function Checkout() {
             await checkoutApi.confirmInstallment({
               ...payload,
               refId: confirmedRef,
+              useWallet: applyWallet,
             });
             setCartCount(0);
             setInstallmentSuccess(true);
@@ -398,6 +438,45 @@ export default function Checkout() {
                   </div>
                 )}
 
+                {/* KuduMart Wallet Balance Toggle */}
+                {mode === 'NGN' && walletBalance > 0 && (
+                  <div
+                    style={{
+                      background: '#f8fafc',
+                      border: '1.5px solid #cbd5e1',
+                      borderRadius: '10px',
+                      padding: '12px 16px',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '10px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Wallet size={20} color="#0f172a" />
+                      <div>
+                        <strong style={{ fontSize: '13px', color: '#0f172a', display: 'block' }}>
+                          Apply KuduMart Wallet Balance
+                        </strong>
+                        <span style={{ fontSize: '12px', color: '#64748b' }}>
+                          Available: <strong>{money(walletBalance)}</strong>
+                        </span>
+                      </div>
+                    </div>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                      <input
+                        type="checkbox"
+                        checked={applyWallet}
+                        onChange={(e) => setApplyWallet(e.target.checked)}
+                        style={{ width: '18px', height: '18px', accentColor: '#0f172a', cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>Apply Balance</span>
+                    </label>
+                  </div>
+                )}
+
                 {isInstallmentEligible && paymentPlan === 'installment' && installmentBreakdown ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                     <div>
@@ -456,35 +535,92 @@ export default function Checkout() {
                       </div>
                     </div>
 
-                    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span>Deposit due today:</span>
-                        <strong style={{ color: '#0f172a' }}>{money(installmentBreakdown.deposit)}</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
-                        <span>Remaining ({installmentBreakdown.subCount} payments of {money(installmentBreakdown.subAmount)}):</span>
-                        <span>{money(installmentBreakdown.remaining)}</span>
-                      </div>
-                      <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px solid #f1f5f9', fontSize: '11px', color: '#64748b', lineHeight: 1.4 }}>
-                        🔒 <strong>Holding reservation:</strong> Stock is reserved exclusively for you. Order fulfills immediately upon final payment settlement.
-                      </div>
-                    </div>
+                    {(() => {
+                      const depositVal = installmentBreakdown.deposit;
+                      const walletUsedInst = applyWallet && walletBalance > 0 ? Math.min(walletBalance, depositVal) : 0;
+                      const instDue = Math.max(0, Math.round((depositVal - walletUsedInst) * 100) / 100);
+                      return (
+                        <>
+                          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Deposit required:</span>
+                              <strong>{money(depositVal)}</strong>
+                            </div>
+                            {walletUsedInst > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a' }}>
+                                <span>Wallet balance applied:</span>
+                                <strong>-{money(walletUsedInst)}</strong>
+                              </div>
+                            )}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px', borderTop: '1px solid #f1f5f9' }}>
+                              <strong style={{ color: '#0f172a' }}>Amount due today:</strong>
+                              <strong style={{ color: '#0f172a', fontSize: '15px' }}>{money(instDue)}</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+                              <span>Remaining ({installmentBreakdown.subCount} payments of {money(installmentBreakdown.subAmount)}):</span>
+                              <span>{money(installmentBreakdown.remaining)}</span>
+                            </div>
+                            <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px solid #f1f5f9', fontSize: '11px', color: '#64748b', lineHeight: 1.4 }}>
+                              🔒 <strong>Holding reservation:</strong> Stock is reserved exclusively for you. Order fulfills immediately upon final payment settlement.
+                            </div>
+                          </div>
 
-                    <Button
-                      className="checkout-pay-button"
-                      type="button"
-                      icon={CalendarClock}
-                      onClick={startInstallment}
-                      disabled={!canPay}
-                      loading={preparing}
-                    >
-                      Pay Deposit & Reserve Item ({money(installmentBreakdown.deposit)})
-                    </Button>
+                          <Button
+                            className="checkout-pay-button"
+                            type="button"
+                            icon={instDue === 0 ? Wallet : CalendarClock}
+                            onClick={startInstallment}
+                            disabled={!canPay}
+                            loading={preparing}
+                          >
+                            {instDue === 0
+                              ? `Pay Deposit with Wallet (${money(depositVal)})`
+                              : `Pay Deposit & Reserve Item (${money(instDue)})`}
+                          </Button>
+                        </>
+                      );
+                    })()}
                   </div>
                 ) : (
-                  <Button className="checkout-pay-button" type="button" icon={CreditCard} onClick={startNaira} disabled={!canPay} loading={preparing}>
-                    Continue to secure payment
-                  </Button>
+                  (() => {
+                    const totalVal = quote?.total || 0;
+                    const walletUsedFull = applyWallet && walletBalance > 0 ? Math.min(walletBalance, totalVal) : 0;
+                    const fullDue = Math.max(0, Math.round((totalVal - walletUsedFull) * 100) / 100);
+                    return (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {walletUsedFull > 0 && (
+                          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Order Total:</span>
+                              <span>{money(totalVal)}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#16a34a' }}>
+                              <span>Wallet balance applied:</span>
+                              <strong>-{money(walletUsedFull)}</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '4px', borderTop: '1px solid #f1f5f9' }}>
+                              <strong style={{ color: '#0f172a' }}>Amount due:</strong>
+                              <strong style={{ color: '#0f172a', fontSize: '15px' }}>{money(fullDue)}</strong>
+                            </div>
+                          </div>
+                        )}
+                        <Button
+                          className="checkout-pay-button"
+                          type="button"
+                          icon={fullDue === 0 ? Wallet : CreditCard}
+                          onClick={startNaira}
+                          disabled={!canPay}
+                          loading={preparing}
+                        >
+                          {fullDue === 0
+                            ? `Pay ${money(totalVal)} with Wallet`
+                            : fullDue < totalVal
+                              ? `Pay Remaining ${money(fullDue)} via Card`
+                              : 'Continue to secure payment'}
+                        </Button>
+                      </div>
+                    );
+                  })()
                 )}
               </div>
             )
@@ -494,7 +630,27 @@ export default function Checkout() {
           {confirmationError && !pendingPayment && <div className="form-alert" role="alert">{confirmationError}</div>}
         </section>
       </div><aside className="checkout-summary"><h2>Order summary</h2><div className="checkout-summary__items">{items.map(item => <div className="checkout-summary__item" key={item.id}><div className="checkout-summary__image">{imageFor(item.product) && <img src={imageFor(item.product)} alt=""/>}</div><div><strong>{item.product?.name}</strong><span>Qty {item.quantity}</span></div></div>)}</div>
-        {mode === 'NGN' ? quote ? <><div className="checkout-summary__row"><span>Items</span><strong>{money(quote.subtotal)}</strong></div><div className="checkout-summary__row"><span>Product charges</span><strong>{money(quote.charges)}</strong></div><div className="checkout-summary__row"><span>Delivery</span><strong>{needsDelivery && deliveryFees.loading ? 'Checking…' : money(quote.delivery)}</strong></div><div className="checkout-summary__total"><span>Total</span><strong>{charges.loading || (needsDelivery && deliveryFees.loading) ? 'Checking…' : money(quote.total)}</strong></div></> : quoteError ? <><div className="checkout-summary__row"><span>Items</span><strong>{chargeQuote ? money(chargeQuote.subtotal) : '—'}</strong></div><div className="checkout-summary__row"><span>Product charges</span><strong>{chargeQuote ? money(chargeQuote.charges) : '—'}</strong></div><div className="checkout-summary__row"><span>Delivery</span><strong>Unavailable</strong></div><div className="checkout-summary__total"><span>Total</span><strong>—</strong></div></> : <p className="checkout-summary__hint">{needsDelivery && !hasAddress ? 'Add a delivery address to see your final total.' : 'Calculating your total…'}</p>
+        {mode === 'NGN' ? quote ? (
+          <>
+            <div className="checkout-summary__row"><span>Items</span><strong>{money(quote.subtotal)}</strong></div>
+            <div className="checkout-summary__row"><span>Product charges</span><strong>{money(quote.charges)}</strong></div>
+            <div className="checkout-summary__row"><span>Delivery</span><strong>{needsDelivery && deliveryFees.loading ? 'Checking…' : money(quote.delivery)}</strong></div>
+            {applyWallet && walletBalance > 0 && (
+              <div className="checkout-summary__row" style={{ color: '#16a34a' }}>
+                <span>Wallet credit applied</span>
+                <strong>-{money(Math.min(walletBalance, quote.total))}</strong>
+              </div>
+            )}
+            <div className="checkout-summary__total">
+              <span>{applyWallet && walletBalance > 0 ? 'Total Due Now' : 'Total'}</span>
+              <strong>
+                {charges.loading || (needsDelivery && deliveryFees.loading)
+                  ? 'Checking…'
+                  : money(Math.max(0, quote.total - (applyWallet ? Math.min(walletBalance, quote.total) : 0)))}
+              </strong>
+            </div>
+          </>
+        ) : quoteError ? <><div className="checkout-summary__row"><span>Items</span><strong>{chargeQuote ? money(chargeQuote.subtotal) : '—'}</strong></div><div className="checkout-summary__row"><span>Product charges</span><strong>{chargeQuote ? money(chargeQuote.charges) : '—'}</strong></div><div className="checkout-summary__row"><span>Delivery</span><strong>Unavailable</strong></div><div className="checkout-summary__total"><span>Total</span><strong>—</strong></div></> : <p className="checkout-summary__hint">{needsDelivery && !hasAddress ? 'Add a delivery address to see your final total.' : 'Calculating your total…'}</p>
           : paymentReady ? <><div className="checkout-summary__row"><span>Items</span><strong>{money(paymentReady.paymentBreakdown?.subtotal, '$')}</strong></div><div className="checkout-summary__row"><span>Product charges</span><strong>{money(paymentReady.paymentBreakdown?.chargeAmount, '$')}</strong></div><div className="checkout-summary__total"><span>Total</span><strong>{money(paymentReady.totalAmount, '$')}</strong></div></> : preparing ? <p className="checkout-summary__hint">Calculating your payment quote…</p> : <p className="checkout-summary__hint">{needsDelivery && !hasAddress ? 'Add a delivery address to see your final total.' : 'Your final dollar total comes from the payment quote before you pay.'}</p>}
         <p className="checkout-summary__assurance"><ShieldCheck size={17}/> Your order is confirmed only after payment is verified.</p></aside></div>}
     {showAddress && <Modal title="Delivery address" onClose={() => setShowAddress(false)}><AddressForm onSaved={() => { setShowAddress(false); setPaymentReady(null); }} onCancel={() => setShowAddress(false)}/></Modal>}
