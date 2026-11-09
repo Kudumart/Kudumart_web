@@ -127,9 +127,9 @@ export default function Product() {
           gap: '8px',
           padding: '6px 14px',
           borderRadius: '20px',
-          background: '#f0f7ff',
-          border: '1px solid #bae6fd',
-          color: '#0369a1',
+          background: '#fff7ed',
+          border: '1px solid #fed7aa',
+          color: '#c2410c',
           fontSize: '12px',
           fontWeight: 500,
           cursor: 'pointer',
@@ -140,9 +140,9 @@ export default function Product() {
           transition: 'all 0.15s ease',
         }}
       >
-        <CalendarClock size={15} color="#0284c7" />
+        <CalendarClock size={15} color="#ea580c" />
         <span>Pay in installments with Layaway • Reserve from {depositPct}% down</span>
-        <span style={{ fontWeight: 700, marginLeft: '4px', color: '#0284c7' }}>Learn more →</span>
+        <span style={{ fontWeight: 700, marginLeft: '4px', color: '#ea580c' }}>Learn more →</span>
       </button>
     )}<p className="product-detail__description">{plainText(product.description) || 'Discover more about this item and make it yours today.'}</p>
     {action === 'sold-out' && <div className="product-detail__purchase"><Button disabled>Sold out</Button></div>}
