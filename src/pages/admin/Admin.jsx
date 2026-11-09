@@ -5,6 +5,7 @@ import {
   BarChart3,
   Bell,
   Box,
+  CalendarClock,
   ClipboardCheck,
   ChevronDown,
   ChevronUp,
@@ -76,6 +77,7 @@ const navigationSections = [
   ] },
   { id: "commerce", label: "Commerce", links: [
     { to: "/admin/orders", label: "Orders", icon: Package },
+    { to: "/admin/installments", label: "Installments & Layaway", icon: CalendarClock },
     { to: "/admin/offers", label: "Offers", icon: Tag },
     { to: "/admin/transactions", label: "Transactions", icon: ArrowUpRight },
     { to: "/admin/withdrawals", label: "Withdrawals", icon: Wallet },

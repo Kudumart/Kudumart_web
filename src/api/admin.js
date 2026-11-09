@@ -610,4 +610,14 @@ export const adminApi = {
           : {}),
       },
     }),
+
+  // Installment / Layaway management
+  installmentConfig: (signal) =>
+    adminRequest("/admin/installments/config", { signal }),
+  saveInstallmentConfig: (values) =>
+    adminRequest("/admin/installments/config", { method: "PUT", body: values }),
+  installmentPlans: (params = {}, signal) =>
+    adminRequest("/admin/installments/plans", { params, signal }),
+  installmentPlanDetail: (id, signal) =>
+    adminRequest(`/admin/installments/plans/${id}`, { signal }),
 };

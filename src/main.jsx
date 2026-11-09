@@ -160,6 +160,11 @@ const AdminOffers = lazy(() =>
     default: module.AdminOffers,
   })),
 );
+const AdminInstallments = lazy(() =>
+  import("./pages/admin/AdminInstallments").then((module) => ({
+    default: module.AdminInstallments,
+  })),
+);
 const AliExpressCallback = lazy(() =>
   import("./pages/admin/AdminSpecialists").then((module) => ({
     default: module.AliExpressCallback,
@@ -403,6 +408,10 @@ function App() {
             <Route path="orders" element={<AdminOrders />} />
             <Route path="orders/:orderId" element={<AdminOrderDetail />} />
             <Route path="offers" element={deferred(<AdminOffers />)} />
+            <Route
+              path="installments"
+              element={deferred(<AdminInstallments />)}
+            />
             <Route path="transactions" element={<AdminTransactions />} />
             <Route path="withdrawals" element={<AdminWithdrawals />} />
             <Route path="verification" element={<AdminVerification />} />
