@@ -375,8 +375,8 @@ export function AdminInstallments() {
                       className="field__input"
                       value={formData.min_order_amount}
                       onChange={(e) => handleConfigChange("min_order_amount", e.target.value)}
-                      min="1000"
-                      step="1000"
+                      min="0"
+                      step="any"
                     />
                     <span className="field__hint">Products below this price cannot be paid in installments</span>
                   </label>
@@ -388,8 +388,8 @@ export function AdminInstallments() {
                       className="field__input"
                       value={formData.max_order_amount}
                       onChange={(e) => handleConfigChange("max_order_amount", e.target.value)}
-                      min="10000"
-                      step="10000"
+                      min="1"
+                      step="any"
                     />
                     <span className="field__hint">Cap per installment transaction</span>
                   </label>
@@ -402,8 +402,8 @@ export function AdminInstallments() {
                         className="field__input"
                         value={formData.min_deposit_percentage}
                         onChange={(e) => handleConfigChange("min_deposit_percentage", e.target.value)}
-                        min="10"
-                        max="90"
+                        min="1"
+                        max="100"
                       />
                       <span style={{ fontWeight: 600, color: "#475569" }}>%</span>
                     </div>
