@@ -102,21 +102,15 @@ export default function CustomerInstallments() {
   };
 
   return (
-    <div className="container account-page" style={{ paddingBottom: '60px' }}>
-      <Link to="/account" className="back-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '16px', color: '#64748b', textDecoration: 'none', fontSize: '14px' }}>
+    <div className="container settings-page">
+      <Link to="/account" className="back-link">
         <ArrowLeft size={16} /> Back to account
       </Link>
 
-      <div className="page-intro" style={{ marginBottom: '28px' }}>
-        <span className="eyebrow" style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: '#e11d48', textTransform: 'uppercase' }}>
-          FINANCING & LAYAWAY
-        </span>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, margin: '6px 0 8px 0', color: '#0f172a' }}>
-          Your Installments & Layaways
-        </h1>
-        <p style={{ color: '#64748b', fontSize: '15px', margin: 0 }}>
-          Manage your reserved items, check holding deadlines, and settle upcoming milestone payments.
-        </p>
+      <div className="page-intro">
+        <span className="eyebrow">FINANCING & LAYAWAY</span>
+        <h1>Your Installments & Layaways</h1>
+        <p>Manage your reserved items, check holding deadlines, and settle upcoming milestone payments.</p>
       </div>
 
       {paymentError && (
