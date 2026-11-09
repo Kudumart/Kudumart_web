@@ -620,4 +620,6 @@ export const adminApi = {
     adminRequest("/admin/installments/plans", { params, signal }),
   installmentPlanDetail: (id, signal) =>
     adminRequest(`/admin/installments/plans/${id}`, { signal }),
+  cancelInstallmentPlan: (id) =>
+    adminRequest(`/admin/installments/plans/${id}/cancel`, { method: "POST" }),
 };

@@ -169,6 +169,18 @@ export function AdminInstallments() {
     }));
   };
 
+  const handleAdminCancel = async (planId) => {
+    if (!window.confirm("Cancel this installment plan? The product will be returned to store inventory, restocking fees will be deducted, and vendor/buyer compensation will be processed.")) return;
+    try {
+      await adminApi.cancelInstallmentPlan(planId);
+      notify({ message: "Plan cancelled, inventory restocked, and refunds processed.", type: "success" });
+      setSelectedPlanId(null);
+      setRevision((r) => r + 1);
+    } catch (err) {
+      notify({ message: err.message || "Failed to cancel plan", type: "error" });
+    }
+  };
+
   const plansPayload = plansResource.data?.data;
   const plans = plansPayload?.plans || [];
   const totalPlans = plansPayload?.total || 0;
@@ -875,6 +887,17 @@ export function AdminInstallments() {
         <Modal
           title="Installment Plan Breakdown"
           onClose={() => setSelectedPlanId(null)}
+          footer={
+            planDetailResource.data?.data?.status === "active" ? (
+              <Button
+                variant="outline"
+                onClick={() => handleAdminCancel(selectedPlanId)}
+                style={{ color: "#e11d48", borderColor: "#fecdd3" }}
+              >
+                Cancel Plan & Restock Product
+              </Button>
+            ) : null
+          }
         >
           {planDetailResource.loading || !planDetailResource.data?.data ? (
             <Skeleton className="skeleton-box" style={{ height: "240px" }} />

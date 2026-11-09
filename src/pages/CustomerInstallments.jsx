@@ -15,7 +15,7 @@ import {
 import { Link } from 'react-router-dom';
 import PaystackPop from '@paystack/inline-js';
 import { checkoutApi } from '../api/checkout';
-import { Button, Badge, Modal, EmptyState, Skeleton } from '../components/ui';
+import { Button, Badge, Modal, ConfirmModal, EmptyState, Skeleton } from '../components/ui';
 import { useResource } from '../hooks/useResource';
 import { useApp } from '../contexts/AppContext';
 import { money } from '../utils/format';
@@ -26,6 +26,8 @@ export default function CustomerInstallments() {
   const [payingMilestoneId, setPayingMilestoneId] = useState(null);
   const [paymentError, setPaymentError] = useState('');
   const [successModal, setSuccessModal] = useState(null);
+  const [cancellingPlan, setCancellingPlan] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const resource = useResource(
     (signal) => checkoutApi.installmentPlans({}, signal),
@@ -81,6 +83,21 @@ export default function CustomerInstallments() {
     } catch (err) {
       setPaymentError(err.message || 'Failed to initialize payment.');
       setPayingMilestoneId(null);
+    }
+  };
+
+  const handleCancelPlan = async () => {
+    if (!cancellingPlan) return;
+    setCancelLoading(true);
+    try {
+      const res = await checkoutApi.cancelInstallmentPlan(cancellingPlan.id);
+      notify(res?.message || 'Plan cancelled and refund processed.', 'success');
+      setCancellingPlan(null);
+      setRevision((r) => r + 1);
+    } catch (err) {
+      notify(err.message || 'Failed to cancel plan', 'error');
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -305,10 +322,43 @@ export default function CustomerInstallments() {
                     )}
                   </span>
                 </div>
+
+                {plan.status === 'active' && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setCancellingPlan(plan)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#94a3b8',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Cancel layaway reservation & request refund
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Cancel Layaway Confirmation Modal */}
+      {cancellingPlan && (
+        <ConfirmModal
+          title="Cancel Layaway Reservation?"
+          description={`Are you sure you want to cancel your layaway for "${cancellingPlan.product?.name || 'this item'}"? The held product will be returned to store inventory. An 8% restocking fee will be deducted, and your remaining paid balance will be credited directly to your KuduMart Wallet.`}
+          confirmLabel="Cancel Layaway & Refund"
+          cancelLabel="Keep Reservation"
+          tone="danger"
+          loading={cancelLoading}
+          onConfirm={handleCancelPlan}
+          onClose={() => setCancellingPlan(null)}
+        />
       )}
 
       {/* Completion Modal */}

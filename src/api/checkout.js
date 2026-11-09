@@ -26,4 +26,5 @@ export const checkoutApi = {
   installmentPlanDetail: async (planId, signal) => unwrap(await request(`/user/installments/plans/${planId}`, { authenticated: true, signal })),
   prepareMilestonePayment: async milestoneId => unwrap(await request(`/user/installments/milestones/${milestoneId}/prepare`, { method: 'POST', authenticated: true })),
   confirmMilestonePayment: async (milestoneId, refId) => unwrap(await request(`/user/installments/milestones/${milestoneId}/confirm`, { method: 'POST', authenticated: true, body: { refId } })),
+  cancelInstallmentPlan: async planId => unwrap(await request(`/user/installments/plans/${planId}/cancel`, { method: 'POST', authenticated: true })),
 };
