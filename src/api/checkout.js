@@ -18,4 +18,12 @@ export const checkoutApi = {
   updateOrderStatus: async (orderItemId, status, deliveryCode = '') => unwrap(await request('/user/order/item/update/status', { method: 'POST', authenticated: true, body: { orderItemId, status, ...(deliveryCode ? { deliveryCode } : {}) } })),
   reviews: async signal => unwrap(await request('/user/get/review', { authenticated: true, signal })),
   addReview: async ({ orderId, productId, rating, comment }) => unwrap(await request('/user/add/review', { method: 'POST', authenticated: true, body: { orderId, productId, rating, comment } })),
+  // Installment & Layaway API
+  installmentConfig: async signal => unwrap(await request('/installments/config', { signal })),
+  prepareInstallment: async payload => unwrap(await request('/user/installments/prepare', { method: 'POST', authenticated: true, body: payload })),
+  confirmInstallment: async payload => unwrap(await request('/user/installments/confirm', { method: 'POST', authenticated: true, body: payload })),
+  installmentPlans: async (params, signal) => unwrap(await request('/user/installments/plans', { authenticated: true, params, signal })),
+  installmentPlanDetail: async (planId, signal) => unwrap(await request(`/user/installments/plans/${planId}`, { authenticated: true, signal })),
+  prepareMilestonePayment: async milestoneId => unwrap(await request(`/user/installments/milestones/${milestoneId}/prepare`, { method: 'POST', authenticated: true })),
+  confirmMilestonePayment: async (milestoneId, refId) => unwrap(await request(`/user/installments/milestones/${milestoneId}/confirm`, { method: 'POST', authenticated: true, body: { refId } })),
 };

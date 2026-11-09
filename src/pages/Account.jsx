@@ -3,6 +3,7 @@ import {
   BadgeCheck,
   Bell,
   Box,
+  CalendarClock,
   CalendarDays,
   Gavel,
   Landmark,
@@ -265,6 +266,15 @@ export default function Account() {
               <Package size={28} />
               <h3>Your orders</h3>
               <p>Track every order in one place.</p>
+              <ArrowRight size={20} />
+            </Link>
+            <Link
+              to="/account/installments"
+              className="account-card account-card--link"
+            >
+              <CalendarClock size={28} />
+              <h3>Installments & Layaway</h3>
+              <p>Track your layaway reservations and pay upcoming milestones.</p>
               <ArrowRight size={20} />
             </Link>
             <Link

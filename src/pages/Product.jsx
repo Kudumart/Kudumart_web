@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, ImageOff, MessageCircle, Minus, Phone, Plus, ShieldCheck, ShoppingBag, Truck, Zap } from 'lucide-react';
+import { ArrowLeft, CalendarClock, Check, ChevronLeft, ChevronRight, ImageOff, MessageCircle, Minus, Phone, Plus, ShieldCheck, ShoppingBag, Truck, Zap } from 'lucide-react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { accountApi } from '../api/account';
 import { catalogApi } from '../api/catalog';
+import { checkoutApi } from '../api/checkout';
 import { Button, EmptyState, Modal, Skeleton, TextField } from '../components/ui';
 import { useApp } from '../contexts/AppContext';
 import { useResource } from '../hooks/useResource';
@@ -20,6 +21,8 @@ export default function Product() {
   const [offerPrice, setOfferPrice] = useState(''); const [offerMessage, setOfferMessage] = useState(''); const [offer, setOffer] = useState(null);
   const [contactMessage, setContactMessage] = useState('');
   const [selectedVariant, setSelectedVariant] = useState('');
+  const [showInstallmentModal, setShowInstallmentModal] = useState(false);
+  const installmentConfigResource = useResource((signal) => checkoutApi.installmentConfig(signal), []);
   useEffect(() => { window.scrollTo(0, 0); setActiveImage(''); setSelectedVariant(''); }, [id]);
   const { data: product, loading, error } = useResource(signal => catalogApi.product(id, signal), [id]);
   useEffect(() => { if (product?.id) recordRecentlyViewed(product); }, [product]);
@@ -90,9 +93,53 @@ export default function Product() {
   const displayPrice = variantPrice.amount;
   const displaySymbol = variantPrice.symbol;
   const variantSoldOut = variant && Number(variant.sku_available_stock) === 0;
+
+  const instConfig = installmentConfigResource.data?.data;
+  const isInstallmentEligible = Boolean(
+    instConfig &&
+    instConfig.system_mode !== 'disabled' &&
+    displaySymbol === '₦' &&
+    displayPrice >= Number(instConfig.min_order_amount) &&
+    displayPrice <= Number(instConfig.max_order_amount)
+  );
+
+  const estimatedDeposit = isInstallmentEligible
+    ? Math.round(displayPrice * ((instConfig.min_deposit_percentage || 25) / 100))
+    : 0;
+  const estimatedMonthly = isInstallmentEligible
+    ? Math.round((displayPrice - estimatedDeposit) / 2)
+    : 0;
+
   const moreFromStore = (storeProducts.data || []).filter(item => item.id && item.id !== id).slice(0, 4);
   const similarProducts = (product.recommendedProducts?.length ? product.recommendedProducts : categoryProducts.data || []).filter(item => item.id && item.id !== id).slice(0, 4);
-  return <div className="container product-page"><Link to="/catalog" className="back-link"><ArrowLeft size={16}/> Back to shopping</Link><div className="product-detail"><div className="product-detail__gallery"><div className="product-detail__main-image">{images.length ? <img src={activeImage || images[0]} alt={product.name}/> : <ImageOff size={48}/>}{images.length > 1 && <><button className="product-gallery__arrow product-gallery__arrow--left" onClick={() => changeImage(-1)} aria-label="Previous image"><ChevronLeft size={20}/></button><button className="product-gallery__arrow product-gallery__arrow--right" onClick={() => changeImage(1)} aria-label="Next image"><ChevronRight size={20}/></button></>}</div>{images.length > 1 && <div className="product-detail__thumbs">{images.map((image, index) => <button className={(activeImage || images[0]) === image ? 'active' : ''} onClick={() => setActiveImage(image)} key={`${image}-${index}`} aria-label={`View product image ${index + 1}`}><img src={image} alt=""/></button>)}</div>}</div><div className="product-detail__info"><span className="eyebrow">{product.store?.name || 'KUDUMART MARKETPLACE'}</span><h1>{product.name}</h1><div className="product-detail__status"><span><Check size={15}/> {isAvailable ? 'Available now' : 'Out of stock'}</span><span>{product.condition?.replaceAll('_',' ') || 'Product'}</span></div><div className="product-detail__price"><strong>{action === 'details' && variantPrice.starting ? 'From ' : ''}{money(displayPrice, displaySymbol)}</strong>{!variant && price.discounted && <del>{money(price.original, symbol)}</del>}</div><p className="product-detail__description">{plainText(product.description) || 'Discover more about this item and make it yours today.'}</p>
+  return <div className="container product-page"><Link to="/catalog" className="back-link"><ArrowLeft size={16}/> Back to shopping</Link><div className="product-detail"><div className="product-detail__gallery"><div className="product-detail__main-image">{images.length ? <img src={activeImage || images[0]} alt={product.name}/> : <ImageOff size={48}/>}{images.length > 1 && <><button className="product-gallery__arrow product-gallery__arrow--left" onClick={() => changeImage(-1)} aria-label="Previous image"><ChevronLeft size={20}/></button><button className="product-gallery__arrow product-gallery__arrow--right" onClick={() => changeImage(1)} aria-label="Next image"><ChevronRight size={20}/></button></>}</div>{images.length > 1 && <div className="product-detail__thumbs">{images.map((image, index) => <button className={(activeImage || images[0]) === image ? 'active' : ''} onClick={() => setActiveImage(image)} key={`${image}-${index}`} aria-label={`View product image ${index + 1}`}><img src={image} alt=""/></button>)}</div>}</div><div className="product-detail__info"><span className="eyebrow">{product.store?.name || 'KUDUMART MARKETPLACE'}</span><h1>{product.name}</h1><div className="product-detail__status"><span><Check size={15}/> {isAvailable ? 'Available now' : 'Out of stock'}</span><span>{product.condition?.replaceAll('_',' ') || 'Product'}</span></div><div className="product-detail__price"><strong>{action === 'details' && variantPrice.starting ? 'From ' : ''}{money(displayPrice, displaySymbol)}</strong>{!variant && price.discounted && <del>{money(price.original, symbol)}</del>}</div>
+    {isInstallmentEligible && (
+      <button
+        type="button"
+        onClick={() => setShowInstallmentModal(true)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '6px 14px',
+          borderRadius: '20px',
+          background: '#fff1f2',
+          border: '1px solid #fecdd3',
+          color: '#be123c',
+          fontSize: '12px',
+          fontWeight: 500,
+          cursor: 'pointer',
+          marginTop: '6px',
+          marginBottom: '8px',
+          textAlign: 'left',
+          width: 'fit-content',
+        }}
+      >
+        <CalendarClock size={15} />
+        <span>Pay in installments from {money(estimatedMonthly)}/mo • Reserve with 25% down</span>
+        <span style={{ fontWeight: 700, marginLeft: '4px' }}>Learn more →</span>
+      </button>
+    )}<p className="product-detail__description">{plainText(product.description) || 'Discover more about this item and make it yours today.'}</p>
     {action === 'sold-out' && <div className="product-detail__purchase"><Button disabled>Sold out</Button></div>}
     {action === 'contact' && <div className="product-detail__purchase"><Button onClick={() => openDialog('contact')}>Contact seller</Button></div>}
     {action === 'offer' && <div className="product-detail__purchase"><Button onClick={() => openDialog('offer')}>{offer ? 'View your offer' : 'Request an offer'}</Button></div>}
@@ -107,5 +154,52 @@ export default function Product() {
     </div>
     {user && dialog === 'contact' && <Modal title="Message vendor" onClose={closeDialog}><form className="offer-form" onSubmit={contactSeller}><p>Ask the vendor about <strong>{product.name}</strong>. Their reply will appear in your messages.</p><label className="field" htmlFor="contactMessage"><span className="field__label">Message</span><textarea id="contactMessage" className="field__input" rows="4" maxLength="2000" required value={contactMessage} onChange={event => setContactMessage(event.target.value)} placeholder="What would you like to know?"/></label><Button type="submit" loading={busy} disabled={!contactMessage.trim()}>Send message</Button></form></Modal>}
     {user && dialog === 'offer' && <Modal title={offer ? 'Your offer' : 'Request an offer'} onClose={closeDialog}>{offer ? <div className="offer-status"><p>You have already made an offer for this product.</p><p><strong>Status:</strong> {offer.status || 'Pending seller response'}</p>{offer.offeredPrice && <p><strong>Your price:</strong> {money(offer.offeredPrice, symbol)}</p>}<Link className="button button--primary button--md" to="/account/offers">Manage my offers</Link></div> : <form className="offer-form" onSubmit={submitOffer}><p>Send your proposed price to the seller for <strong>{product.name}</strong>.</p><TextField label={`Your offer (${symbol})`} name="offeredPrice" type="number" min="1" step="0.01" required value={offerPrice} onChange={event => setOfferPrice(event.target.value)}/><label className="field" htmlFor="offerMessage"><span className="field__label">Message (optional)</span><textarea id="offerMessage" className="field__input" rows="3" value={offerMessage} onChange={event => setOfferMessage(event.target.value)} placeholder="Add a note for the seller"/></label><Button type="submit" loading={busy}>Send offer</Button></form>}</Modal>}
+    {showInstallmentModal && (
+      <Modal
+        title="Pay in Installments & Layaway"
+        icon={<CalendarClock size={20} />}
+        onClose={() => setShowInstallmentModal(false)}
+        footer={
+          <Button
+            onClick={() => {
+              setShowInstallmentModal(false);
+              buyNow();
+            }}
+          >
+            Proceed to Checkout
+          </Button>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
+              How Layaway Works on KuduMart
+            </h4>
+            <ol style={{ margin: 0, paddingLeft: '18px', color: '#475569', fontSize: '13px', lineHeight: 1.6 }}>
+              <li>Select <strong>Pay in Installments</strong> during checkout.</li>
+              <li>Pay your initial <strong>25% deposit</strong> today to secure and lock in the item.</li>
+              <li>The product is immediately removed from public stock and <strong>held exclusively for you</strong>.</li>
+              <li>Pay your remaining milestones at your own pace within the agreed timeframe.</li>
+              <li>Once fully paid, your order is dispatched immediately for delivery!</li>
+            </ol>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div style={{ padding: '12px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+              <div style={{ fontSize: '12px', color: '#166534', fontWeight: 600 }}>Deposit Today</div>
+              <strong style={{ fontSize: '16px', color: '#166534' }}>{money(estimatedDeposit)}</strong>
+            </div>
+            <div style={{ padding: '12px', background: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
+              <div style={{ fontSize: '12px', color: '#1e40af', fontWeight: 600 }}>Estimated Installment</div>
+              <strong style={{ fontSize: '16px', color: '#1e40af' }}>{money(estimatedMonthly)} / month</strong>
+            </div>
+          </div>
+
+          <p style={{ margin: 0, fontSize: '12px', color: '#64748b', lineHeight: 1.5 }}>
+            * A 5-day grace period is provided after each due date. If a plan is cancelled or defaulted, the held item returns to inventory with an 8% restocking fee deducted from your deposit refund.
+          </p>
+        </div>
+      </Modal>
+    )}
   </div>;
 }

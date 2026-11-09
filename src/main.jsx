@@ -28,6 +28,7 @@ import Notifications from "./pages/Notifications";
 import Messages from "./pages/Messages";
 import ServiceBookings from "./pages/ServiceBookings";
 import AuctionInterests from "./pages/AuctionInterests";
+import CustomerInstallments from "./pages/CustomerInstallments";
 import Discovery from "./pages/Discovery";
 import DiscoveryDetail from "./pages/DiscoveryDetail";
 import PasswordRecovery from "./pages/PasswordRecovery";
@@ -227,6 +228,7 @@ function App() {
               <Route path="account/settings" element={<AccountSettings />} />
               <Route path="account/orders" element={<Orders />} />
               <Route path="account/orders/:id" element={<Orders detail />} />
+              <Route path="account/installments" element={<CustomerInstallments />} />
               <Route path="account/offers" element={<Offers />} />
               <Route path="account/notifications" element={<Notifications />} />
               <Route path="account/messages" element={<Messages />} />

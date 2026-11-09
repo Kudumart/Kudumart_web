@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CheckCircle2, CreditCard, MapPin, MessageCircle, PackageCheck, Phone, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CalendarClock, CheckCircle2, Clock, CreditCard, Info, MapPin, MessageCircle, PackageCheck, Phone, ShieldCheck } from 'lucide-react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import PaystackPop from '@paystack/inline-js';
@@ -29,10 +29,19 @@ export default function Checkout() {
   const [selectedStoreVendor, setSelectedStoreVendor] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [paymentPlan, setPaymentPlan] = useState('full'); // 'full' | 'installment'
+  const [selectedTenureId, setSelectedTenureId] = useState(null);
+  const [selectedDepositPct, setSelectedDepositPct] = useState(null);
+  const [installmentSuccess, setInstallmentSuccess] = useState(false);
   const [pendingPayment, setPendingPayment] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('kuduPendingCheckout') || 'null'); }
     catch { return null; }
   });
+
+  const installmentConfigResource = useResource(
+    (signal) => checkoutApi.installmentConfig(signal),
+    [],
+  );
 
   const cart = useResource(signal => user ? accountApi.cart(signal) : Promise.resolve([]), [user?.id]);
   const items = Array.isArray(cart.data) ? cart.data : cart.data?.data || [];
@@ -137,6 +146,40 @@ export default function Checkout() {
   const addressText = needsDelivery ? formatAddress(location) : 'Pickup at Kudumart Store';
   const canPay = Boolean(user && items.length && (hasAddress || (!needsDelivery && canPickup)) && !stockIssues.length && !cart.loading && !cart.error && !pendingPayment && (mode !== 'NGN' || (!charges.loading && (!needsDelivery || !deliveryFees.loading) && !charges.error && (!needsDelivery || !deliveryFees.error) && quote?.total > 0)));
 
+  const instConfig = installmentConfigResource.data?.data;
+  const isInstallmentEligible = Boolean(
+    mode === 'NGN' &&
+    instConfig &&
+    instConfig.system_mode !== 'disabled' &&
+    items.length === 1 &&
+    quote?.total >= Number(instConfig.min_order_amount) &&
+    quote?.total <= Number(instConfig.max_order_amount)
+  );
+
+  const activeTenures = useMemo(() => {
+    return (instConfig?.allowed_tenures || []).filter((t) => t.is_active !== false);
+  }, [instConfig]);
+
+  const activeTenure = activeTenures.find((t) => t.id === selectedTenureId) || activeTenures[0];
+  const effectiveDepositPct = selectedDepositPct || instConfig?.min_deposit_percentage || 25;
+
+  const installmentBreakdown = useMemo(() => {
+    if (!quote?.total || !activeTenure) return null;
+    const total = quote.total;
+    const deposit = Math.round((total * (effectiveDepositPct / 100)) * 100) / 100;
+    const remaining = Math.round((total - deposit) * 100) / 100;
+    const subCount = Math.max(1, activeTenure.installments - 1);
+    const subAmount = Math.round((remaining / subCount) * 100) / 100;
+    return {
+      deposit,
+      remaining,
+      subCount,
+      subAmount,
+      tenure: activeTenure,
+      total,
+    };
+  }, [quote?.total, activeTenure, effectiveDepositPct]);
+
   const completeOrder = async payment => {
     if (!payment || confirming) return;
     const pending = typeof payment === 'string' ? { refId: payment, mode, shippingAddress: addressText, shippingAddressZipCode: location?.zipCode, deliveryMethod: needsDelivery ? 'delivery' : 'pickup' } : payment;
@@ -204,6 +247,60 @@ export default function Checkout() {
     }
   };
 
+  const startInstallment = async () => {
+    if (!canPay || !activeTenure || !items.length || !installmentBreakdown) return;
+    setPreparing(true);
+    setConfirmationError('');
+    try {
+      const firstItem = items[0];
+      const method = needsDelivery ? 'delivery' : 'pickup';
+      const payload = {
+        productId: firstItem.productId || firstItem.product?.id,
+        quantity: firstItem.quantity,
+        tenureId: activeTenure.id,
+        depositPercentage: effectiveDepositPct,
+        shippingAddress: addressText,
+        deliveryMethod: method,
+        deliveryFee: needsDelivery ? Number(deliveryFees.data?.totalDeliveryFee || 0) : 0,
+      };
+
+      const prepared = await checkoutApi.prepareInstallment(payload);
+      const accessCode = prepared?.data?.paystackDetails?.access_code;
+      const refId = prepared?.data?.refId;
+
+      if (!accessCode || !refId) throw new Error('Paystack did not return a valid checkout session.');
+
+      const paystack = new PaystackPop();
+      paystack.resumeTransaction(accessCode, {
+        onLoad: () => setPreparing(false),
+        onSuccess: async (result) => {
+          try {
+            setConfirming(true);
+            const confirmedRef = result?.reference || refId;
+            await checkoutApi.confirmInstallment({
+              ...payload,
+              refId: confirmedRef,
+            });
+            setCartCount(0);
+            setInstallmentSuccess(true);
+          } catch (err) {
+            setConfirmationError(`Deposit was charged (${result?.reference}), but layaway plan recording encountered an error: ${err.message}. Please contact support.`);
+          } finally {
+            setConfirming(false);
+          }
+        },
+        onCancel: () => setPreparing(false),
+        onError: (err) => {
+          setConfirmationError(err?.message || 'Payment provider encountered an error.');
+          setPreparing(false);
+        },
+      });
+    } catch (err) {
+      setConfirmationError(err.message);
+      setPreparing(false);
+    }
+  };
+
   const startDollar = async () => {
     if (!canPay) return;
     setPreparing(true);
@@ -257,7 +354,138 @@ export default function Checkout() {
           {mode === 'NGN' && (hasAddress || !needsDelivery) && !quote && !charges.loading && !deliveryFees.loading && <div className="form-alert" role="alert">We couldn’t calculate a valid total. Review your cart before paying.</div>}
           {pendingPayment ? <div className="checkout-warning"><strong>Payment verification pending</strong><p>{confirmationError || `Checking reference ${pendingPayment.refId} with the payment provider. Do not pay again.`}</p><Button variant="outline" loading={confirming} onClick={() => completeOrder(pendingPayment)}>Retry verification</Button></div>
             : needsDelivery && !hasAddress ? <div className="checkout-warning"><MapPin size={20}/><div><strong>Add a delivery address to continue</strong><p>We’ll show the final delivery cost and unlock payment once your address is saved.</p></div></div>
-            : mode === 'NGN' ? quoteError ? <div className="checkout-warning"><div><strong>{deliveryError ? 'Delivery is unavailable for this address' : 'We couldn’t verify the current product charges'}</strong><p>{(quoteError.message || 'Please try again before continuing to payment.').replace(/contact the seller\.?/i, 'choose contact options.')}</p><div className="checkout-warning__actions">{deliveryError && canPickup && <Button variant="outline" size="sm" onClick={() => { setDeliveryOption('store'); setPaymentReady(null); }}>Use pickup instead</Button>}{activeStoreVendor?.vendorId && <Button variant="outline" size="sm" icon={MessageCircle} onClick={() => openMessageModalForStore(troubledStore || activeStoreVendor)}>Message {troubledStore ? troubledStore.storeName : 'seller'}</Button>}<a className="button button--outline button--sm checkout-support-btn" href={`tel:${supportPhone}`}><Phone size={14}/> Contact support ({supportPhoneDisplay})</a></div></div></div> : <Button className="checkout-pay-button" type="button" icon={CreditCard} onClick={startNaira} disabled={!canPay} loading={preparing}>Continue to secure payment</Button>
+            : mode === 'NGN' ? quoteError ? <div className="checkout-warning"><div><strong>{deliveryError ? 'Delivery is unavailable for this address' : 'We couldn’t verify the current product charges'}</strong><p>{(quoteError.message || 'Please try again before continuing to payment.').replace(/contact the seller\.?/i, 'choose contact options.')}</p><div className="checkout-warning__actions">{deliveryError && canPickup && <Button variant="outline" size="sm" onClick={() => { setDeliveryOption('store'); setPaymentReady(null); }}>Use pickup instead</Button>}{activeStoreVendor?.vendorId && <Button variant="outline" size="sm" icon={MessageCircle} onClick={() => openMessageModalForStore(troubledStore || activeStoreVendor)}>Message {troubledStore ? troubledStore.storeName : 'seller'}</Button>}<a className="button button--outline button--sm checkout-support-btn" href={`tel:${supportPhone}`}><Phone size={14}/> Contact support ({supportPhoneDisplay})</a></div></div></div> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {isInstallmentEligible && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div
+                      onClick={() => setPaymentPlan('full')}
+                      style={{
+                        padding: '14px',
+                        borderRadius: '10px',
+                        border: paymentPlan === 'full' ? '2px solid #0f172a' : '1px solid #cbd5e1',
+                        background: paymentPlan === 'full' ? '#f8fafc' : '#fff',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a' }}>Pay in Full</div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                        Pay {money(quote.total)} now in full
+                      </div>
+                    </div>
+
+                    <div
+                      onClick={() => setPaymentPlan('installment')}
+                      style={{
+                        padding: '14px',
+                        borderRadius: '10px',
+                        border: paymentPlan === 'installment' ? '2px solid #0f172a' : '1px solid #cbd5e1',
+                        background: paymentPlan === 'installment' ? '#f8fafc' : '#fff',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <CalendarClock size={16} color="#e11d48" /> Layaway / Installment
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                        Reserve item with deposit; pay in parts
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {isInstallmentEligible && paymentPlan === 'installment' && installmentBreakdown ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                    <div>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '8px' }}>
+                        Payment Duration
+                      </span>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {activeTenures.map((tenure) => (
+                          <button
+                            key={tenure.id}
+                            type="button"
+                            onClick={() => setSelectedTenureId(tenure.id)}
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                              fontWeight: 500,
+                              border: activeTenure?.id === tenure.id ? '2px solid #0f172a' : '1px solid #cbd5e1',
+                              background: activeTenure?.id === tenure.id ? '#0f172a' : '#fff',
+                              color: activeTenure?.id === tenure.id ? '#fff' : '#334155',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {tenure.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '8px' }}>
+                        Initial Deposit Down
+                      </span>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {[instConfig.min_deposit_percentage, 35, 50]
+                          .filter((v, i, a) => a.indexOf(v) === i && v >= instConfig.min_deposit_percentage)
+                          .map((pct) => (
+                            <button
+                              key={pct}
+                              type="button"
+                              onClick={() => setSelectedDepositPct(pct)}
+                              style={{
+                                padding: '6px 14px',
+                                borderRadius: '6px',
+                                fontSize: '13px',
+                                fontWeight: 500,
+                                border: effectiveDepositPct === pct ? '2px solid #0f172a' : '1px solid #cbd5e1',
+                                background: effectiveDepositPct === pct ? '#0f172a' : '#fff',
+                                color: effectiveDepositPct === pct ? '#fff' : '#334155',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {pct}% ({money(Math.round(quote.total * (pct / 100)))})
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Deposit due today:</span>
+                        <strong style={{ color: '#0f172a' }}>{money(installmentBreakdown.deposit)}</strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
+                        <span>Remaining ({installmentBreakdown.subCount} payments of {money(installmentBreakdown.subAmount)}):</span>
+                        <span>{money(installmentBreakdown.remaining)}</span>
+                      </div>
+                      <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px solid #f1f5f9', fontSize: '11px', color: '#64748b', lineHeight: 1.4 }}>
+                        🔒 <strong>Holding reservation:</strong> Stock is reserved exclusively for you. Order fulfills immediately upon final payment settlement.
+                      </div>
+                    </div>
+
+                    <Button
+                      className="checkout-pay-button"
+                      type="button"
+                      icon={CalendarClock}
+                      onClick={startInstallment}
+                      disabled={!canPay}
+                      loading={preparing}
+                    >
+                      Pay Deposit & Reserve Item ({money(installmentBreakdown.deposit)})
+                    </Button>
+                  </div>
+                ) : (
+                  <Button className="checkout-pay-button" type="button" icon={CreditCard} onClick={startNaira} disabled={!canPay} loading={preparing}>
+                    Continue to secure payment
+                  </Button>
+                )}
+              </div>
+            )
             : paymentReady ? <StripePayment clientSecret={paymentReady.clientSecret} publicKey={paymentReady.publicKey} amount={money(paymentReady.totalAmount, '$')} onPaid={completeOrder} onError={setConfirmationError}/>
             : preparing ? <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 0', color: '#64748b', fontSize: 13 }}><span className="spinner" /><span>Calculating quote and preparing payment options…</span></div>
             : <div><Button loading={preparing} disabled={!canPay} onClick={startDollar} icon={CreditCard}>Proceed to payment options</Button><small style={{ display: 'block', marginTop: 8, color: '#64748b', fontSize: 12 }}>You will review your final quote and enter payment details before any charge is made.</small></div>}
@@ -270,5 +498,27 @@ export default function Checkout() {
     {showAddress && <Modal title="Delivery address" onClose={() => setShowAddress(false)}><AddressForm onSaved={() => { setShowAddress(false); setPaymentReady(null); }} onCancel={() => setShowAddress(false)}/></Modal>}
     {messageModal && <Modal title={`Message ${sellerStoreName}`} onClose={() => setMessageModal(false)}><form className="offer-form" onSubmit={handleSendMessage}>{storeVendors.length > 1 && <label className="field" htmlFor="selectStoreVendor"><span className="field__label">Store / Seller to contact</span><select id="selectStoreVendor" className="field__input" value={activeStoreVendor?.storeId || ''} onChange={event => { const chosen = storeVendors.find(sv => sv.storeId === event.target.value); if (chosen) { setSelectedStoreVendor(chosen); const productList = chosen.productNames?.length ? `"${chosen.productNames.join(', ')}"` : 'items in my cart'; setMessageText(`Hi ${chosen.storeName}, I'd like to order ${productList}, but delivery to ${location?.city || 'my location'} is unavailable. Could you provide a delivery rate?`); } }}>{storeVendors.map(sv => <option key={sv.storeId} value={sv.storeId}>{sv.storeName} {sv.storeId === troubledStore?.storeId ? '(needs delivery rate update)' : ''}</option>)}</select></label>}<p>Ask <strong>{sellerStoreName}</strong> about delivery to your address or alternative options. Their reply will appear in your messages.</p><label className="field" htmlFor="checkoutMessage"><span className="field__label">Message</span><textarea id="checkoutMessage" className="field__input" rows="4" maxLength="2000" required value={messageText} onChange={event => setMessageText(event.target.value)} placeholder="What would you like to ask the seller?"/></label><Button type="submit" loading={sendingMessage} disabled={!messageText.trim()}>Send message</Button></form></Modal>}
     {orderSuccess && <Modal title="Order confirmed" icon={<CheckCircle2 size={20}/>} onClose={() => navigate('/account/orders', { replace: true })} footer={<Button icon={PackageCheck} onClick={() => navigate('/account/orders', { replace: true })}>View my orders</Button>}><div className="checkout-success"><span className="checkout-success__icon"><CheckCircle2 size={38}/></span><h3>Thank you for your order!</h3><p>Your payment was verified and your order has been placed successfully. You can follow its progress from your orders page.</p></div></Modal>}
+    {installmentSuccess && (
+      <Modal
+        title="Layaway Reservation Confirmed"
+        icon={<CheckCircle2 size={20} />}
+        onClose={() => navigate('/account/installments', { replace: true })}
+        footer={
+          <Button icon={CalendarClock} onClick={() => navigate('/account/installments', { replace: true })}>
+            View my layaways
+          </Button>
+        }
+      >
+        <div className="checkout-success">
+          <span className="checkout-success__icon">
+            <CheckCircle2 size={38} color="#16a34a" />
+          </span>
+          <h3>Your item is reserved!</h3>
+          <p>
+            Your initial deposit was verified and the product has been placed on hold exclusively for you. You can track upcoming due dates and make payments from your Installments page.
+          </p>
+        </div>
+      </Modal>
+    )}
   </div>;
 }
