@@ -69,7 +69,9 @@ export function AppProvider({ children }) {
   }, []);
   const notify = (message, type = 'info') => {
     const id = crypto.randomUUID();
-    setToasts(items => [...items, { id, message, type }]);
+    const text = typeof message === 'object' && message !== null ? (message.message || JSON.stringify(message)) : String(message || '');
+    const toastType = typeof message === 'object' && message !== null && message.type ? message.type : type;
+    setToasts(items => [...items, { id, message: text, type: toastType }]);
     window.setTimeout(() => setToasts(items => items.filter(item => item.id !== id)), 4200);
   };
   const changeCountry = value => { setCountry(value); localStorage.setItem('kuduCountry', value.name); };

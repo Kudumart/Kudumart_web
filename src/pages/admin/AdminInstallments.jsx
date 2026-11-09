@@ -122,10 +122,10 @@ export function AdminInstallments() {
     setIsSaving(true);
     try {
       await adminApi.saveInstallmentConfig(formData);
-      notify({ message: "Installment settings updated successfully", type: "success" });
+      notify("Installment settings updated successfully", "success");
       setRevision((r) => r + 1);
     } catch (err) {
-      notify({ message: err.message || "Failed to update settings", type: "error" });
+      notify(err.message || "Failed to update settings", "error");
     } finally {
       setIsSaving(false);
     }
@@ -173,11 +173,11 @@ export function AdminInstallments() {
     if (!window.confirm("Cancel this installment plan? The product will be returned to store inventory, restocking fees will be deducted, and vendor/buyer compensation will be processed.")) return;
     try {
       await adminApi.cancelInstallmentPlan(planId);
-      notify({ message: "Plan cancelled, inventory restocked, and refunds processed.", type: "success" });
+      notify("Plan cancelled, inventory restocked, and refunds processed.", "success");
       setSelectedPlanId(null);
       setRevision((r) => r + 1);
     } catch (err) {
-      notify({ message: err.message || "Failed to cancel plan", type: "error" });
+      notify(err.message || "Failed to cancel plan", "error");
     }
   };
 
