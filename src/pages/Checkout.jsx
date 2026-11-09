@@ -266,8 +266,9 @@ export default function Checkout() {
       };
 
       const prepared = await checkoutApi.prepareInstallment(payload);
-      const accessCode = prepared?.data?.paystackDetails?.access_code;
-      const refId = prepared?.data?.refId;
+      const info = prepared?.data || prepared;
+      const accessCode = info?.paystackDetails?.access_code || info?.paystackDetails?.data?.access_code;
+      const refId = info?.refId;
 
       if (!accessCode || !refId) throw new Error('Paystack did not return a valid checkout session.');
 

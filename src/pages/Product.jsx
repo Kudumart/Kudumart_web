@@ -127,9 +127,9 @@ export default function Product() {
           gap: '8px',
           padding: '6px 14px',
           borderRadius: '20px',
-          background: '#fff1f2',
-          border: '1px solid #fecdd3',
-          color: '#be123c',
+          background: '#f0f7ff',
+          border: '1px solid #bae6fd',
+          color: '#0369a1',
           fontSize: '12px',
           fontWeight: 500,
           cursor: 'pointer',
@@ -137,11 +137,12 @@ export default function Product() {
           marginBottom: '8px',
           textAlign: 'left',
           width: 'fit-content',
+          transition: 'all 0.15s ease',
         }}
       >
-        <CalendarClock size={15} />
-        <span>Pay in installments from {money(estimatedMonthly)}/mo • Reserve with {depositPct}% down</span>
-        <span style={{ fontWeight: 700, marginLeft: '4px' }}>Learn more →</span>
+        <CalendarClock size={15} color="#0284c7" />
+        <span>Pay in installments with Layaway • Reserve from {depositPct}% down</span>
+        <span style={{ fontWeight: 700, marginLeft: '4px', color: '#0284c7' }}>Learn more →</span>
       </button>
     )}<p className="product-detail__description">{plainText(product.description) || 'Discover more about this item and make it yours today.'}</p>
     {action === 'sold-out' && <div className="product-detail__purchase"><Button disabled>Sold out</Button></div>}
@@ -181,26 +182,15 @@ export default function Product() {
             </h4>
             <ol style={{ margin: 0, paddingLeft: '18px', color: '#475569', fontSize: '13px', lineHeight: 1.6 }}>
               <li>Select <strong>Pay in Installments</strong> during checkout.</li>
-              <li>Pay your initial <strong>25% deposit</strong> today to secure and lock in the item.</li>
+              <li>Pay your initial <strong>{depositPct}% deposit</strong> today to secure and lock in the item.</li>
               <li>The product is immediately removed from public stock and <strong>held exclusively for you</strong>.</li>
               <li>Pay your remaining milestones at your own pace within the agreed timeframe.</li>
               <li>Once fully paid, your order is dispatched immediately for delivery!</li>
             </ol>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <div style={{ padding: '12px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-              <div style={{ fontSize: '12px', color: '#166534', fontWeight: 600 }}>Deposit Today</div>
-              <strong style={{ fontSize: '16px', color: '#166534' }}>{money(estimatedDeposit)}</strong>
-            </div>
-            <div style={{ padding: '12px', background: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-              <div style={{ fontSize: '12px', color: '#1e40af', fontWeight: 600 }}>Estimated Installment</div>
-              <strong style={{ fontSize: '16px', color: '#1e40af' }}>{money(estimatedMonthly)} / month</strong>
-            </div>
-          </div>
-
           <p style={{ margin: 0, fontSize: '12px', color: '#64748b', lineHeight: 1.5 }}>
-            * A 5-day grace period is provided after each due date. If a plan is cancelled or defaulted, the held item returns to inventory with an 8% restocking fee deducted from your deposit refund.
+            * Delivery and fulfillment details will be calculated at checkout. A 5-day grace period is provided after each due date. If a plan is cancelled or defaulted, the held item returns to inventory with an 8% restocking fee deducted from your deposit refund.
           </p>
         </div>
       </Modal>
