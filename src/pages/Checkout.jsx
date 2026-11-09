@@ -146,14 +146,15 @@ export default function Checkout() {
   const addressText = needsDelivery ? formatAddress(location) : 'Pickup at Kudumart Store';
   const canPay = Boolean(user && items.length && (hasAddress || (!needsDelivery && canPickup)) && !stockIssues.length && !cart.loading && !cart.error && !pendingPayment && (mode !== 'NGN' || (!charges.loading && (!needsDelivery || !deliveryFees.loading) && !charges.error && (!needsDelivery || !deliveryFees.error) && quote?.total > 0)));
 
-  const instConfig = installmentConfigResource.data?.data;
+  const instConfig = installmentConfigResource.data?.data || installmentConfigResource.data;
   const isInstallmentEligible = Boolean(
     mode === 'NGN' &&
     instConfig &&
+    instConfig.system_mode &&
     instConfig.system_mode !== 'disabled' &&
     items.length === 1 &&
-    quote?.total >= Number(instConfig.min_order_amount) &&
-    quote?.total <= Number(instConfig.max_order_amount)
+    quote?.total >= Number(instConfig.min_order_amount ?? 25000) &&
+    quote?.total <= Number(instConfig.max_order_amount ?? 2000000)
   );
 
   const activeTenures = useMemo(() => {

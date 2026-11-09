@@ -94,17 +94,21 @@ export default function Product() {
   const displaySymbol = variantPrice.symbol;
   const variantSoldOut = variant && Number(variant.sku_available_stock) === 0;
 
-  const instConfig = installmentConfigResource.data?.data;
+  const instConfig = installmentConfigResource.data?.data || installmentConfigResource.data;
+  const minAmount = Number(instConfig?.min_order_amount ?? 25000);
+  const maxAmount = Number(instConfig?.max_order_amount ?? 2000000);
   const isInstallmentEligible = Boolean(
     instConfig &&
+    instConfig.system_mode &&
     instConfig.system_mode !== 'disabled' &&
     displaySymbol === '₦' &&
-    displayPrice >= Number(instConfig.min_order_amount) &&
-    displayPrice <= Number(instConfig.max_order_amount)
+    displayPrice >= minAmount &&
+    displayPrice <= maxAmount
   );
 
+  const depositPct = Number(instConfig?.min_deposit_percentage || 25);
   const estimatedDeposit = isInstallmentEligible
-    ? Math.round(displayPrice * ((instConfig.min_deposit_percentage || 25) / 100))
+    ? Math.round(displayPrice * (depositPct / 100))
     : 0;
   const estimatedMonthly = isInstallmentEligible
     ? Math.round((displayPrice - estimatedDeposit) / 2)
@@ -136,7 +140,7 @@ export default function Product() {
         }}
       >
         <CalendarClock size={15} />
-        <span>Pay in installments from {money(estimatedMonthly)}/mo • Reserve with 25% down</span>
+        <span>Pay in installments from {money(estimatedMonthly)}/mo • Reserve with {depositPct}% down</span>
         <span style={{ fontWeight: 700, marginLeft: '4px' }}>Learn more →</span>
       </button>
     )}<p className="product-detail__description">{plainText(product.description) || 'Discover more about this item and make it yours today.'}</p>
