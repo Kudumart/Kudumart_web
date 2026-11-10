@@ -1757,16 +1757,18 @@ export function AdminOrderDetail() {
       <Link className="admin-review-back" to="/admin/orders">
         <ArrowLeft size={18} /> Back to orders
       </Link>
-      <div className="admin-page-head">
-        <div>
+      <div className="admin-page-head" style={{ flexWrap: "wrap", alignItems: "flex-start", gap: "16px" }}>
+        <div style={{ minWidth: 0, flex: "1 1 300px" }}>
           <span className="eyebrow">ORDER DETAILS</span>
-          <h1>{order.refId}</h1>
-          <p>
-            {order.trackingNumber || "Tracking number unavailable"} · Placed{" "}
+          <h1 style={{ wordBreak: "break-word", overflowWrap: "anywhere", fontSize: "clamp(22px, 3vw, 32px)", lineHeight: 1.25, margin: "4px 0 6px" }}>
+            {order.trackingNumber || `Order #${order.id}`}
+          </h1>
+          <p style={{ wordBreak: "break-all", overflowWrap: "anywhere", margin: 0, color: "#64748b", fontSize: "13px" }}>
+            Payment Ref: <span style={{ fontFamily: "monospace", color: "#334155" }}>{order.refId}</span> · Placed{" "}
             {order.createdAt ? new Date(order.createdAt).toLocaleString() : "—"}
           </p>
         </div>
-        <strong className="admin-order-total">
+        <strong className="admin-order-total" style={{ flexShrink: 0 }}>
           ₦{Number(order.totalAmount).toLocaleString()}
         </strong>
       </div>
@@ -1807,8 +1809,8 @@ export function AdminOrderDetail() {
                         <Box />
                       )}
                     </div>
-                    <div>
-                      <span className="eyebrow">
+                    <div style={{ minWidth: 0 }}>
+                      <span className="eyebrow" style={{ wordBreak: "break-all", overflowWrap: "anywhere" }}>
                         {product.sku || "ORDER ITEM"}
                       </span>
                       <h2>{product.name || "Product"}</h2>
@@ -1947,9 +1949,9 @@ export function AdminOrderDetail() {
               </div>
             ) : (
               payments.map((payment) => (
-                <div className="admin-payment" key={payment.id}>
-                  <div>
-                    <strong>{payment.refId}</strong>
+                <div className="admin-payment" key={payment.id} style={{ minWidth: 0 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ wordBreak: "break-all", overflowWrap: "anywhere", display: "block" }}>{payment.refId}</strong>
                     <span>
                       {payment.channel || "Payment gateway"} ·{" "}
                       {payment.paymentDate
@@ -1959,6 +1961,7 @@ export function AdminOrderDetail() {
                   </div>
                   <span
                     className={`admin-status ${String(payment.status).toLowerCase() === "success" ? "admin-status--good" : "admin-status--changes_requested"}`}
+                    style={{ flexShrink: 0 }}
                   >
                     {payment.status}
                   </span>
