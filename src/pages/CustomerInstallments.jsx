@@ -174,26 +174,38 @@ export default function CustomerInstallments() {
             const milestones = plan.milestones || [];
             const paidCount = milestones.filter((m) => m.status === 'paid').length;
             const totalCount = milestones.length || plan.numberOfInstallments;
-            const progress = Math.min(
-              100,
-              Math.round(((Number(plan.totalAmount) - Number(plan.remainingBalance)) / Number(plan.totalAmount)) * 100) || 0,
-            );
-
-            const nextPendingMilestone = milestones.find((m) => m.status === 'pending' || m.status === 'overdue');
             const isCompleted = plan.status === 'completed';
+            const isCancelled = plan.status === 'cancelled';
+            const isDefaulted = plan.status === 'defaulted';
+            const isActive = plan.status === 'active';
+
+            const progress = isCancelled || isDefaulted
+              ? Math.min(
+                  100,
+                  Math.round(((Number(plan.totalAmount) - Number(plan.remainingBalance)) / Number(plan.totalAmount)) * 100) || 0,
+                )
+              : Math.min(
+                  100,
+                  Math.round(((Number(plan.totalAmount) - Number(plan.remainingBalance)) / Number(plan.totalAmount)) * 100) || 0,
+                );
+
+            const nextPendingMilestone = isActive
+              ? milestones.find((m) => m.status === 'pending' || m.status === 'overdue')
+              : null;
 
             return (
               <div
                 key={plan.id}
                 style={{
                   background: '#fff',
-                  border: '1px solid #e2e8f0',
+                  border: isCancelled ? '1px solid #e2e8f0' : isDefaulted ? '1px solid #fecaca' : '1px solid #e2e8f0',
                   borderRadius: '16px',
                   padding: '24px',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '20px',
+                  opacity: isCancelled ? 0.92 : 1,
                 }}
               >
                 {/* Plan Header */}
@@ -203,20 +215,36 @@ export default function CustomerInstallments() {
                       <img
                         src={plan.product.image_url}
                         alt=""
-                        style={{ width: '64px', height: '64px', borderRadius: '10px', objectFit: 'cover', border: '1px solid #f1f5f9' }}
+                        style={{
+                          width: '64px',
+                          height: '64px',
+                          borderRadius: '10px',
+                          objectFit: 'cover',
+                          border: '1px solid #f1f5f9',
+                          filter: isCancelled ? 'grayscale(40%)' : 'none',
+                        }}
                       />
                     )}
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                         <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#0f172a' }}>
                           {plan.product?.name || 'Product'}
                         </h3>
                         <Badge tone={plan.mode === 'bnpl' ? 'info' : 'neutral'}>
                           {plan.mode === 'bnpl' ? 'BNPL' : 'Layaway'}
                         </Badge>
+                        {isCancelled && <Badge tone="neutral">Cancelled</Badge>}
+                        {isDefaulted && <Badge tone="danger">Defaulted</Badge>}
+                        {isCompleted && <Badge tone="success">Completed</Badge>}
+                        {isActive && <Badge tone="warning">Active Hold</Badge>}
                       </div>
                       <span style={{ fontSize: '13px', color: '#64748b' }}>
-                        Sold by {plan.vendor?.firstName} {plan.vendor?.lastName} • Reserved until {plan.reservedUntil ? new Date(plan.reservedUntil).toLocaleDateString() : 'N/A'}
+                        Sold by {plan.vendor?.firstName} {plan.vendor?.lastName} •{' '}
+                        {isCancelled
+                          ? 'Reservation cancelled'
+                          : isDefaulted
+                            ? 'Reservation expired'
+                            : `Reserved until ${plan.reservedUntil ? new Date(plan.reservedUntil).toLocaleDateString() : 'N/A'}`}
                       </span>
                     </div>
                   </div>
@@ -224,9 +252,23 @@ export default function CustomerInstallments() {
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: '13px', color: '#64748b' }}>Plan Total</div>
                     <strong style={{ fontSize: '20px', color: '#0f172a' }}>{money(plan.totalAmount)}</strong>
-                    <div style={{ fontSize: '12px', color: Number(plan.remainingBalance) > 0 ? '#e11d48' : '#166534', fontWeight: 600 }}>
-                      {Number(plan.remainingBalance) > 0 ? `Remaining: ${money(plan.remainingBalance)}` : 'Fully Settled'}
-                    </div>
+                    {isCancelled ? (
+                      <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
+                        Cancelled & Refunded
+                      </div>
+                    ) : isDefaulted ? (
+                      <div style={{ fontSize: '12px', color: '#dc2626', fontWeight: 600 }}>
+                        Defaulted & Closed
+                      </div>
+                    ) : isCompleted ? (
+                      <div style={{ fontSize: '12px', color: '#166534', fontWeight: 600 }}>
+                        Fully Settled
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '12px', color: Number(plan.remainingBalance) > 0 ? '#e11d48' : '#166534', fontWeight: 600 }}>
+                        {Number(plan.remainingBalance) > 0 ? `Remaining: ${money(plan.remainingBalance)}` : 'Fully Settled'}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -236,14 +278,26 @@ export default function CustomerInstallments() {
                     <span>
                       <strong>{paidCount} of {totalCount}</strong> payments made
                     </span>
-                    <span style={{ fontWeight: 600 }}>{progress}% Completed</span>
+                    <span style={{ fontWeight: 600, color: isCancelled ? '#64748b' : isDefaulted ? '#dc2626' : '#0f172a' }}>
+                      {isCancelled
+                        ? 'Cancelled'
+                        : isDefaulted
+                          ? 'Defaulted'
+                          : `${progress}% Completed`}
+                    </span>
                   </div>
                   <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
                     <div
                       style={{
                         width: `${progress}%`,
                         height: '100%',
-                        background: isCompleted ? '#10b981' : '#3b82f6',
+                        background: isCompleted
+                          ? '#10b981'
+                          : isCancelled
+                            ? '#94a3b8'
+                            : isDefaulted
+                              ? '#ef4444'
+                              : '#3b82f6',
                         transition: 'width 0.4s ease',
                       }}
                     />
@@ -258,6 +312,7 @@ export default function CustomerInstallments() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {milestones.map((milestone) => {
                       const isPaid = milestone.status === 'paid';
+                      const isMilestoneCancelled = milestone.status === 'cancelled' || isCancelled || isDefaulted;
                       const isNext = nextPendingMilestone?.id === milestone.id;
                       const isPaying = payingMilestoneId === milestone.id;
 
@@ -270,35 +325,53 @@ export default function CustomerInstallments() {
                             justifyContent: 'space-between',
                             padding: '12px 16px',
                             borderRadius: '8px',
-                            border: isPaid ? '1px solid #dcfce7' : isNext ? '1px solid #cbd5e1' : '1px solid #f1f5f9',
-                            background: isPaid ? '#f0fdf4' : isNext ? '#fff' : '#f8fafc',
+                            border: isPaid
+                              ? '1px solid #dcfce7'
+                              : isMilestoneCancelled
+                                ? '1px solid #f1f5f9'
+                                : isNext
+                                  ? '1px solid #cbd5e1'
+                                  : '1px solid #f1f5f9',
+                            background: isPaid
+                              ? '#f0fdf4'
+                              : isMilestoneCancelled
+                                ? '#f8fafc'
+                                : isNext
+                                  ? '#fff'
+                                  : '#f8fafc',
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             {isPaid ? (
                               <CheckCircle2 size={18} color="#16a34a" />
+                            ) : isMilestoneCancelled ? (
+                              <Clock size={18} color="#94a3b8" />
                             ) : (
                               <Clock size={18} color={isNext ? '#f59e0b' : '#94a3b8'} />
                             )}
                             <div>
-                              <div style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b' }}>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: isMilestoneCancelled && !isPaid ? '#64748b' : '#1e293b' }}>
                                 #{milestone.installmentNumber} {milestone.installmentNumber === 1 ? '(Deposit)' : 'Payment'}
                               </div>
                               <span style={{ fontSize: '12px', color: '#64748b' }}>
                                 {isPaid
                                   ? `Paid on ${new Date(milestone.paidAt || milestone.updatedAt).toLocaleDateString()}`
-                                  : `Due by ${new Date(milestone.dueDate).toLocaleDateString()}`}
+                                  : isMilestoneCancelled
+                                    ? 'Cancelled with plan'
+                                    : `Due by ${new Date(milestone.dueDate).toLocaleDateString()}`}
                               </span>
                             </div>
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <strong style={{ fontSize: '15px', color: '#0f172a' }}>
+                            <strong style={{ fontSize: '15px', color: isMilestoneCancelled && !isPaid ? '#64748b' : '#0f172a' }}>
                               {money(milestone.amount)}
                             </strong>
 
                             {isPaid ? (
                               <Badge tone="success">Paid</Badge>
+                            ) : isMilestoneCancelled ? (
+                              <Badge tone="neutral">Cancelled</Badge>
                             ) : isNext ? (
                               <div style={{ display: 'flex', gap: '8px' }}>
                                 {walletBalance >= Number(milestone.amount) && (
@@ -332,22 +405,51 @@ export default function CustomerInstallments() {
                   </div>
                 </div>
 
-                {/* Fulfillment Status Banner */}
+                {/* Fulfillment / Status Banner */}
                 <div
                   style={{
                     padding: '12px 16px',
                     borderRadius: '8px',
-                    background: isCompleted ? '#f0fdf4' : '#eff6ff',
-                    color: isCompleted ? '#166534' : '#1e40af',
+                    background: isCancelled
+                      ? '#f8fafc'
+                      : isDefaulted
+                        ? '#fef2f2'
+                        : isCompleted
+                          ? '#f0fdf4'
+                          : '#eff6ff',
+                    border: isCancelled
+                      ? '1px solid #e2e8f0'
+                      : isDefaulted
+                        ? '1px solid #fecaca'
+                        : isCompleted
+                          ? '1px solid #bbf7d0'
+                          : '1px solid #bfdbfe',
+                    color: isCancelled
+                      ? '#475569'
+                      : isDefaulted
+                        ? '#991b1b'
+                        : isCompleted
+                          ? '#166534'
+                          : '#1e40af',
                     fontSize: '13px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
                   }}
                 >
-                  <ShieldCheck size={18} />
+                  {isCancelled ? (
+                    <AlertTriangle size={18} color="#64748b" />
+                  ) : isDefaulted ? (
+                    <AlertTriangle size={18} color="#dc2626" />
+                  ) : (
+                    <ShieldCheck size={18} />
+                  )}
                   <span>
-                    {isCompleted ? (
+                    {isCancelled ? (
+                      <span>This layaway reservation was cancelled. The reserved inventory has been returned to stock and your refund was credited to your KuduMart Wallet.</span>
+                    ) : isDefaulted ? (
+                      <span>This layaway plan defaulted after the grace period expired. The reserved item has been returned to stock and any net refund was credited to your KuduMart Wallet.</span>
+                    ) : isCompleted ? (
                       <strong>Fulfillment active: All installments are 100% complete! Your item is dispatched for delivery.</strong>
                     ) : plan.fulfillment_trigger === 'on_completion' ? (
                       <span>Inventory is safely held and reserved for you. Order dispatches upon completion of your final payment.</span>
