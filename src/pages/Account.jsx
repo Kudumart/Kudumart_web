@@ -21,8 +21,12 @@ import {
   Building2,
   CheckCircle2,
   ArrowDownToLine,
+  ChevronDown,
+  Search,
+  Check,
+  X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { accountApi } from "../api/account";
 import { sellerApi, sellerList } from "../api/seller";
 import { useResource } from "../hooks/useResource";
@@ -177,6 +181,221 @@ function VendorOnboarding({ user }) {
     </section>
   );
 }
+function SearchableBankSelect({
+  banks = [],
+  value,
+  onChange,
+  placeholder = "Choose your Nigerian bank…",
+  loading = false,
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef(null);
+  const searchInputRef = useRef(null);
+
+  const selectedBank = banks.find((b) => String(b.code) === String(value));
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => searchInputRef.current?.focus(), 50);
+    } else {
+      setSearch("");
+    }
+  }, [isOpen]);
+
+  const filteredBanks = search.trim()
+    ? banks.filter(
+        (b) =>
+          b.name?.toLowerCase().includes(search.toLowerCase()) ||
+          String(b.code).includes(search.trim()),
+      )
+    : banks;
+
+  return (
+    <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => setIsOpen((prev) => !prev)}
+        style={{
+          width: "100%",
+          padding: "11px 14px",
+          borderRadius: "8px",
+          border: isOpen ? "1.5px solid var(--orange)" : "1px solid #cbd5e1",
+          background: "#fff",
+          fontSize: "13px",
+          color: selectedBank ? "#0f172a" : "#64748b",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          cursor: loading ? "not-allowed" : "pointer",
+          outline: "none",
+          transition: "border-color 0.15s ease",
+          boxSizing: "border-box",
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span
+          style={{
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            marginRight: "8px",
+          }}
+        >
+          {loading
+            ? "Loading banks list…"
+            : selectedBank
+              ? selectedBank.name
+              : placeholder}
+        </span>
+        <ChevronDown
+          size={16}
+          style={{
+            flexShrink: 0,
+            color: "#64748b",
+            transform: isOpen ? "rotate(180deg)" : "none",
+            transition: "transform 0.2s ease",
+          }}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            background: "#ffffff",
+            border: "1px solid #cbd5e1",
+            borderRadius: "10px",
+            boxShadow:
+              "0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Search box inside dropdown */}
+          <div
+            style={{
+              padding: "8px 10px",
+              borderBottom: "1px solid #f1f5f9",
+              background: "#f8fafc",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <Search size={15} color="#94a3b8" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Type to search Nigerian bank…"
+              style={{
+                width: "100%",
+                border: "none",
+                background: "transparent",
+                outline: "none",
+                fontSize: "12px",
+                color: "#0f172a",
+              }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  color: "#94a3b8",
+                  cursor: "pointer",
+                  padding: "2px",
+                  display: "flex",
+                }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* List of options */}
+          <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+            {filteredBanks.length === 0 ? (
+              <div
+                style={{
+                  padding: "14px 12px",
+                  fontSize: "12px",
+                  color: "#64748b",
+                  textAlign: "center",
+                }}
+              >
+                No banks found matching "{search}"
+              </div>
+            ) : (
+              filteredBanks.map((bank) => {
+                const isSelected = String(bank.code) === String(value);
+                return (
+                  <button
+                    key={`${bank.code}-${bank.name}`}
+                    type="button"
+                    onClick={() => {
+                      onChange(bank.code);
+                      setIsOpen(false);
+                      setSearch("");
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      textAlign: "left",
+                      fontSize: "13px",
+                      background: isSelected ? "#fff7ed" : "transparent",
+                      color: isSelected ? "var(--orange-dark)" : "#1e293b",
+                      border: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      cursor: "pointer",
+                      transition: "background 0.15s ease",
+                      borderBottom: "1px solid #f8fafc",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = "#f8fafc";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    <span style={{ fontWeight: isSelected ? 600 : 400 }}>
+                      {bank.name}
+                    </span>
+                    {isSelected && <Check size={16} color="var(--orange)" />}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Account() {
   const { user, signOut, notify } = useApp();
   const [walletModalOpen, setWalletModalOpen] = useState(false);
@@ -364,7 +583,18 @@ export default function Account() {
             <button
               type="button"
               className="account-card account-card--link"
-              style={{ textAlign: "left", width: "100%", background: "none", border: "1px solid var(--line)", font: "inherit", cursor: "pointer" }}
+              style={{
+                textAlign: "left",
+                width: "100%",
+                background: "#fff",
+                border: "1px solid var(--line)",
+                borderRadius: "13px",
+                padding: "27px",
+                minHeight: "230px",
+                font: "inherit",
+                cursor: "pointer",
+                color: "inherit",
+              }}
               onClick={() => setWalletModalOpen(true)}
             >
               <Wallet size={28} />
@@ -481,31 +711,33 @@ export default function Account() {
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
             <div style={{ background: "#f8fafc", borderRadius: "12px", padding: "20px", border: "1px solid #e2e8f0" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
-                <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+                <div style={{ flex: "1 1 240px" }}>
                   <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748b" }}>
                     Current Wallet Balance
                   </div>
                   <div style={{ fontSize: "32px", fontWeight: 800, margin: "4px 0", color: "#0f172a" }}>
                     {money(balance)}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#64748b", maxWidth: "340px", lineHeight: 1.4 }}>
+                  <div style={{ fontSize: "12px", color: "#64748b", lineHeight: 1.4 }}>
                     Usable directly during checkout or withdrawable to your Nigerian bank account.
                   </div>
                 </div>
 
                 {balance > 0 && (
-                  <Button
-                    variant={showWithdraw ? "outline" : "primary"}
-                    size="small"
-                    icon={showWithdraw ? Wallet : ArrowDownToLine}
-                    onClick={() => {
-                      setShowWithdraw(!showWithdraw);
-                      setWithdrawalError("");
-                    }}
-                  >
-                    {showWithdraw ? "Cancel" : "Withdraw to Bank"}
-                  </Button>
+                  <div style={{ marginLeft: "auto", display: "flex", justifyContent: "flex-end" }}>
+                    <Button
+                      variant={showWithdraw ? "outline" : "primary"}
+                      size="small"
+                      icon={showWithdraw ? Wallet : ArrowDownToLine}
+                      onClick={() => {
+                        setShowWithdraw(!showWithdraw);
+                        setWithdrawalError("");
+                      }}
+                    >
+                      {showWithdraw ? "Cancel" : "Withdraw to Bank"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -538,27 +770,13 @@ export default function Account() {
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
                     Select Destination Bank
                   </label>
-                  <select
+                  <SearchableBankSelect
+                    banks={banksList}
                     value={selectedBankCode}
-                    onChange={(e) => setSelectedBankCode(e.target.value)}
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid #cbd5e1",
-                      fontSize: "13px",
-                      color: "#0f172a",
-                      background: "#fff",
-                    }}
-                  >
-                    <option value="">{loadingBanks ? "Loading banks list…" : "Choose your Nigerian bank…"}</option>
-                    {banksList.map((bank) => (
-                      <option key={`${bank.code}-${bank.name}`} value={bank.code}>
-                        {bank.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(code) => setSelectedBankCode(code)}
+                    placeholder="Choose your Nigerian bank…"
+                    loading={loadingBanks}
+                  />
                 </div>
 
                 <div>
@@ -618,12 +836,12 @@ export default function Account() {
                   </div>
                   <input
                     type="number"
-                    min="100"
+                    min="0.01"
                     max={balance}
                     step="any"
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                    placeholder="Enter amount"
+                    placeholder="Enter amount (e.g. 2)"
                     required
                     style={{
                       width: "100%",
