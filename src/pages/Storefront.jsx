@@ -3,6 +3,7 @@ import { ArrowLeft, BadgeCheck, CalendarDays, MapPin, Search, Store } from 'luci
 import { Link, useParams } from 'react-router-dom';
 import { catalogApi } from '../api/catalog';
 import ProductCard from '../components/ProductCard';
+import SEO from '../components/SEO';
 import { Button, EmptyState, Skeleton } from '../components/ui';
 import { useResource } from '../hooks/useResource';
 
@@ -40,8 +41,14 @@ export default function Storefront() {
   const totalPages = Number(pagination.totalPages || 1);
   const totalCount = Number(pagination.totalCount ?? items.length);
 
-  return <div className="storefront-page">
-    <div className="container storefront-back"><Link to="/catalog" className="back-link"><ArrowLeft size={16}/> Back to shopping</Link></div>
+  return (
+    <div className="storefront-page">
+      <SEO
+        title={`${storeName} — Official Storefront`}
+        description={`Explore verified products from ${storeName} on KuduMart Nigeria. Fast delivery, secure payments, and layaway installment plans.`}
+        image={store?.logo}
+      />
+      <div className="container storefront-back"><Link to="/catalog" className="back-link"><ArrowLeft size={16}/> Back to shopping</Link></div>
     {resource.loading && !resource.data ? <div className="container"><Skeleton className="storefront-hero-skeleton"/><div className="product-grid product-grid--catalog storefront-grid">{Array.from({ length: 8 }, (_, index) => <Skeleton className="product-skeleton" key={index}/>)}</div></div>
       : resource.error ? <div className="container page-space"><EmptyState icon={Store} title="Store unavailable" description={resource.error.message} action={<Link to="/catalog"><Button variant="outline">Explore other products</Button></Link>}/></div>
       : !items.length ? <div className="container page-space"><EmptyState icon={Store} title="This store has no active products" description="There is nothing available from this seller right now." action={<Link to="/catalog"><Button>Explore the marketplace</Button></Link>}/></div>
@@ -52,5 +59,6 @@ export default function Storefront() {
           {totalPages > 1 && <nav className="catalog-pagination" aria-label="Store products pagination"><Button variant="outline" disabled={page <= 1 || resource.loading} onClick={() => { setPage(value => value - 1); window.scrollTo(0, 0); }}>Previous</Button><span>Page {page} of {totalPages}</span><Button variant="outline" disabled={page >= totalPages || resource.loading} onClick={() => { setPage(value => value + 1); window.scrollTo(0, 0); }}>Next</Button></nav>}
         </main>
       </>}
-  </div>;
+    </div>
+  );
 }

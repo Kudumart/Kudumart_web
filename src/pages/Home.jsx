@@ -19,6 +19,7 @@ import { Link } from 'react-router-dom';
 import { catalogApi } from '../api/catalog';
 import { contentApi } from '../api/content';
 import ProductCard from '../components/ProductCard';
+import SEO from '../components/SEO';
 import { Button, EmptyState, Skeleton } from '../components/ui';
 import { useApp } from '../contexts/AppContext';
 import { useResource } from '../hooks/useResource';
@@ -422,6 +423,11 @@ export default function Home() {
 
   return (
     <>
+      <SEO
+        title="KuduMart — Buy & Sell in Nigeria | Marketplace, Auctions & Layaway"
+        description="Discover thousands of quality products from verified Nigerian sellers on KuduMart. Enjoy secure payments, live auctions, verified services, and flexible layaway installment plans."
+        keywords="KuduMart, online shopping Nigeria, buy in installments, layaway Nigeria, buy and sell, verified electronics, nigerian marketplace"
+      />
       <section className="hero">
         <div className="hero__content">
           <h1>

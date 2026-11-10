@@ -13,6 +13,7 @@ import { variantDisplayPrice, variantLabel } from '../utils/productVariant';
 import { recordRecentlyViewed } from '../utils/recentlyViewed';
 import ProductCard from '../components/ProductCard';
 import SaveHeart from '../components/SaveHeart';
+import SEO from '../components/SEO';
 import { ProductFacts, ProductReviews, SellerProfile, ShareProduct } from '../components/ProductDetailSections';
 import './Product.css';
 export default function Product() {
@@ -116,7 +117,29 @@ export default function Product() {
 
   const moreFromStore = (storeProducts.data || []).filter(item => item.id && item.id !== id).slice(0, 4);
   const similarProducts = (product.recommendedProducts?.length ? product.recommendedProducts : categoryProducts.data || []).filter(item => item.id && item.id !== id).slice(0, 4);
-  return <div className="container product-page"><Link to="/catalog" className="back-link"><ArrowLeft size={16}/> Back to shopping</Link><div className="product-detail"><div className="product-detail__gallery"><div className="product-detail__main-image">{images.length ? <img src={activeImage || images[0]} alt={product.name}/> : <ImageOff size={48}/>}{images.length > 1 && <><button className="product-gallery__arrow product-gallery__arrow--left" onClick={() => changeImage(-1)} aria-label="Previous image"><ChevronLeft size={20}/></button><button className="product-gallery__arrow product-gallery__arrow--right" onClick={() => changeImage(1)} aria-label="Next image"><ChevronRight size={20}/></button></>}</div>{images.length > 1 && <div className="product-detail__thumbs">{images.map((image, index) => <button className={(activeImage || images[0]) === image ? 'active' : ''} onClick={() => setActiveImage(image)} key={`${image}-${index}`} aria-label={`View product image ${index + 1}`}><img src={image} alt=""/></button>)}</div>}</div><div className="product-detail__info"><span className="eyebrow">{product.store?.name || 'KUDUMART MARKETPLACE'}</span><h1>{product.name}</h1><div className="product-detail__status"><span><Check size={15}/> {isAvailable ? 'Available now' : 'Out of stock'}</span><span>{product.condition?.replaceAll('_',' ') || 'Product'}</span></div><div className="product-detail__price"><strong>{action === 'details' && variantPrice.starting ? 'From ' : ''}{money(displayPrice, displaySymbol)}</strong>{!variant && price.discounted && <del>{money(price.original, symbol)}</del>}</div>
+  const seoDescription = plainText(product.description || '').slice(0, 160) || `Buy ${product.name} at the best price on KuduMart Nigeria. Fast delivery and secure layaway installments.`;
+  const seoImage = images[0] || product.image_url;
+
+  return (
+    <div className="container product-page">
+      <SEO
+        title={`${product.name} — Buy Online`}
+        description={seoDescription}
+        image={seoImage}
+        type="product"
+        product={{
+          name: product.name,
+          description: seoDescription,
+          image: seoImage,
+          price: displayPrice,
+          currency: displaySymbol === '₦' ? 'NGN' : 'USD',
+          inStock: isAvailable && !variantSoldOut,
+          condition: product.condition,
+          seller: product.store?.name || (product.vendor ? `${product.vendor.firstName || ''} ${product.vendor.lastName || ''}`.trim() : 'KuduMart Marketplace'),
+          sku: product.sku || String(product.id),
+        }}
+      />
+      <Link to="/catalog" className="back-link"><ArrowLeft size={16}/> Back to shopping</Link><div className="product-detail"><div className="product-detail__gallery"><div className="product-detail__main-image">{images.length ? <img src={activeImage || images[0]} alt={product.name}/> : <ImageOff size={48}/>}{images.length > 1 && <><button className="product-gallery__arrow product-gallery__arrow--left" onClick={() => changeImage(-1)} aria-label="Previous image"><ChevronLeft size={20}/></button><button className="product-gallery__arrow product-gallery__arrow--right" onClick={() => changeImage(1)} aria-label="Next image"><ChevronRight size={20}/></button></>}</div>{images.length > 1 && <div className="product-detail__thumbs">{images.map((image, index) => <button className={(activeImage || images[0]) === image ? 'active' : ''} onClick={() => setActiveImage(image)} key={`${image}-${index}`} aria-label={`View product image ${index + 1}`}><img src={image} alt=""/></button>)}</div>}</div><div className="product-detail__info"><span className="eyebrow">{product.store?.name || 'KUDUMART MARKETPLACE'}</span><h1>{product.name}</h1><div className="product-detail__status"><span><Check size={15}/> {isAvailable ? 'Available now' : 'Out of stock'}</span><span>{product.condition?.replaceAll('_',' ') || 'Product'}</span></div><div className="product-detail__price"><strong>{action === 'details' && variantPrice.starting ? 'From ' : ''}{money(displayPrice, displaySymbol)}</strong>{!variant && price.discounted && <del>{money(price.original, symbol)}</del>}</div>
     {isInstallmentEligible && (
       <button
         type="button"
@@ -195,5 +218,6 @@ export default function Product() {
         </div>
       </Modal>
     )}
-  </div>;
+    </div>
+  );
 }

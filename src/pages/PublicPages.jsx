@@ -16,6 +16,7 @@ import { contentApi } from "../api/content";
 import { uploadFile } from "../api/upload";
 import { useResource } from "../hooks/useResource";
 import { Button, EmptyState, Skeleton } from "../components/ui";
+import SEO from "../components/SEO";
 
 const pageCopy = {
   about: {
@@ -132,6 +133,7 @@ export function ContentPage({ kind }) {
   const copy = pageCopy[kind];
   return (
     <div className="public-page">
+      <SEO title={copy?.title} description={copy?.intro} />
       <section className="public-hero">
         <div className="container">
           <span className="eyebrow">{copy.eyebrow}</span>
@@ -172,6 +174,10 @@ export function Contact() {
   };
   return (
     <div className="container public-form-page">
+      <SEO
+        title="Contact Us"
+        description="Have a question or need assistance? Contact KuduMart customer support."
+      />
       <div className="public-form-intro">
         <span className="eyebrow">CONTACT US</span>
         <h1>How can we help?</h1>
@@ -259,6 +265,10 @@ export function Faqs() {
   );
   return (
     <div className="container public-list-page">
+      <SEO
+        title="Frequently Asked Questions (FAQ)"
+        description="Find answers to common questions about buying, selling, delivery, and installment payments on KuduMart."
+      />
       <div className="public-list-head">
         <HelpCircle />
         <span className="eyebrow">HELP CENTRE</span>
@@ -298,6 +308,10 @@ export function Testimonials() {
   const items = useResource((signal) => contentApi.testimonials(signal), []);
   return (
     <div className="container public-list-page">
+      <SEO
+        title="Frequently Asked Questions (FAQ)"
+        description="Find answers to common questions about buying, selling, delivery, and installment payments on KuduMart."
+      />
       <div className="public-list-head">
         <span className="eyebrow">COMMUNITY STORIES</span>
         <h1>What people say about KuduMart.</h1>
@@ -425,6 +439,10 @@ export function Careers() {
   );
   return (
     <div className="container public-list-page">
+      <SEO
+        title="Frequently Asked Questions (FAQ)"
+        description="Find answers to common questions about buying, selling, delivery, and installment payments on KuduMart."
+      />
       <div className="public-list-head">
         <BriefcaseBusiness />
         <span className="eyebrow">JOIN THE TEAM</span>

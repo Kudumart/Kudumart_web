@@ -1,0 +1,27 @@
+# Robots.txt for KuduMart
+User-agent: *
+Allow: /
+Allow: /catalog
+Allow: /product/
+Allow: /auctions
+Allow: /services
+Allow: /about
+Allow: /careers
+Allow: /terms
+Allow: /privacy
+Allow: /contact
+
+# Private application areas
+Disallow: /account/
+Disallow: /seller/
+Disallow: /admin/
+Disallow: /checkout
+Disallow: /cart
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Sitemaps
+Sitemap: https://kudumart.com/api/sitemap.xml
+Sitemap: https://kudumart.com/sitemap.xml
