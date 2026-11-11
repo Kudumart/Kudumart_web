@@ -2,6 +2,7 @@ import { Clock3, MapPin, Plus, Trash2, Truck } from 'lucide-react';
 import { SelectField, TextField } from '../../components/ui';
 import { checkoutApi } from '../../api/checkout';
 import { useResource } from '../../hooks/useResource';
+import { getBuiltInStates, supportedCountries } from '../../utils/locations';
 
 const schedules = [
   { key: 'monday_friday', label: 'Monday–Friday', start: '09:00', end: '18:00' },
@@ -10,7 +11,7 @@ const schedules = [
 ];
 
 export const arrivalOptions = ['Same day', 'Next day', '2–3 days', '3–5 days', '5–7 days'];
-export const countries = [{ code: 'NG', name: 'Nigeria' }, { code: 'US', name: 'United States' }, { code: 'UK', name: 'United Kingdom' }];
+export const countries = supportedCountries;
 
 function toTwentyFourHour(time, period) {
   const [hours, minutes] = time.split(':').map(Number);
@@ -56,7 +57,11 @@ export function DeliveryRuleFields({ option, onPatch }) {
   const scope = option.scope || 'city';
   const country = countries.find(item => item.code === option.countryCode || item.name === option.country);
   const regions = useResource(signal => country ? checkoutApi.shippingRegions(country.code, signal) : Promise.resolve(null), [country?.code]);
-  const states = Array.isArray(regions.data?.children) ? regions.data.children.map(state => ({ ...state, code: state.code || state.name })) : [];
+  const remoteStates = Array.isArray(regions.data?.children) && regions.data.children.length > 0
+    ? regions.data.children.map(state => ({ ...state, code: state.code || state.name }))
+    : [];
+  const fallbackStates = country ? getBuiltInStates(country.code) : [];
+  const states = remoteStates.length > 0 ? remoteStates : fallbackStates;
   const state = states.find(item => item.code === option.stateCode || item.name === option.state);
   const cities = state?.children || [];
   const pickCountry = code => { const next = countries.find(item => item.code === code); onPatch({ country: next?.name || '', countryCode: next?.code || '', state: '', stateCode: '', city: scope === 'country' ? next?.name || '' : '' }); };

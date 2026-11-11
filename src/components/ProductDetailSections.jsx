@@ -55,14 +55,17 @@ export function ShareProduct({ product }) {
   const [copied, setCopied] = useState(false);
   const menuRef = useRef(null);
   const triggerRef = useRef(null);
-  const url = `${String(import.meta.env.VITE_API_BASE_URL || 'https://api.kudumart.com/api').replace(/\/$/, '')}/products/${product.id}/share`;
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://kudumart.com';
+  const directUrl = `${origin}/product/${product.id}`;
+  const apiBase = String(import.meta.env.VITE_API_BASE_URL || 'https://api.kudumart.com/api').replace(/\/$/, '');
+  const previewUrl = `${apiBase}/products/${product.id}/share`;
   const title = `Check out ${product.name} on KuduMart`;
-  const encodedUrl = encodeURIComponent(url);
+  const encodedPreviewUrl = encodeURIComponent(previewUrl);
   const options = [
-    { name: 'WhatsApp', href: `https://wa.me/?text=${encodeURIComponent(`${title}: ${url}`)}` },
-    { name: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}` },
-    { name: 'X', href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodeURIComponent(title)}` },
-    { name: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}` },
+    { name: 'WhatsApp', href: `https://wa.me/?text=${encodeURIComponent(`${title}: ${previewUrl}`)}` },
+    { name: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${encodedPreviewUrl}` },
+    { name: 'X', href: `https://twitter.com/intent/tweet?url=${encodedPreviewUrl}&text=${encodeURIComponent(title)}` },
+    { name: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedPreviewUrl}` },
   ];
   useEffect(() => {
     if (!open) return;
@@ -72,6 +75,6 @@ export function ShareProduct({ product }) {
     document.addEventListener('keydown', closeEscape);
     return () => { document.removeEventListener('pointerdown', closeOutside); document.removeEventListener('keydown', closeEscape); };
   }, [open]);
-  const copy = async () => { try { await navigator.clipboard.writeText(url); setCopied(true); setOpen(false); notify('Product link copied.', 'success'); window.setTimeout(() => setCopied(false), 2000); } catch { notify('Could not copy the link.', 'error'); } };
+  const copy = async () => { try { await navigator.clipboard.writeText(directUrl); setCopied(true); setOpen(false); notify('Product link copied.', 'success'); window.setTimeout(() => setCopied(false), 2000); } catch { notify('Could not copy the link.', 'error'); } };
   return <div className="product-share" ref={menuRef}><button ref={triggerRef} type="button" aria-expanded={open} aria-controls="product-share-menu" onClick={() => setOpen(value => !value)}><Share2 size={18}/> Share</button><button type="button" onClick={copy}>{copied ? <Check size={18}/> : <Copy size={18}/>} {copied ? 'Copied' : 'Copy link'}</button>{open && <div id="product-share-menu" className="product-share__menu"><p>Share this product</p>{options.map(({ name, href }) => <a key={name} href={href} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>{socialIcons[name]}{name}</a>)}</div>}</div>;
 }
