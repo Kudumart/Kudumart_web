@@ -20,14 +20,23 @@ export default function AddressForm({ onSaved, onCancel }) {
   const [error, setError] = useState('');
   const [customCity, setCustomCity] = useState(false);
 
-  const code = supportedCountries.find(item => item.name === values.country || item.code === values.country)?.code || 'NG';
+  const countryQuery = String(values.country || '').trim().toLowerCase();
+  const countryObj = supportedCountries.find(
+    item => item.name.toLowerCase() === countryQuery || item.code.toLowerCase() === countryQuery
+  ) || supportedCountries[0];
+  const code = countryObj.code;
   const regions = useResource(signal => checkoutApi.shippingRegions(code, signal), [code]);
 
   const remoteStates = Array.isArray(regions.data?.children) && regions.data.children.length > 0 ? regions.data.children : [];
   const fallbackStates = getBuiltInStates(code);
   const states = remoteStates.length > 0 ? remoteStates : fallbackStates;
 
-  const selectedState = states.find(item => item.name === values.state || item.code === values.state);
+  const normState = String(values.state || '').trim().toLowerCase().replace(/\s+state$/i, '');
+  const selectedState = states.find(item => {
+    const itemName = String(item.name || '').trim().toLowerCase().replace(/\s+state$/i, '');
+    const itemCode = String(item.code || '').trim().toLowerCase();
+    return itemName === normState || itemCode === normState;
+  });
   const cities = selectedState?.children || [];
 
   const change = event => setValues(current => ({ ...current, [event.target.name]: event.target.value }));
@@ -71,7 +80,7 @@ export default function AddressForm({ onSaved, onCancel }) {
           <SelectField
             label="State / province"
             name="state"
-            value={values.state}
+            value={selectedState ? selectedState.name : values.state}
             onChange={event => {
               setValues(current => ({ ...current, state: event.target.value, city: '' }));
               setCustomCity(false);
@@ -101,7 +110,13 @@ export default function AddressForm({ onSaved, onCancel }) {
             <SelectField
               label="City"
               name="city"
-              value={cities.some(c => c.name === values.city) ? values.city : values.city ? '__other__' : ''}
+              value={
+                cities.some(c => c.name.toLowerCase() === String(values.city || '').trim().toLowerCase())
+                  ? (cities.find(c => c.name.toLowerCase() === String(values.city || '').trim().toLowerCase())?.name || values.city)
+                  : values.city
+                    ? '__other__'
+                    : ''
+              }
               onChange={event => {
                 if (event.target.value === '__other__') {
                   setCustomCity(true);
