@@ -3,6 +3,18 @@
   command = "npm run build"
 
 [[redirects]]
+  from = "/sitemap.xml"
+  to = "https://api.kudumart.com/api/sitemap.xml"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/feed/google-merchant.xml"
+  to = "https://api.kudumart.com/api/feed/google-merchant.xml"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
