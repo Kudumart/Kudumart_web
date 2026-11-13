@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -2544,6 +2544,7 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [formError, setFormError] = useState("");
+  const fileInputRef = useRef(null);
 
   const previews = useMemo(
     () => files.map((file) => ({ name: file.name, url: URL.createObjectURL(file) })),
@@ -2634,8 +2635,32 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
       className="modal--wide"
       title={item ? "Edit product" : "Add a product"}
       onClose={onClose}
+      footer={
+        <>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={onClose}
+            disabled={busy || uploading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="admin-product-form"
+            loading={busy || uploading}
+            disabled={!myStores.length || busy || uploading}
+          >
+            {uploading
+              ? "Uploading photos..."
+              : item
+              ? "Update product"
+              : "Save product"}
+          </Button>
+        </>
+      }
     >
-      <form className="admin-content-form" onSubmit={handleSubmit}>
+      <form id="admin-product-form" className="admin-content-form" onSubmit={handleSubmit}>
         {activeError && (
           <div
             className="admin-error"
@@ -2836,12 +2861,22 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
             </span>
           </label>
 
-          <label
+          <div
             className="seller-upload"
+            onClick={() => fileInputRef.current?.click()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
             style={{
               minHeight: 110,
               padding: "16px 12px",
               cursor: uploading ? "wait" : "pointer",
+              position: "relative",
               opacity: existingImages.length + files.length >= 8 ? 0.6 : 1,
             }}
           >
@@ -2849,13 +2884,15 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
             <strong>Add product photos</strong>
             <span>JPG, PNG, or WebP · Select multiple photos (up to 8 total)</span>
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               multiple
+              style={{ display: "none" }}
               onChange={handleFilesAdded}
               disabled={uploading || existingImages.length + files.length >= 8}
             />
-          </label>
+          </div>
 
           {(existingImages.length > 0 || previews.length > 0) && (
             <div className="seller-upload-preview" style={{ marginTop: 4, display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -2951,35 +2988,6 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
               })}
             </div>
           )}
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 10,
-            marginTop: 14,
-          }}
-        >
-          <Button
-            variant="outline"
-            type="button"
-            onClick={onClose}
-            disabled={busy || uploading}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            loading={busy || uploading}
-            disabled={!myStores.length || busy || uploading}
-          >
-            {uploading
-              ? "Uploading photos..."
-              : item
-              ? "Update product"
-              : "Save product"}
-          </Button>
         </div>
       </form>
     </Modal>
