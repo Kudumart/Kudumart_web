@@ -2098,6 +2098,8 @@ export function AdminProducts() {
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
+  const [condition, setCondition] = useState("");
+  const [sortBy, setSortBy] = useState("latest");
   const [categoryId, setCategoryId] = useState("");
   const [revision, setRevision] = useState(0);
   const [productModal, setProductModal] = useState(null);
@@ -2122,10 +2124,11 @@ export function AdminProducts() {
             name: debouncedQuery,
             status,
             categoryId,
+            condition,
             limit: 20,
           })
         : Promise.resolve({ data: [] }),
-    [tab, page, debouncedQuery, status, categoryId],
+    [tab, page, debouncedQuery, status, categoryId, condition],
   );
 
   const myResource = useResource(
@@ -2140,29 +2143,77 @@ export function AdminProducts() {
   const rawRows = rowsFrom(resource.data);
 
   const rows = useMemo(() => {
-    if (tab === "all") return rawRows;
-    const term = debouncedQuery.toLowerCase();
-    return rawRows.filter((item) => {
-      const matchName = !term || (item.name || "").toLowerCase().includes(term);
-      const matchStatus = !status || item.status === status;
-      const matchCat =
-        !categoryId ||
-        item.categoryId === categoryId ||
-        item.category?.id === categoryId ||
-        item.sub_category?.categoryId === categoryId;
-      return matchName && matchStatus && matchCat;
+    let list = [...rawRows];
+    if (tab === "my") {
+      const term = debouncedQuery.toLowerCase();
+      list = list.filter((item) => {
+        const matchName =
+          !term ||
+          (item.name || "").toLowerCase().includes(term) ||
+          (item.sku || "").toLowerCase().includes(term);
+        const matchStatus = !status || item.status === status;
+        const matchCat =
+          !categoryId ||
+          item.categoryId === categoryId ||
+          item.category?.id === categoryId ||
+          item.sub_category?.categoryId === categoryId ||
+          item.sub_category?.id === categoryId;
+        const matchCond = !condition || item.condition === condition;
+        return matchName && matchStatus && matchCat && matchCond;
+      });
+    }
+
+    list.sort((a, b) => {
+      if (sortBy === "oldest") {
+        return (
+          new Date(a.createdAt || a.created_at || 0) -
+          new Date(b.createdAt || b.created_at || 0)
+        );
+      }
+      if (sortBy === "price_asc") {
+        return Number(a.price || 0) - Number(b.price || 0);
+      }
+      if (sortBy === "price_desc") {
+        return Number(b.price || 0) - Number(a.price || 0);
+      }
+      if (sortBy === "name_asc") {
+        return (a.name || "").localeCompare(b.name || "");
+      }
+      // default: "latest"
+      return (
+        new Date(b.createdAt || b.created_at || 0) -
+        new Date(a.createdAt || a.created_at || 0)
+      );
     });
-  }, [tab, rawRows, debouncedQuery, status, categoryId]);
+
+    return list;
+  }, [tab, rawRows, debouncedQuery, status, categoryId, condition, sortBy]);
+
+  const pageSize = 20;
+  const totalPages =
+    tab === "all"
+      ? allResource.data?.pagination?.pages || 1
+      : Math.ceil(rows.length / pageSize) || 1;
+
+  const displayedRows = useMemo(() => {
+    if (tab === "all") return rows;
+    const start = (page - 1) * pageSize;
+    return rows.slice(start, start + pageSize);
+  }, [tab, rows, page]);
 
   const pagination =
     tab === "all"
       ? allResource.data?.pagination || {}
-      : { total: rows.length, pages: 1 };
-  const hasFilters = Boolean(query || status || categoryId);
+      : { total: rows.length, pages: totalPages };
+  const hasFilters = Boolean(
+    query || status || categoryId || condition || sortBy !== "latest",
+  );
   const clearFilters = () => {
     setQuery("");
     setStatus("");
     setCategoryId("");
+    setCondition("");
+    setSortBy("latest");
     setPage(1);
   };
 
@@ -2291,7 +2342,7 @@ export function AdminProducts() {
             setPage(1);
           }}
         >
-          <Package size={16} /> My products ({rowsFrom(myResource.data).length || 0})
+          <Package size={16} /> My products
         </button>
       </div>
 
@@ -2299,13 +2350,27 @@ export function AdminProducts() {
         <div className="admin-product-toolbar">
           <input
             aria-label="Search products"
-            placeholder="Search product name"
+            placeholder="Search product name or SKU"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
               setPage(1);
             }}
           />
+          <select
+            aria-label="Sort products"
+            value={sortBy}
+            onChange={(event) => {
+              setSortBy(event.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="latest">Sort: Latest first</option>
+            <option value="oldest">Sort: Oldest first</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="name_asc">Name: A to Z</option>
+          </select>
           <select
             aria-label="Filter product status"
             value={status}
@@ -2315,9 +2380,22 @@ export function AdminProducts() {
             }}
           >
             <option value="">All statuses</option>
-            <option value="inactive">Unpublished</option>
             <option value="active">Published</option>
+            <option value="inactive">Unpublished</option>
             <option value="draft">Draft</option>
+          </select>
+          <select
+            aria-label="Filter product condition"
+            value={condition}
+            onChange={(event) => {
+              setCondition(event.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">All conditions</option>
+            <option value="brand_new">Brand new</option>
+            <option value="fairly_used">Fairly used</option>
+            <option value="refurbished">Refurbished</option>
           </select>
           <select
             aria-label="Filter product category"
@@ -2365,7 +2443,7 @@ export function AdminProducts() {
           />
         ) : (
           <div className="admin-product-list">
-            {rows.map((product) => (
+            {displayedRows.map((product) => (
               <article className="admin-product-row" key={product.id}>
                 <div className="admin-product-row__image">
                   {product.image_url || product.image ? (
@@ -2441,21 +2519,27 @@ export function AdminProducts() {
             ))}
           </div>
         )}
-        {tab === "all" && (
+        {(totalPages > 1 || tab === "all") && (
           <div className="admin-pagination">
             <span>
-              {pagination.total ? `Page ${page} of ${pagination.pages || 1}` : ""}
+              {tab === "all"
+                ? allResource.data?.pagination?.total
+                  ? `Page ${page} of ${totalPages}`
+                  : ""
+                : rows.length
+                  ? `Page ${page} of ${totalPages} (${rows.length} total)`
+                  : ""}
             </span>
             <Button
               variant="outline"
               disabled={page === 1 || resource.loading}
-              onClick={() => setPage((value) => value - 1)}
+              onClick={() => setPage((value) => Math.max(1, value - 1))}
             >
               Previous
             </Button>
             <Button
               variant="outline"
-              disabled={resource.loading || page >= (pagination.pages || 1)}
+              disabled={resource.loading || page >= totalPages}
               onClick={() => setPage((value) => value + 1)}
             >
               Next
