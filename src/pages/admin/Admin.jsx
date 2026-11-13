@@ -12,6 +12,7 @@ import {
   CreditCard,
   FileText,
   Gavel,
+  ImagePlus,
   KeyRound,
   Landmark,
   LogOut,
@@ -28,6 +29,7 @@ import {
   Store,
   Tag,
   Tags,
+  Trash2,
   User,
   Users,
   Wallet,
@@ -2169,6 +2171,14 @@ export function AdminProducts() {
     setProductModalError("");
     setFeedback("");
     try {
+      const images =
+        Array.isArray(formValues.images) && formValues.images.length > 0
+          ? formValues.images
+          : formValues.image
+          ? [formValues.image]
+          : [];
+      const primaryImage = images[0] || "";
+
       const payload = {
         storeId: formValues.storeId,
         categoryId: formValues.categoryId,
@@ -2183,10 +2193,10 @@ export function AdminProducts() {
         specifications: formValues.specification || "",
         warranty: formValues.warranty || "No warranty",
         return_policy: formValues.return_policy || "7 days return policy",
-        photos: formValues.image ? [formValues.image] : [],
-        additional_images: formValues.image ? [formValues.image] : [],
-        image_url: formValues.image || "",
-        image: formValues.image || "",
+        photos: images,
+        additional_images: images,
+        image_url: primaryImage,
+        image: primaryImage,
       };
 
       if (productModal?.item?.id) {
@@ -2510,10 +2520,39 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
     return_policy: item?.return_policy || "7 days return policy",
     description: item?.description || "",
     specification: item?.specification || item?.specifications || "",
-    image: item?.image_url || item?.image || "",
   });
 
+  const [existingImages, setExistingImages] = useState(() => {
+    if (!item) return [];
+    let extra = [];
+    if (Array.isArray(item.additional_images)) {
+      extra = item.additional_images;
+    } else if (typeof item.additional_images === "string") {
+      try {
+        const parsed = JSON.parse(item.additional_images);
+        if (Array.isArray(parsed)) extra = parsed;
+      } catch {
+        extra = [item.additional_images];
+      }
+    } else if (Array.isArray(item.photos)) {
+      extra = item.photos;
+    }
+    const all = [item.image_url, item.image, ...extra].filter(Boolean);
+    return [...new Set(all)];
+  });
+
+  const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const previews = useMemo(
+    () => files.map((file) => ({ name: file.name, url: URL.createObjectURL(file) })),
+    [files]
+  );
+
+  useEffect(() => {
+    return () => previews.forEach((p) => URL.revokeObjectURL(p.url));
+  }, [previews]);
 
   useEffect(() => {
     if (!form.storeId && myStores.length) {
@@ -2529,28 +2568,66 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
     setForm((f) => ({ ...f, categoryId: "" }));
   };
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFilesAdded = (e) => {
+    const selected = Array.from(e.target.files || []);
+    if (!selected.length) return;
+    setFiles((current) => {
+      const combined = [...current, ...selected];
+      const maxAllowed = Math.max(0, 8 - existingImages.length);
+      return combined.slice(0, maxAllowed);
+    });
+    e.target.value = "";
+  };
+
+  const removeExistingImage = (url) => {
+    setExistingImages((current) => current.filter((img) => img !== url));
+  };
+
+  const removeNewFile = (index) => {
+    setFiles((current) => current.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFormError("");
+    if (!form.categoryId) {
+      setFormError("Please select a subcategory for this product.");
+      return;
+    }
+    const totalImages = existingImages.length + files.length;
+    if (totalImages === 0) {
+      setFormError("Please add at least one product photo.");
+      return;
+    }
+    if (
+      form.discountPrice &&
+      Number(form.discountPrice) >= Number(form.price) &&
+      Number(form.discountPrice) > 0
+    ) {
+      setFormError("Discount price must be less than regular price.");
+      return;
+    }
+
     try {
       setUploading(true);
-      const url = await uploadImage(file);
-      setForm((f) => ({ ...f, image: url }));
+      let uploadedUrls = [];
+      if (files.length > 0) {
+        uploadedUrls = await Promise.all(files.map((file) => uploadImage(file)));
+      }
+      const allImages = [...existingImages, ...uploadedUrls];
+      onSave({
+        ...form,
+        images: allImages,
+        image: allImages[0] || "",
+      });
     } catch (err) {
-      alert(err.message || "Failed to upload image.");
+      setFormError(err.message || "Failed to upload images. Please try again.");
     } finally {
       setUploading(false);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!form.categoryId) {
-      alert("Please select a subcategory for this product.");
-      return;
-    }
-    onSave(form);
-  };
+  const activeError = formError || error;
 
   return (
     <Modal
@@ -2559,7 +2636,7 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
       onClose={onClose}
     >
       <form className="admin-content-form" onSubmit={handleSubmit}>
-        {error && (
+        {activeError && (
           <div
             className="admin-error"
             role="alert"
@@ -2574,7 +2651,7 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
               marginBottom: 12,
             }}
           >
-            {error}
+            {activeError}
           </div>
         )}
 
@@ -2751,28 +2828,130 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
           />
         </label>
 
-        <label>
-          Product image *
-          {form.image && (
-            <img
-              src={form.image}
-              alt="Preview"
-              style={{
-                width: 100,
-                height: 100,
-                objectFit: "cover",
-                borderRadius: 8,
-                marginBottom: 8,
-              }}
+        <div style={{ display: "grid", gap: 8, marginTop: 4 }}>
+          <label style={{ display: "block", fontWeight: 700, fontSize: 13, color: "var(--navy)", marginBottom: 0 }}>
+            Product photos *
+            <span style={{ display: "block", fontSize: 11, fontWeight: 500, color: "#78869a", marginTop: 2 }}>
+              Add up to 8 images. The first image will be used as the main cover photo.
+            </span>
+          </label>
+
+          <label
+            className="seller-upload"
+            style={{
+              minHeight: 110,
+              padding: "16px 12px",
+              cursor: uploading ? "wait" : "pointer",
+              opacity: existingImages.length + files.length >= 8 ? 0.6 : 1,
+            }}
+          >
+            <ImagePlus size={24} />
+            <strong>Add product photos</strong>
+            <span>JPG, PNG, or WebP · Select multiple photos (up to 8 total)</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              multiple
+              onChange={handleFilesAdded}
+              disabled={uploading || existingImages.length + files.length >= 8}
             />
+          </label>
+
+          {(existingImages.length > 0 || previews.length > 0) && (
+            <div className="seller-upload-preview" style={{ marginTop: 4, display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {existingImages.map((url, idx) => (
+                <span key={url} className="seller-upload-image" style={{ position: "relative", display: "inline-block" }}>
+                  <img
+                    src={url}
+                    alt={`Product photo ${idx + 1}`}
+                    style={{
+                      width: 80,
+                      height: 80,
+                      objectFit: "cover",
+                      borderRadius: 8,
+                      border: "1px solid #e2e8f0",
+                      display: "block",
+                    }}
+                  />
+                  {idx === 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        bottom: 4,
+                        left: 4,
+                        background: "#172642",
+                        color: "#fff",
+                        fontSize: 9,
+                        fontWeight: 800,
+                        padding: "2px 5px",
+                        borderRadius: 4,
+                        letterSpacing: "0.04em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Cover
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    aria-label="Remove image"
+                    onClick={() => removeExistingImage(url)}
+                    disabled={uploading}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </span>
+              ))}
+
+              {previews.map((item, idx) => {
+                const isCover = existingImages.length === 0 && idx === 0;
+                return (
+                  <span key={item.url} className="seller-upload-image" style={{ position: "relative", display: "inline-block" }}>
+                    <img
+                      src={item.url}
+                      alt={item.name}
+                      style={{
+                        width: 80,
+                        height: 80,
+                        objectFit: "cover",
+                        borderRadius: 8,
+                        border: "1px solid #e2e8f0",
+                        display: "block",
+                      }}
+                    />
+                    {isCover && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          bottom: 4,
+                          left: 4,
+                          background: "#172642",
+                          color: "#fff",
+                          fontSize: 9,
+                          fontWeight: 800,
+                          padding: "2px 5px",
+                          borderRadius: 4,
+                          letterSpacing: "0.04em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Cover
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      aria-label="Remove image"
+                      onClick={() => removeNewFile(idx)}
+                      disabled={uploading}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
           )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            disabled={uploading}
-          />
-        </label>
+        </div>
 
         <div
           style={{
@@ -2786,16 +2965,20 @@ function AdminProductModal({ item, busy, categories, error, onClose, onSave }) {
             variant="outline"
             type="button"
             onClick={onClose}
-            disabled={busy}
+            disabled={busy || uploading}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             loading={busy || uploading}
-            disabled={!myStores.length}
+            disabled={!myStores.length || busy || uploading}
           >
-            {item ? "Update product" : "Save product"}
+            {uploading
+              ? "Uploading photos..."
+              : item
+              ? "Update product"
+              : "Save product"}
           </Button>
         </div>
       </form>
