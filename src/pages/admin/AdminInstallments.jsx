@@ -12,6 +12,7 @@ import {
   Search,
   RefreshCw,
   Plus,
+  Pencil,
   Trash2,
   PackageCheck,
   Layers,
@@ -71,6 +72,7 @@ export function AdminInstallments() {
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [tenureModal, setTenureModal] = useState(null);
 
   // Fetch Config
   const configResource = useResource(
@@ -131,21 +133,90 @@ export function AdminInstallments() {
     }
   };
 
-  const addTenureOption = () => {
+  const handleOpenAddTenure = () => {
     const existing = formData.allowed_tenures || [];
     const count = existing.length + 1;
-    const newTenure = {
-      id: `${count}_payments`,
-      label: `${count} Payments (${count * 30} Days)`,
-      installments: count,
-      tenure_days: count * 30,
-      interval_days: 30,
-      is_active: true,
+    const installments = Math.max(2, count);
+    const interval = 30;
+    const totalDays = (installments - 1) * interval;
+    setTenureModal({
+      index: null,
+      data: {
+        id: `${installments}_payments`,
+        label: `${installments} Payments (${totalDays} Days)`,
+        installments: installments,
+        tenure_days: totalDays,
+        interval_days: interval,
+        is_active: true,
+      },
+    });
+  };
+
+  const handleOpenEditTenure = (tenure, index) => {
+    setTenureModal({
+      index,
+      data: {
+        id: tenure.id || `tenure_${index + 1}`,
+        label: tenure.label || "",
+        installments: Number(tenure.installments) || 2,
+        tenure_days: Number(tenure.tenure_days) || 30,
+        interval_days: Number(tenure.interval_days) || 30,
+        is_active: tenure.is_active !== false,
+      },
+    });
+  };
+
+  const handleSaveTenureModal = (e) => {
+    if (e) e.preventDefault();
+    if (!tenureModal?.data) return;
+
+    const { id, label, installments, tenure_days, interval_days, is_active } = tenureModal.data;
+
+    if (!label.trim()) {
+      notify("Please provide a label for this tenure duration option", "error");
+      return;
+    }
+    if (!id.trim()) {
+      notify("Please provide a unique ID for this tenure duration option", "error");
+      return;
+    }
+    if (Number(installments) < 2) {
+      notify("Installments must be at least 2 payments (1 deposit + 1 installment)", "error");
+      return;
+    }
+    if (Number(tenure_days) < 1) {
+      notify("Total tenure days must be at least 1 day", "error");
+      return;
+    }
+
+    const cleanTenure = {
+      id: id.trim().toLowerCase().replace(/\s+/g, "_"),
+      label: label.trim(),
+      installments: Number(installments),
+      tenure_days: Number(tenure_days),
+      interval_days: Number(interval_days) || 30,
+      is_active: Boolean(is_active),
     };
+
+    const updated = [...(formData.allowed_tenures || [])];
+    if (tenureModal.index !== null && tenureModal.index >= 0) {
+      updated[tenureModal.index] = cleanTenure;
+    } else {
+      updated.push(cleanTenure);
+    }
+
     setFormData((prev) => ({
       ...prev,
-      allowed_tenures: [...existing, newTenure],
+      allowed_tenures: updated,
     }));
+
+    setTenureModal(null);
+    notify(
+      tenureModal.index !== null
+        ? "Tenure updated! Click 'Save Installment Configuration' below to apply."
+        : "Tenure added! Click 'Save Installment Configuration' below to apply.",
+      "success"
+    );
   };
 
   const toggleTenure = (index) => {
@@ -540,7 +611,7 @@ export function AdminInstallments() {
                     variant="outline"
                     size="sm"
                     icon={Plus}
-                    onClick={addTenureOption}
+                    onClick={handleOpenAddTenure}
                   >
                     Add Tenure
                   </Button>
@@ -559,40 +630,60 @@ export function AdminInstallments() {
                       </tr>
                     </thead>
                     <tbody>
-                      {(formData.allowed_tenures || []).map((tenure, idx) => (
-                        <tr key={tenure.id || idx}>
-                          <td>
-                            <strong>{tenure.label}</strong>
-                          </td>
-                          <td>{tenure.installments} Payments</td>
-                          <td>{tenure.tenure_days} Days</td>
-                          <td>Every {tenure.interval_days} Days</td>
-                          <td>
-                            <Badge tone={tenure.is_active !== false ? "success" : "neutral"}>
-                              {tenure.is_active !== false ? "Enabled" : "Disabled"}
-                            </Badge>
-                          </td>
-                          <td style={{ textAlign: "right" }}>
-                            <div style={{ display: "inline-flex", gap: "6px" }}>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => toggleTenure(idx)}
-                              >
-                                {tenure.is_active !== false ? "Disable" : "Enable"}
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                icon={Trash2}
-                                onClick={() => removeTenure(idx)}
-                              />
-                            </div>
+                      {(!formData.allowed_tenures || formData.allowed_tenures.length === 0) ? (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: "center", padding: "28px", color: "#64748b" }}>
+                            No tenure durations configured yet. Click "Add Tenure" above to configure an option.
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        formData.allowed_tenures.map((tenure, idx) => (
+                          <tr key={tenure.id || idx}>
+                            <td>
+                              <strong>{tenure.label}</strong>
+                              <div style={{ fontSize: "11px", color: "#94a3b8", fontFamily: "monospace" }}>
+                                ID: {tenure.id}
+                              </div>
+                            </td>
+                            <td>{tenure.installments} Payments</td>
+                            <td>{tenure.tenure_days} Days</td>
+                            <td>Every {tenure.interval_days} Days</td>
+                            <td>
+                              <Badge tone={tenure.is_active !== false ? "success" : "neutral"}>
+                                {tenure.is_active !== false ? "Enabled" : "Disabled"}
+                              </Badge>
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              <div style={{ display: "inline-flex", gap: "6px" }}>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  icon={Pencil}
+                                  onClick={() => handleOpenEditTenure(tenure, idx)}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => toggleTenure(idx)}
+                                >
+                                  {tenure.is_active !== false ? "Disable" : "Enable"}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  icon={Trash2}
+                                  onClick={() => removeTenure(idx)}
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1025,6 +1116,163 @@ export function AdminInstallments() {
               </div>
             );
           })()}
+        </Modal>
+      )}
+      {/* Tenure Configuration Modal */}
+      {tenureModal && (
+        <Modal
+          title={tenureModal.index !== null ? "Edit Tenure Duration" : "Add Available Tenure Duration"}
+          icon={<CalendarClock size={20} />}
+          onClose={() => setTenureModal(null)}
+          footer={
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", width: "100%" }}>
+              <Button type="button" variant="outline" onClick={() => setTenureModal(null)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleSaveTenureModal}>
+                {tenureModal.index !== null ? "Update Tenure" : "Add Tenure"}
+              </Button>
+            </div>
+          }
+        >
+          <form onSubmit={handleSaveTenureModal} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <label className="field">
+              <span className="field__label">Option Label <span style={{ color: "#e11d48" }}>*</span></span>
+              <input
+                type="text"
+                className="field__input"
+                required
+                placeholder="e.g. 2 Payments (30 Days), Bi-Weekly Plan, or 6 Months"
+                value={tenureModal.data.label}
+                onChange={(e) =>
+                  setTenureModal((prev) => ({
+                    ...prev,
+                    data: { ...prev.data, label: e.target.value },
+                  }))
+                }
+              />
+              <span className="field__hint">How this plan is titled and presented to shoppers at checkout.</span>
+            </label>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <label className="field">
+                <span className="field__label">Unique ID <span style={{ color: "#e11d48" }}>*</span></span>
+                <input
+                  type="text"
+                  className="field__input"
+                  required
+                  placeholder="e.g. 2_payments"
+                  value={tenureModal.data.id}
+                  onChange={(e) =>
+                    setTenureModal((prev) => ({
+                      ...prev,
+                      data: { ...prev.data, id: e.target.value },
+                    }))
+                  }
+                />
+                <span className="field__hint">Unique system slug for backend matching.</span>
+              </label>
+
+              <label className="field">
+                <span className="field__label">Total Milestones (Payments) <span style={{ color: "#e11d48" }}>*</span></span>
+                <input
+                  type="number"
+                  className="field__input"
+                  required
+                  min="2"
+                  max="24"
+                  value={tenureModal.data.installments}
+                  onChange={(e) => {
+                    const inst = Math.max(2, Number(e.target.value) || 2);
+                    setTenureModal((prev) => {
+                      const interval = prev.data.interval_days || 30;
+                      const calculatedDays = Math.max(1, (inst - 1) * interval);
+                      const isDefaultStyle = prev.data.label.includes("Payments");
+                      return {
+                        ...prev,
+                        data: {
+                          ...prev.data,
+                          installments: inst,
+                          tenure_days: calculatedDays,
+                          label: isDefaultStyle ? `${inst} Payments (${calculatedDays} Days)` : prev.data.label,
+                        },
+                      };
+                    });
+                  }}
+                />
+                <span className="field__hint">Total payments (1 deposit + remaining installments).</span>
+              </label>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <label className="field">
+                <span className="field__label">Milestone Interval (Days) <span style={{ color: "#e11d48" }}>*</span></span>
+                <input
+                  type="number"
+                  className="field__input"
+                  required
+                  min="1"
+                  max="365"
+                  value={tenureModal.data.interval_days}
+                  onChange={(e) => {
+                    const interval = Math.max(1, Number(e.target.value) || 30);
+                    setTenureModal((prev) => {
+                      const calculatedDays = Math.max(1, (prev.data.installments - 1) * interval);
+                      const isDefaultStyle = prev.data.label.includes("Payments");
+                      return {
+                        ...prev,
+                        data: {
+                          ...prev.data,
+                          interval_days: interval,
+                          tenure_days: calculatedDays,
+                          label: isDefaultStyle ? `${prev.data.installments} Payments (${calculatedDays} Days)` : prev.data.label,
+                        },
+                      };
+                    });
+                  }}
+                />
+                <span className="field__hint">Days between installments (e.g. 30 for monthly, 14 for bi-weekly, 7 for weekly).</span>
+              </label>
+
+              <label className="field">
+                <span className="field__label">Total Tenure Duration (Days) <span style={{ color: "#e11d48" }}>*</span></span>
+                <input
+                  type="number"
+                  className="field__input"
+                  required
+                  min="1"
+                  max="365"
+                  value={tenureModal.data.tenure_days}
+                  onChange={(e) =>
+                    setTenureModal((prev) => ({
+                      ...prev,
+                      data: { ...prev.data, tenure_days: Number(e.target.value) },
+                    }))
+                  }
+                />
+                <span className="field__hint">Total calendar days until full order settlement is required.</span>
+              </label>
+            </div>
+
+            <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "8px", border: "1px solid #f1f5f9" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(tenureModal.data.is_active)}
+                  onChange={(e) =>
+                    setTenureModal((prev) => ({
+                      ...prev,
+                      data: { ...prev.data, is_active: e.target.checked },
+                    }))
+                  }
+                />
+                <div>
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: "#1e293b" }}>Option Enabled</div>
+                  <div style={{ fontSize: "12px", color: "#64748b" }}>When enabled, buyers can choose this tenure option in the checkout installment calculator.</div>
+                </div>
+              </label>
+            </div>
+          </form>
         </Modal>
       )}
     </>
