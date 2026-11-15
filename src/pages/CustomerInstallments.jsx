@@ -64,9 +64,12 @@ export default function CustomerInstallments() {
         notify('Milestone payment settled from your KuduMart Wallet!', 'success');
         setRevision((r) => r + 1);
         if (res?.data?.plan?.status === 'completed') {
+          const isBnpl = plan.mode === 'bnpl';
           setSuccessModal({
-            title: 'Layaway 100% Completed!',
-            message: `Congratulations! Your installment plan for "${plan.product?.name}" is now fully settled. Your order has been dispatched for fulfillment.`,
+            title: isBnpl ? 'BNPL Plan 100% Settled!' : 'Layaway 100% Completed!',
+            message: isBnpl
+              ? `Congratulations! Your BNPL financing plan for "${plan.product?.name}" is now fully settled. Thank you for shopping with KuduMart!`
+              : `Congratulations! Your installment plan for "${plan.product?.name}" is now fully settled. Your order has been dispatched for fulfillment.`,
           });
         }
         setPayingMilestoneId(null);
@@ -88,9 +91,12 @@ export default function CustomerInstallments() {
             notify('Milestone payment verified and recorded successfully!', 'success');
             setRevision((r) => r + 1);
             if (res?.data?.plan?.status === 'completed') {
+              const isBnpl = plan.mode === 'bnpl';
               setSuccessModal({
-                title: 'Layaway 100% Completed!',
-                message: `Congratulations! Your installment plan for "${plan.product?.name}" is now fully settled. Your order has been dispatched for fulfillment.`,
+                title: isBnpl ? 'BNPL Plan 100% Settled!' : 'Layaway 100% Completed!',
+                message: isBnpl
+                  ? `Congratulations! Your BNPL financing plan for "${plan.product?.name}" is now fully settled. Thank you for shopping with KuduMart!`
+                  : `Congratulations! Your installment plan for "${plan.product?.name}" is now fully settled. Your order has been dispatched for fulfillment.`,
               });
             }
           } catch (err) {
@@ -488,7 +494,7 @@ export default function CustomerInstallments() {
                         textDecoration: 'underline',
                       }}
                     >
-                      Cancel layaway reservation & request refund
+                      {plan.mode === 'bnpl' ? 'Cancel BNPL plan & request settlement' : 'Cancel layaway reservation & request refund'}
                     </button>
                   </div>
                 )}
@@ -501,9 +507,13 @@ export default function CustomerInstallments() {
       {/* Cancel Layaway Confirmation Modal */}
       {cancellingPlan && (
         <ConfirmModal
-          title="Cancel Layaway Reservation?"
-          description={`Are you sure you want to cancel your layaway for "${cancellingPlan.product?.name || 'this item'}"? The held product will be returned to store inventory. An 8% restocking fee will be deducted, and your remaining paid balance will be credited directly to your KuduMart Wallet.`}
-          confirmLabel="Cancel Layaway & Refund"
+          title={cancellingPlan.mode === 'bnpl' ? 'Cancel BNPL Financing Plan?' : 'Cancel Layaway Reservation?'}
+          description={
+            cancellingPlan.mode === 'bnpl'
+              ? `Are you sure you want to cancel your BNPL financing plan for "${cancellingPlan.product?.name || 'this item'}"? Outstanding balances will be closed and any applicable fees deducted from your refund balance.`
+              : `Are you sure you want to cancel your layaway for "${cancellingPlan.product?.name || 'this item'}"? The held product will be returned to store inventory. An 8% restocking fee will be deducted, and your remaining paid balance will be credited directly to your KuduMart Wallet.`
+          }
+          confirmLabel={cancellingPlan.mode === 'bnpl' ? 'Cancel Plan & Settle' : 'Cancel Layaway & Refund'}
           cancelLabel="Keep Reservation"
           tone="danger"
           loading={cancelLoading}

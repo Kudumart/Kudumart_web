@@ -12,6 +12,7 @@ import { useApp } from '../contexts/AppContext';
 import { useResource } from '../hooks/useResource';
 import { availableStock, calculateNairaQuote, countryCodeForLocation, formatAddress, hasDeliveryAddress, isDropship, parseLocation, paymentMode } from '../utils/checkout';
 import { imageFor, money } from '../utils/format';
+import { getInstallmentModeMeta } from '../utils/installments';
 import './Checkout.css';
 
 export default function Checkout() {
@@ -156,6 +157,7 @@ export default function Checkout() {
   const canPay = Boolean(user && items.length && (hasAddress || (!needsDelivery && canPickup)) && !stockIssues.length && !cart.loading && !cart.error && !pendingPayment && (mode !== 'NGN' || (!charges.loading && (!needsDelivery || !deliveryFees.loading) && !charges.error && (!needsDelivery || !deliveryFees.error) && quote?.total > 0)));
 
   const instConfig = installmentConfigResource.data?.data || installmentConfigResource.data;
+  const instMeta = useMemo(() => getInstallmentModeMeta(instConfig), [instConfig]);
   const isInstallmentEligible = Boolean(
     mode === 'NGN' &&
     instConfig &&
@@ -433,10 +435,10 @@ export default function Checkout() {
                       }}
                     >
                       <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <CalendarClock size={16} color="#e11d48" /> Layaway / Installment
+                        <CalendarClock size={16} color="#e11d48" /> {instMeta.checkoutOptionTitle}
                       </div>
                       <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                        Reserve item with deposit; pay in parts
+                        {instMeta.checkoutOptionDesc}
                       </div>
                     </div>
                   </div>
@@ -565,7 +567,7 @@ export default function Checkout() {
                               <span>{money(installmentBreakdown.remaining)}</span>
                             </div>
                             <div style={{ marginTop: '4px', paddingTop: '6px', borderTop: '1px solid #f1f5f9', fontSize: '11px', color: '#64748b', lineHeight: 1.4 }}>
-                              🔒 <strong>Holding reservation:</strong> Stock is reserved exclusively for you. Order fulfills immediately upon final payment settlement.
+                              {instMeta.holdingNote}
                             </div>
                           </div>
 
@@ -578,8 +580,8 @@ export default function Checkout() {
                             loading={preparing}
                           >
                             {instDue === 0
-                              ? `Pay Deposit with Wallet (${money(depositVal)})`
-                              : `Pay Deposit & Reserve Item (${money(instDue)})`}
+                              ? instMeta.walletPayButtonLabel(money(depositVal))
+                              : instMeta.reserveButtonLabel(money(instDue))}
                           </Button>
                         </>
                       );
@@ -692,12 +694,12 @@ export default function Checkout() {
     {orderSuccess && <Modal title="Order confirmed" icon={<CheckCircle2 size={20}/>} onClose={() => navigate('/account/orders', { replace: true })} footer={<Button icon={PackageCheck} onClick={() => navigate('/account/orders', { replace: true })}>View my orders</Button>}><div className="checkout-success"><span className="checkout-success__icon"><CheckCircle2 size={38}/></span><h3>Thank you for your order!</h3><p>Your payment was verified and your order has been placed successfully. You can follow its progress from your orders page.</p></div></Modal>}
     {installmentSuccess && (
       <Modal
-        title="Layaway Reservation Confirmed"
+        title={`${instMeta.name} Plan Confirmed`}
         icon={<CheckCircle2 size={20} />}
         onClose={() => navigate('/account/installments', { replace: true })}
         footer={
           <Button icon={CalendarClock} onClick={() => navigate('/account/installments', { replace: true })}>
-            View my layaways
+            View my plans
           </Button>
         }
       >

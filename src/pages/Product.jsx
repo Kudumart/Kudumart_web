@@ -11,6 +11,7 @@ import { imageFor, money, priceFor, plainText } from '../utils/format';
 import { productAction } from '../utils/productAction';
 import { variantDisplayPrice, variantLabel } from '../utils/productVariant';
 import { recordRecentlyViewed } from '../utils/recentlyViewed';
+import { getInstallmentModeMeta } from '../utils/installments';
 import ProductCard from '../components/ProductCard';
 import SaveHeart from '../components/SaveHeart';
 import SEO from '../components/SEO';
@@ -96,6 +97,7 @@ export default function Product() {
   const variantSoldOut = variant && Number(variant.sku_available_stock) === 0;
 
   const instConfig = installmentConfigResource.data?.data || installmentConfigResource.data;
+  const instMeta = getInstallmentModeMeta(instConfig);
   const minAmount = Number(instConfig?.min_order_amount ?? 25000);
   const maxAmount = Number(instConfig?.max_order_amount ?? 2000000);
   const isInstallmentEligible = Boolean(
@@ -164,7 +166,7 @@ export default function Product() {
         }}
       >
         <CalendarClock size={15} color="#ea580c" />
-        <span>Pay in installments with Layaway • Reserve from {depositPct}% down</span>
+        <span>{instMeta.badgeText(depositPct)}</span>
         <span style={{ fontWeight: 700, marginLeft: '4px', color: '#ea580c' }}>Learn more →</span>
       </button>
     )}<p className="product-detail__description">{plainText(product.description) || 'Discover more about this item and make it yours today.'}</p>
@@ -184,7 +186,7 @@ export default function Product() {
     {user && dialog === 'offer' && <Modal title={offer ? 'Your offer' : 'Request an offer'} onClose={closeDialog}>{offer ? <div className="offer-status"><p>You have already made an offer for this product.</p><p><strong>Status:</strong> {offer.status || 'Pending seller response'}</p>{offer.offeredPrice && <p><strong>Your price:</strong> {money(offer.offeredPrice, symbol)}</p>}<Link className="button button--primary button--md" to="/account/offers">Manage my offers</Link></div> : <form className="offer-form" onSubmit={submitOffer}><p>Send your proposed price to the seller for <strong>{product.name}</strong>.</p><TextField label={`Your offer (${symbol})`} name="offeredPrice" type="number" min="1" step="0.01" required value={offerPrice} onChange={event => setOfferPrice(event.target.value)}/><label className="field" htmlFor="offerMessage"><span className="field__label">Message (optional)</span><textarea id="offerMessage" className="field__input" rows="3" value={offerMessage} onChange={event => setOfferMessage(event.target.value)} placeholder="Add a note for the seller"/></label><Button type="submit" loading={busy}>Send offer</Button></form>}</Modal>}
     {showInstallmentModal && (
       <Modal
-        title="Pay in Installments & Layaway"
+        title={instMeta.fullLabel}
         icon={<CalendarClock size={20} />}
         onClose={() => setShowInstallmentModal(false)}
         footer={
@@ -201,19 +203,28 @@ export default function Product() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
             <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>
-              How Layaway Works on KuduMart
+              How {instMeta.name} Works on KuduMart
             </h4>
             <ol style={{ margin: 0, paddingLeft: '18px', color: '#475569', fontSize: '13px', lineHeight: 1.6 }}>
-              <li>Select <strong>Pay in Installments</strong> during checkout.</li>
-              <li>Pay your initial <strong>{depositPct}% deposit</strong> today to secure and lock in the item.</li>
-              <li>The product is immediately removed from public stock and <strong>held exclusively for you</strong>.</li>
-              <li>Pay your remaining milestones at your own pace within the agreed timeframe.</li>
-              <li>Once fully paid, your order is dispatched immediately for delivery!</li>
+              <li>Select <strong>{instMeta.checkoutOptionTitle}</strong> during checkout.</li>
+              <li>Pay your initial <strong>{depositPct}% deposit</strong> today to activate the plan.</li>
+              {instConfig?.system_mode === 'bnpl_only' ? (
+                <>
+                  <li>Your order is verified and <strong>dispatched immediately</strong> for delivery!</li>
+                  <li>Pay your remaining scheduled installments across your chosen tenure.</li>
+                </>
+              ) : (
+                <>
+                  <li>The product is immediately removed from public stock and <strong>held exclusively for you</strong>.</li>
+                  <li>Pay your remaining milestones at your own pace within the agreed timeframe.</li>
+                  <li>Once fully paid, your order is dispatched immediately for delivery!</li>
+                </>
+              )}
             </ol>
           </div>
 
           <p style={{ margin: 0, fontSize: '12px', color: '#64748b', lineHeight: 1.5 }}>
-            * Delivery and fulfillment details will be calculated at checkout. A 5-day grace period is provided after each due date. If a plan is cancelled or defaulted, the held item returns to inventory with an 8% restocking fee deducted from your deposit refund.
+            * Delivery and fulfillment details will be calculated at checkout. A {instConfig?.grace_period_days || 7}-day grace period is provided after each due date. If a plan is cancelled or defaulted, the item returns to inventory with a {instConfig?.cancellation_fee_percentage || 8}% restocking fee deducted from your deposit refund.
           </p>
         </div>
       </Modal>
