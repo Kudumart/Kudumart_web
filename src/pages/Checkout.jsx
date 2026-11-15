@@ -24,6 +24,7 @@ export default function Checkout() {
   const [preparing, setPreparing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [confirmationError, setConfirmationError] = useState('');
+  const [chargedInstallment, setChargedInstallment] = useState(null);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [messageModal, setMessageModal] = useState(false);
   const [selectedStoreVendor, setSelectedStoreVendor] = useState(null);
@@ -325,8 +326,11 @@ export default function Checkout() {
             });
             setCartCount(0);
             setInstallmentSuccess(true);
+            setChargedInstallment(null);
           } catch (err) {
-            setConfirmationError(`Deposit was charged (${result?.reference}), but layaway plan recording encountered an error: ${err.message}. Please contact support.`);
+            const confirmedRef = result?.reference || refId;
+            setChargedInstallment({ payload, refId: confirmedRef });
+            setConfirmationError(`Deposit was charged (${confirmedRef}), but layaway plan recording encountered an error: ${err.message}. Click "Complete Reservation" below to complete without paying again, or contact support.`);
           } finally {
             setConfirming(false);
           }
@@ -627,7 +631,37 @@ export default function Checkout() {
             : paymentReady ? <StripePayment clientSecret={paymentReady.clientSecret} publicKey={paymentReady.publicKey} amount={money(paymentReady.totalAmount, '$')} onPaid={completeOrder} onError={setConfirmationError}/>
             : preparing ? <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 0', color: '#64748b', fontSize: 13 }}><span className="spinner" /><span>Calculating quote and preparing payment options…</span></div>
             : <div><Button loading={preparing} disabled={!canPay} onClick={startDollar} icon={CreditCard}>Proceed to payment options</Button><small style={{ display: 'block', marginTop: 8, color: '#64748b', fontSize: 12 }}>You will review your final quote and enter payment details before any charge is made.</small></div>}
-          {confirmationError && !pendingPayment && <div className="form-alert" role="alert">{confirmationError}</div>}
+          {confirmationError && !pendingPayment && (
+            <div className="form-alert" role="alert" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div>{confirmationError}</div>
+              {chargedInstallment && (
+                <Button
+                  type="button"
+                  loading={confirming}
+                  onClick={async () => {
+                    setConfirming(true);
+                    try {
+                      await checkoutApi.confirmInstallment({
+                        ...chargedInstallment.payload,
+                        refId: chargedInstallment.refId,
+                        useWallet: applyWallet,
+                      });
+                      setCartCount(0);
+                      setInstallmentSuccess(true);
+                      setChargedInstallment(null);
+                    } catch (err) {
+                      setConfirmationError(`Retry failed: ${err.message}. Please contact support with reference ${chargedInstallment.refId}.`);
+                    } finally {
+                      setConfirming(false);
+                    }
+                  }}
+                  style={{ alignSelf: 'flex-start', marginTop: '6px' }}
+                >
+                  Complete Reservation with Paid Reference
+                </Button>
+              )}
+            </div>
+          )}
         </section>
       </div><aside className="checkout-summary"><h2>Order summary</h2><div className="checkout-summary__items">{items.map(item => <div className="checkout-summary__item" key={item.id}><div className="checkout-summary__image">{imageFor(item.product) && <img src={imageFor(item.product)} alt=""/>}</div><div><strong>{item.product?.name}</strong><span>Qty {item.quantity}</span></div></div>)}</div>
         {mode === 'NGN' ? quote ? (
