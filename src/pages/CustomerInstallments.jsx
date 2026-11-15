@@ -21,6 +21,7 @@ import { Button, Badge, Modal, ConfirmModal, EmptyState, Skeleton } from '../com
 import { useResource } from '../hooks/useResource';
 import { useApp } from '../contexts/AppContext';
 import { money } from '../utils/format';
+import './CustomerInstallments.css';
 
 export default function CustomerInstallments() {
   const { user, notify } = useApp();
@@ -128,7 +129,7 @@ export default function CustomerInstallments() {
   };
 
   return (
-    <div className="container settings-page">
+    <div className="container settings-page installments-page">
       <Link to="/account" className="back-link">
         <ArrowLeft size={16} /> Back to account
       </Link>
@@ -196,38 +197,28 @@ export default function CustomerInstallments() {
             return (
               <div
                 key={plan.id}
+                className="installment-plan-card"
                 style={{
-                  background: '#fff',
                   border: isCancelled ? '1px solid #e2e8f0' : isDefaulted ? '1px solid #fecaca' : '1px solid #e2e8f0',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '20px',
                   opacity: isCancelled ? 0.92 : 1,
                 }}
               >
                 {/* Plan Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <div className="plan-header">
+                  <div className="plan-header__product">
                     {plan.product?.image_url && (
                       <img
                         src={plan.product.image_url}
                         alt=""
+                        className="plan-header__thumb"
                         style={{
-                          width: '64px',
-                          height: '64px',
-                          borderRadius: '10px',
-                          objectFit: 'cover',
-                          border: '1px solid #f1f5f9',
                           filter: isCancelled ? 'grayscale(40%)' : 'none',
                         }}
                       />
                     )}
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#0f172a' }}>
+                    <div className="plan-header__info">
+                      <div className="plan-header__title-row">
+                        <h3 className="plan-header__title">
                           {plan.product?.name || 'Product'}
                         </h3>
                         <Badge tone={plan.mode === 'bnpl' ? 'info' : 'neutral'}>
@@ -238,8 +229,8 @@ export default function CustomerInstallments() {
                         {isCompleted && <Badge tone="success">Completed</Badge>}
                         {isActive && <Badge tone="warning">Active Hold</Badge>}
                       </div>
-                      <span style={{ fontSize: '13px', color: '#64748b' }}>
-                        Sold by {plan.vendor?.firstName} {plan.vendor?.lastName} •{' '}
+                      <span className="plan-header__vendor">
+                        Sold by {plan.vendor ? `${plan.vendor.firstName || ''} ${plan.vendor.lastName || ''}`.trim() : 'KuduMart Official Store'} •{' '}
                         {isCancelled
                           ? 'Reservation cancelled'
                           : isDefaulted
@@ -249,9 +240,11 @@ export default function CustomerInstallments() {
                     </div>
                   </div>
 
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '13px', color: '#64748b' }}>Plan Total</div>
-                    <strong style={{ fontSize: '20px', color: '#0f172a' }}>{money(plan.totalAmount)}</strong>
+                  <div className="plan-header__summary">
+                    <div>
+                      <div className="plan-header__total-label">Plan Total</div>
+                      <strong className="plan-header__total-val">{money(plan.totalAmount)}</strong>
+                    </div>
                     {isCancelled ? (
                       <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
                         Cancelled & Refunded
@@ -273,8 +266,8 @@ export default function CustomerInstallments() {
                 </div>
 
                 {/* Progress Bar */}
-                <div style={{ background: '#f8fafc', padding: '14px 18px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#475569' }}>
+                <div className="plan-progress-box">
+                  <div className="plan-progress-header">
                     <span>
                       <strong>{paidCount} of {totalCount}</strong> payments made
                     </span>
@@ -286,11 +279,11 @@ export default function CustomerInstallments() {
                           : `${progress}% Completed`}
                     </span>
                   </div>
-                  <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div className="plan-progress-bar">
                     <div
+                      className="plan-progress-fill"
                       style={{
                         width: `${progress}%`,
-                        height: '100%',
                         background: isCompleted
                           ? '#10b981'
                           : isCancelled
@@ -298,18 +291,17 @@ export default function CustomerInstallments() {
                             : isDefaulted
                               ? '#ef4444'
                               : '#3b82f6',
-                        transition: 'width 0.4s ease',
                       }}
                     />
                   </div>
                 </div>
 
                 {/* Milestones Schedule */}
-                <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 12px 0', color: '#334155' }}>
+                <div className="milestones-section">
+                  <h4 className="milestones-title">
                     Milestone Payment Schedule
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="milestones-list">
                     {milestones.map((milestone) => {
                       const isPaid = milestone.status === 'paid';
                       const isMilestoneCancelled = milestone.status === 'cancelled' || isCancelled || isDefaulted;
@@ -319,12 +311,8 @@ export default function CustomerInstallments() {
                       return (
                         <div
                           key={milestone.id}
+                          className="milestone-item"
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '12px 16px',
-                            borderRadius: '8px',
                             border: isPaid
                               ? '1px solid #dcfce7'
                               : isMilestoneCancelled
@@ -341,64 +329,94 @@ export default function CustomerInstallments() {
                                   : '#f8fafc',
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            {isPaid ? (
-                              <CheckCircle2 size={18} color="#16a34a" />
-                            ) : isMilestoneCancelled ? (
-                              <Clock size={18} color="#94a3b8" />
-                            ) : (
-                              <Clock size={18} color={isNext ? '#f59e0b' : '#94a3b8'} />
-                            )}
-                            <div>
-                              <div style={{ fontSize: '14px', fontWeight: 600, color: isMilestoneCancelled && !isPaid ? '#64748b' : '#1e293b' }}>
-                                #{milestone.installmentNumber} {milestone.installmentNumber === 1 ? '(Deposit)' : 'Payment'}
-                              </div>
-                              <span style={{ fontSize: '12px', color: '#64748b' }}>
-                                {isPaid
-                                  ? `Paid on ${new Date(milestone.paidAt || milestone.updatedAt).toLocaleDateString()}`
-                                  : isMilestoneCancelled
-                                    ? 'Cancelled with plan'
-                                    : `Due by ${new Date(milestone.dueDate).toLocaleDateString()}`}
+                          <div className="milestone-item__main">
+                            <div className="milestone-item__left">
+                              <span className="milestone-item__icon">
+                                {isPaid ? (
+                                  <CheckCircle2 size={18} color="#16a34a" />
+                                ) : isMilestoneCancelled ? (
+                                  <Clock size={18} color="#94a3b8" />
+                                ) : (
+                                  <Clock size={18} color={isNext ? '#f59e0b' : '#94a3b8'} />
+                                )}
                               </span>
+                              <div className="milestone-item__details">
+                                <div className="milestone-item__title">
+                                  #{milestone.installmentNumber} {milestone.installmentNumber === 1 ? '(Deposit)' : 'Payment'}
+                                </div>
+                                <span className="milestone-item__date">
+                                  {isPaid
+                                    ? `Paid on ${new Date(milestone.paidAt || milestone.updatedAt).toLocaleDateString()}`
+                                    : isMilestoneCancelled
+                                      ? 'Cancelled with plan'
+                                      : `Due by ${new Date(milestone.dueDate).toLocaleDateString()}`}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="milestone-item__right">
+                              <strong className="milestone-item__amount">
+                                {money(milestone.amount)}
+                              </strong>
+
+                              {isPaid ? (
+                                <Badge tone="success">Paid</Badge>
+                              ) : isMilestoneCancelled ? (
+                                <Badge tone="neutral">Cancelled</Badge>
+                              ) : isNext ? (
+                                <div className="milestone-item__desktop-actions">
+                                  {walletBalance >= Number(milestone.amount) && (
+                                    <Button
+                                      size="sm"
+                                      variant="primary"
+                                      icon={Wallet}
+                                      loading={isPaying}
+                                      onClick={() => handlePayMilestone(milestone, plan, true)}
+                                    >
+                                      Pay with Wallet
+                                    </Button>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant={walletBalance >= Number(milestone.amount) ? 'outline' : 'primary'}
+                                    icon={CreditCard}
+                                    loading={isPaying}
+                                    onClick={() => handlePayMilestone(milestone, plan, false)}
+                                  >
+                                    {walletBalance >= Number(milestone.amount) ? 'Pay with Card' : 'Pay Now'}
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Badge tone="neutral">Upcoming</Badge>
+                              )}
                             </div>
                           </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <strong style={{ fontSize: '15px', color: isMilestoneCancelled && !isPaid ? '#64748b' : '#0f172a' }}>
-                              {money(milestone.amount)}
-                            </strong>
-
-                            {isPaid ? (
-                              <Badge tone="success">Paid</Badge>
-                            ) : isMilestoneCancelled ? (
-                              <Badge tone="neutral">Cancelled</Badge>
-                            ) : isNext ? (
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                {walletBalance >= Number(milestone.amount) && (
-                                  <Button
-                                    size="sm"
-                                    variant="primary"
-                                    icon={Wallet}
-                                    loading={isPaying}
-                                    onClick={() => handlePayMilestone(milestone, plan, true)}
-                                  >
-                                    Pay with Wallet
-                                  </Button>
-                                )}
+                          {/* Mobile-only action buttons for payable milestone */}
+                          {isNext && (
+                            <div className="milestone-item__mobile-actions">
+                              {walletBalance >= Number(milestone.amount) && (
                                 <Button
                                   size="sm"
-                                  variant={walletBalance >= Number(milestone.amount) ? 'outline' : 'primary'}
-                                  icon={CreditCard}
+                                  variant="primary"
+                                  icon={Wallet}
                                   loading={isPaying}
-                                  onClick={() => handlePayMilestone(milestone, plan, false)}
+                                  onClick={() => handlePayMilestone(milestone, plan, true)}
                                 >
-                                  {walletBalance >= Number(milestone.amount) ? 'Pay with Card' : 'Pay Now'}
+                                  Pay with Wallet ({money(milestone.amount)})
                                 </Button>
-                              </div>
-                            ) : (
-                              <Badge tone="neutral">Upcoming</Badge>
-                            )}
-                          </div>
+                              )}
+                              <Button
+                                size="sm"
+                                variant={walletBalance >= Number(milestone.amount) ? 'outline' : 'primary'}
+                                icon={CreditCard}
+                                loading={isPaying}
+                                onClick={() => handlePayMilestone(milestone, plan, false)}
+                              >
+                                {walletBalance >= Number(milestone.amount) ? 'Pay with Card' : 'Pay Now'}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -407,9 +425,8 @@ export default function CustomerInstallments() {
 
                 {/* Fulfillment / Status Banner */}
                 <div
+                  className="fulfillment-notice"
                   style={{
-                    padding: '12px 16px',
-                    borderRadius: '8px',
                     background: isCancelled
                       ? '#f8fafc'
                       : isDefaulted
@@ -431,19 +448,17 @@ export default function CustomerInstallments() {
                         : isCompleted
                           ? '#166534'
                           : '#1e40af',
-                    fontSize: '13px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
                   }}
                 >
-                  {isCancelled ? (
-                    <AlertTriangle size={18} color="#64748b" />
-                  ) : isDefaulted ? (
-                    <AlertTriangle size={18} color="#dc2626" />
-                  ) : (
-                    <ShieldCheck size={18} />
-                  )}
+                  <span className="fulfillment-notice__icon">
+                    {isCancelled ? (
+                      <AlertTriangle size={18} color="#64748b" />
+                    ) : isDefaulted ? (
+                      <AlertTriangle size={18} color="#dc2626" />
+                    ) : (
+                      <ShieldCheck size={18} />
+                    )}
+                  </span>
                   <span>
                     {isCancelled ? (
                       <span>This layaway reservation was cancelled. The reserved inventory has been returned to stock and your refund was credited to your KuduMart Wallet.</span>
@@ -460,7 +475,7 @@ export default function CustomerInstallments() {
                 </div>
 
                 {plan.status === 'active' && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-8px' }}>
+                  <div className="plan-cancel-link-wrap">
                     <button
                       type="button"
                       onClick={() => setCancellingPlan(plan)}
