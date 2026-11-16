@@ -427,6 +427,7 @@ export default function Home() {
         title="KuduMart — Buy & Sell in Nigeria | Marketplace, Auctions & Layaway"
         description="Discover thousands of quality products from verified Nigerian sellers on KuduMart. Enjoy secure payments, live auctions, verified services, and flexible layaway installment plans."
         keywords="KuduMart, online shopping Nigeria, buy in installments, layaway Nigeria, buy and sell, verified electronics, nigerian marketplace"
+        url="https://kudumart.com/"
       />
       <section className="hero">
         <div className="hero__content">

@@ -3,6 +3,7 @@ User-agent: *
 Allow: /
 Allow: /catalog
 Allow: /product/
+Allow: /store/
 Allow: /auctions
 Allow: /services
 Allow: /about
@@ -21,7 +22,7 @@ Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
 Disallow: /reset-password
+Disallow: /search
 
 # Sitemaps
-Sitemap: https://kudumart.com/api/sitemap.xml
 Sitemap: https://kudumart.com/sitemap.xml

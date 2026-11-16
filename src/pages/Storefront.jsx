@@ -40,6 +40,8 @@ export default function Storefront() {
   }, [items, query]);
   const totalPages = Number(pagination.totalPages || 1);
   const totalCount = Number(pagination.totalCount ?? items.length);
+  const canonicalUrl = `https://kudumart.com/store/${vendorId}`;
+  const isEmptyOrError = Boolean(resource.error || (!resource.loading && !items.length));
 
   return (
     <div className="storefront-page">
@@ -47,6 +49,8 @@ export default function Storefront() {
         title={`${storeName} — Official Storefront`}
         description={`Explore verified products from ${storeName} on KuduMart Nigeria. Fast delivery, secure payments, and layaway installment plans.`}
         image={store?.logo}
+        url={canonicalUrl}
+        noindex={isEmptyOrError}
       />
       <div className="container storefront-back"><Link to="/catalog" className="back-link"><ArrowLeft size={16}/> Back to shopping</Link></div>
     {resource.loading && !resource.data ? <div className="container"><Skeleton className="storefront-hero-skeleton"/><div className="product-grid product-grid--catalog storefront-grid">{Array.from({ length: 8 }, (_, index) => <Skeleton className="product-skeleton" key={index}/>)}</div></div>

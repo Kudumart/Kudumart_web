@@ -86,8 +86,36 @@ export default function Product() {
     } catch (error) { notify(error.message, 'error'); }
     finally { setBusy(false); }
   };
-  if (loading) return <div className="container product-page"><Skeleton className="product-detail-skeleton"/></div>;
-  if (error || !product) return <div className="container page-space"><EmptyState title="Product unavailable" description={error?.message || 'This product could not be found.'} action={<Link to="/catalog"><Button variant="outline">Back to products</Button></Link>}/></div>;
+
+  const canonicalUrl = `https://kudumart.com/product/${id}`;
+
+  if (loading) {
+    return (
+      <div className="container product-page">
+        <SEO title="Product Details | KuduMart" url={canonicalUrl} />
+        <Skeleton className="product-detail-skeleton" />
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="container page-space">
+        <SEO
+          title="Product Unavailable | KuduMart"
+          description={error?.message || 'This product could not be found or is no longer available.'}
+          url={canonicalUrl}
+          noindex={true}
+        />
+        <EmptyState
+          title="Product unavailable"
+          description={error?.message || 'This product could not be found.'}
+          action={<Link to="/catalog"><Button variant="outline">Back to products</Button></Link>}
+        />
+      </div>
+    );
+  }
+
   const variants = product.variants || [];
   const isAvailable = Number(product.quantity) > 0;
   const variant = selectedVariant !== '' ? variants[Number(selectedVariant)] : null;
@@ -128,6 +156,7 @@ export default function Product() {
         title={`${product.name} — Buy Online`}
         description={seoDescription}
         image={seoImage}
+        url={canonicalUrl}
         type="product"
         product={{
           name: product.name,

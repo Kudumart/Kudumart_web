@@ -13,6 +13,7 @@ export default function SEO({
   product,
   schema,
   keywords,
+  noindex = false,
 }) {
   useEffect(() => {
     // 1. Page Title
@@ -49,11 +50,43 @@ export default function SEO({
       el.setAttribute('href', href);
     };
 
-    const currentUrl = url || window.location.href;
+    // Clean Canonical URL
+    let cleanCanonical = '';
+    try {
+      if (url) {
+        const parsed = new URL(url, window.location.origin);
+        const paramsToKeep = new URLSearchParams();
+        for (const [k, v] of parsed.searchParams.entries()) {
+          if (!k.startsWith('utm_') && !['ref', 'fbclid', 'gclid', '_ga'].includes(k.toLowerCase())) {
+            paramsToKeep.append(k, v);
+          }
+        }
+        const searchStr = paramsToKeep.toString();
+        cleanCanonical = `${parsed.origin}${parsed.pathname}${searchStr ? `?${searchStr}` : ''}`;
+      } else {
+        cleanCanonical = `${window.location.origin}${window.location.pathname}`;
+      }
+      if (cleanCanonical.length > 1 && cleanCanonical.endsWith('/') && !cleanCanonical.includes('?')) {
+        cleanCanonical = cleanCanonical.slice(0, -1);
+      }
+    } catch {
+      cleanCanonical = url || window.location.href.split('?')[0];
+    }
+
+    const currentUrl = cleanCanonical;
     const finalDescription =
       description ||
       'Discover more with KuduMart — Nigeria’s marketplace for verified products, services, auctions, and flexible installment layaway.';
     const finalImage = image || `${window.location.origin}/kudumart-logo.png`;
+
+    // Robots meta (Crucial for GSC Soft 404 & Crawl Budget)
+    if (noindex) {
+      setMeta('name', 'robots', 'noindex, nofollow');
+      setMeta('name', 'googlebot', 'noindex, nofollow');
+    } else {
+      setMeta('name', 'robots', 'index, follow, max-image-preview:large');
+      setMeta('name', 'googlebot', 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1');
+    }
 
     // Standard Meta
     setMeta('name', 'description', finalDescription);
@@ -165,7 +198,7 @@ export default function SEO({
     if (jsonLdData) {
       scriptTag.textContent = JSON.stringify(jsonLdData);
     }
-  }, [title, description, image, url, type, product, schema, keywords]);
+  }, [title, description, image, url, type, product, schema, keywords, noindex]);
 
   return null;
 }

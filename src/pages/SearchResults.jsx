@@ -40,6 +40,7 @@ export default function SearchResults() {
       <SEO
         title={query ? `Results for “${query}”` : 'Search Products & Services'}
         description={`Find "${query || 'products'}" on KuduMart Nigeria with verified sellers, best prices, and secure layaway installment options.`}
+        noindex={true}
       />
       <div className="page-intro"><span className="eyebrow">THE MARKETPLACE</span><h1>Results for “{query}”</h1><p>Explore the finds and services matching your search.</p></div>
     <div className="search-results-tabs" role="tablist" aria-label="Search result type"><button type="button" role="tab" aria-selected={tab === 'products'} className={tab === 'products' ? 'active' : ''} onClick={() => setTab('products')}>Products</button><button type="button" role="tab" aria-selected={tab === 'services'} className={tab === 'services' ? 'active' : ''} onClick={() => { setTab('services'); setPage(1); }}>Services</button></div>

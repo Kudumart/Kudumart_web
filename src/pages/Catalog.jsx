@@ -171,9 +171,13 @@ function CatalogBrowse() {
     ? `Browse ${categoryName} on KuduMart Nigeria. Enjoy verified sellers, best prices, fast delivery, and layaway installment plans.`
     : `Shop thousands of products across fashion, electronics, gadgets, and home goods on KuduMart Nigeria.`;
 
+  const canonicalUrl = categoryId
+    ? `https://kudumart.com/catalog?category=${categoryId}${categoryName ? `&name=${encodeURIComponent(categoryName)}` : ''}`
+    : 'https://kudumart.com/catalog';
+
   return (
     <div className="catalog-page container">
-      <SEO title={pageTitle} description={pageDesc} />
+      <SEO title={pageTitle} description={pageDesc} url={canonicalUrl} />
       <div className="page-intro">
         <span className="eyebrow">THE MARKETPLACE</span>
         <h1>
