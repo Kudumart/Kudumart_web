@@ -575,6 +575,12 @@ export const adminApi = {
       body: values,
     }),
 
+  // Platform Pickup Address Settings
+  pickupSettings: (signal) =>
+    adminRequest("/admin/settings/pickup", { signal }),
+  savePickupSettings: (body) =>
+    adminRequest("/admin/settings/pickup", { method: "PUT", body }),
+
   // Admin-owned stores
   myStores: (signal) => adminRequest("/admin/store", { signal }),
   createStore: (values) =>

@@ -53,13 +53,23 @@ export default function Checkout() {
   const walletData = walletResource.data?.data || walletResource.data;
   const walletBalance = Number(walletData?.balance ?? user?.wallet ?? 0);
 
+  const pickupResource = useResource(
+    (signal) => checkoutApi.pickupAddress(signal).catch(() => null),
+    [],
+  );
+  const pickupSettings = pickupResource.data?.data || pickupResource.data || {};
+  const pickupEnabled = pickupSettings.pickupEnabled !== false;
+  const pickupLabel = pickupSettings.pickupLabel || 'Pick up from KuduMart';
+  const pickupAddressText = pickupSettings.pickupAddress || 'Pickup details will be shared upon order confirmation.';
+  const pickupNote = pickupSettings.pickupNote || '';
+
   const cart = useResource(signal => user ? accountApi.cart(signal) : Promise.resolve([]), [user?.id]);
   const items = Array.isArray(cart.data) ? cart.data : cart.data?.data || [];
   const location = parseLocation(user?.location);
   const hasAddress = hasDeliveryAddress(location);
   const mode = paymentMode({ items, country: location?.country || country.name });
   const countryCode = countryCodeForLocation(location, country.code);
-  const canPickup = mode === 'NGN' && !items.some(isDropship);
+  const canPickup = pickupEnabled && mode === 'NGN' && !items.some(isDropship);
   const needsDelivery = deliveryOption !== 'store' || !canPickup;
   const charges = useResource(signal => user && items.length && mode === 'NGN' ? checkoutApi.charges(signal) : Promise.resolve([]), [user?.id, items.length, mode]);
   const deliveryFees = useResource(signal => user && items.length && mode === 'NGN' && needsDelivery && hasAddress ? checkoutApi.deliveryFees(countryCode, signal) : Promise.resolve(null), [user?.id, items.length, mode, needsDelivery, hasAddress, countryCode, location?.city, location?.zipCode]);
@@ -153,7 +163,11 @@ export default function Checkout() {
     const stock = availableStock(item);
     return stock !== null && Number(item.quantity) > stock;
   });
-  const addressText = needsDelivery ? formatAddress(location) : 'Pickup at Kudumart Store';
+  const addressText = needsDelivery
+    ? formatAddress(location)
+    : pickupSettings.pickupAddress
+      ? `Pickup: ${pickupSettings.pickupAddress}`
+      : 'Pickup at Kudumart Store';
   const canPay = Boolean(user && items.length && (hasAddress || (!needsDelivery && canPickup)) && !stockIssues.length && !cart.loading && !cart.error && !pendingPayment && (mode !== 'NGN' || (!charges.loading && (!needsDelivery || !deliveryFees.loading) && !charges.error && (!needsDelivery || !deliveryFees.error) && quote?.total > 0)));
 
   const instConfig = installmentConfigResource.data?.data || installmentConfigResource.data;
@@ -393,7 +407,7 @@ export default function Checkout() {
         <section className="checkout-panel">
           <div className="checkout-panel__heading"><div className="checkout-step">1</div><div><h2>Delivery details</h2><p>Where should your order go?</p></div></div>
           {hasAddress ? <div className="delivery-options"><label className={needsDelivery ? 'selected' : ''}><input type="radio" name="delivery" checked={needsDelivery} onChange={() => { setDeliveryOption('customer'); setPaymentReady(null); }}/><MapPin size={20}/><span><strong>Deliver to my address</strong><small>{formatAddress(location)}</small></span></label></div> : <div className="checkout-address-empty"><span className="checkout-address-empty__icon"><MapPin size={24}/></span><div><h3>No delivery address yet</h3><p>Add your street, city, and postal code to calculate delivery and continue to payment.</p></div><Button type="button" onClick={() => setShowAddress(true)}>Add address</Button></div>}
-          {canPickup && <div className="delivery-options"><label className={!needsDelivery ? 'selected' : ''}><input type="radio" name="delivery" checked={!needsDelivery} onChange={() => { setDeliveryOption('store'); setPaymentReady(null); }}/><PackageCheck size={20}/><span><strong>Pick up from KuduMart</strong><small>52, Gbemisola Adenubi Street, Off Ago Palace Way, by Jemtok Bus Stop, Ago-Okota, Lagos</small></span></label></div>}
+          {canPickup && <div className="delivery-options"><label className={!needsDelivery ? 'selected' : ''}><input type="radio" name="delivery" checked={!needsDelivery} onChange={() => { setDeliveryOption('store'); setPaymentReady(null); }}/><PackageCheck size={20}/><span><strong>{pickupLabel}</strong><small>{pickupAddressText}{pickupNote ? ` · ${pickupNote}` : ''}</small></span></label></div>}
           {hasAddress && <Button variant="outline" size="sm" onClick={() => setShowAddress(true)}>Change address</Button>}
         </section>
         <section className="checkout-panel">

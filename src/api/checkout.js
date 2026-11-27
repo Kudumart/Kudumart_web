@@ -20,6 +20,7 @@ export const checkoutApi = {
   addReview: async ({ orderId, productId, rating, comment }) => unwrap(await request('/user/add/review', { method: 'POST', authenticated: true, body: { orderId, productId, rating, comment } })),
   // Installment & Layaway API
   installmentConfig: async signal => unwrap(await request('/installments/config', { signal })),
+  pickupAddress: async signal => unwrap(await request('/pickup-address', { signal })),
   prepareInstallment: async payload => unwrap(await request('/user/installments/prepare', { method: 'POST', authenticated: true, body: payload })),
   confirmInstallment: async payload => unwrap(await request('/user/installments/confirm', { method: 'POST', authenticated: true, body: payload })),
   installmentPlans: async (params, signal) => unwrap(await request('/user/installments/plans', { authenticated: true, params, signal })),
