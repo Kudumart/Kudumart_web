@@ -73,7 +73,8 @@ export function mapRowsForExport(kind, rows = []) {
 }
 
 /**
- * Triggers a browser download of an Excel (.xlsx) or CSV (.csv) file.
+ * Triggers a browser download of an Excel (.xlsx) or CSV (.csv) file
+ * with auto-sized column widths.
  */
 export function downloadSpreadsheet({ rows, filename, format = "xlsx", sheetName = "Data" }) {
   if (!rows || !rows.length) {
