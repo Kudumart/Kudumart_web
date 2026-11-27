@@ -143,7 +143,16 @@ export default function CustomerInstallments() {
       <div className="page-intro">
         <span className="eyebrow">FINANCING & LAYAWAY</span>
         <h1>Your Installments & Layaways</h1>
-        <p>Manage your reserved items, check holding deadlines, and settle upcoming milestone payments.</p>
+        <p>
+          Manage your reserved items, check holding deadlines, and settle upcoming milestone payments.{' '}
+          <Link to="/installment-agreement" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>
+            Installment Agreement
+          </Link>
+          {' · '}
+          <Link to="/return-policy" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>
+            Return Policy
+          </Link>
+        </p>
       </div>
 
       {paymentError && (

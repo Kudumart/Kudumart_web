@@ -32,6 +32,7 @@ export default function Checkout() {
   const [messageText, setMessageText] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   const [paymentPlan, setPaymentPlan] = useState('full'); // 'full' | 'installment'
+  const [acceptedInstallmentTerms, setAcceptedInstallmentTerms] = useState(false);
   const [selectedTenureId, setSelectedTenureId] = useState(null);
   const [selectedDepositPct, setSelectedDepositPct] = useState(null);
   const [installmentSuccess, setInstallmentSuccess] = useState(false);
@@ -585,12 +586,55 @@ export default function Checkout() {
                             </div>
                           </div>
 
+                          <label
+                            style={{
+                              display: 'flex',
+                              alignItems: 'flex-start',
+                              gap: '10px',
+                              padding: '10px 12px',
+                              background: '#f8fafc',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              fontSize: '12.5px',
+                              color: '#334155',
+                              lineHeight: 1.45,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={acceptedInstallmentTerms}
+                              onChange={(e) => setAcceptedInstallmentTerms(e.target.checked)}
+                              style={{ marginTop: '2px', accentColor: '#0f172a', cursor: 'pointer' }}
+                            />
+                            <span>
+                              I have read and agree to the KuduMart{' '}
+                              <Link
+                                to="/installment-agreement"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#0f172a', fontWeight: 600, textDecoration: 'underline' }}
+                              >
+                                Installment Agreement
+                              </Link>{' '}
+                              and{' '}
+                              <Link
+                                to="/return-policy"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#0f172a', fontWeight: 600, textDecoration: 'underline' }}
+                              >
+                                Return Policy
+                              </Link>.
+                            </span>
+                          </label>
+
                           <Button
                             className="checkout-pay-button"
                             type="button"
                             icon={instDue === 0 ? Wallet : CalendarClock}
                             onClick={startInstallment}
-                            disabled={!canPay}
+                            disabled={!canPay || !acceptedInstallmentTerms}
                             loading={preparing}
                           >
                             {instDue === 0
@@ -702,7 +746,7 @@ export default function Checkout() {
           </>
         ) : quoteError ? <><div className="checkout-summary__row"><span>Items</span><strong>{chargeQuote ? money(chargeQuote.subtotal) : '—'}</strong></div><div className="checkout-summary__row"><span>Product charges</span><strong>{chargeQuote ? money(chargeQuote.charges) : '—'}</strong></div><div className="checkout-summary__row"><span>Delivery</span><strong>Unavailable</strong></div><div className="checkout-summary__total"><span>Total</span><strong>—</strong></div></> : <p className="checkout-summary__hint">{needsDelivery && !hasAddress ? 'Add a delivery address to see your final total.' : 'Calculating your total…'}</p>
           : paymentReady ? <><div className="checkout-summary__row"><span>Items</span><strong>{money(paymentReady.paymentBreakdown?.subtotal, '$')}</strong></div><div className="checkout-summary__row"><span>Product charges</span><strong>{money(paymentReady.paymentBreakdown?.chargeAmount, '$')}</strong></div><div className="checkout-summary__total"><span>Total</span><strong>{money(paymentReady.totalAmount, '$')}</strong></div></> : preparing ? <p className="checkout-summary__hint">Calculating your payment quote…</p> : <p className="checkout-summary__hint">{needsDelivery && !hasAddress ? 'Add a delivery address to see your final total.' : 'Your final dollar total comes from the payment quote before you pay.'}</p>}
-        <p className="checkout-summary__assurance"><ShieldCheck size={17}/> Your order is confirmed only after payment is verified.</p></aside></div>}
+        <p className="checkout-summary__assurance"><ShieldCheck size={17}/> Your order is confirmed only after payment is verified. Covered by our <Link to="/return-policy" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline' }}>Return Policy</Link>.</p></aside></div>}
     {showAddress && <Modal title="Delivery address" onClose={() => setShowAddress(false)}><AddressForm onSaved={() => { setShowAddress(false); setPaymentReady(null); }} onCancel={() => setShowAddress(false)}/></Modal>}
     {messageModal && <Modal title={`Message ${sellerStoreName}`} onClose={() => setMessageModal(false)}><form className="offer-form" onSubmit={handleSendMessage}>{storeVendors.length > 1 && <label className="field" htmlFor="selectStoreVendor"><span className="field__label">Store / Seller to contact</span><select id="selectStoreVendor" className="field__input" value={activeStoreVendor?.storeId || ''} onChange={event => { const chosen = storeVendors.find(sv => sv.storeId === event.target.value); if (chosen) { setSelectedStoreVendor(chosen); const productList = chosen.productNames?.length ? `"${chosen.productNames.join(', ')}"` : 'items in my cart'; setMessageText(`Hi ${chosen.storeName}, I'd like to order ${productList}, but delivery to ${location?.city || 'my location'} is unavailable. Could you provide a delivery rate?`); } }}>{storeVendors.map(sv => <option key={sv.storeId} value={sv.storeId}>{sv.storeName} {sv.storeId === troubledStore?.storeId ? '(needs delivery rate update)' : ''}</option>)}</select></label>}<p>Ask <strong>{sellerStoreName}</strong> about delivery to your address or alternative options. Their reply will appear in your messages.</p><label className="field" htmlFor="checkoutMessage"><span className="field__label">Message</span><textarea id="checkoutMessage" className="field__input" rows="4" maxLength="2000" required value={messageText} onChange={event => setMessageText(event.target.value)} placeholder="What would you like to ask the seller?"/></label><Button type="submit" loading={sendingMessage} disabled={!messageText.trim()}>Send message</Button></form></Modal>}
     {orderSuccess && <Modal title="Order confirmed" icon={<CheckCircle2 size={20}/>} onClose={() => navigate('/account/orders', { replace: true })} footer={<Button icon={PackageCheck} onClick={() => navigate('/account/orders', { replace: true })}>View my orders</Button>}><div className="checkout-success"><span className="checkout-success__icon"><CheckCircle2 size={38}/></span><h3>Thank you for your order!</h3><p>Your payment was verified and your order has been placed successfully. You can follow its progress from your orders page.</p></div></Modal>}

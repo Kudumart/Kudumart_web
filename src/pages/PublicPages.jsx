@@ -109,21 +109,81 @@ const pageCopy = {
   },
   returns: {
     eyebrow: "BUY WITH CLARITY",
-    title: "Return and refund policy.",
+    title: "Return and Refund Policy",
     intro:
-      "Return eligibility depends on the listing, item condition and the circumstances of the transaction.",
+      "We want every purchase on KuduMart to meet your expectations. This Return and Refund Policy explains when and how you can return an item or request a refund.",
     sections: [
       [
-        "Before you buy",
-        "Review the listing description, seller terms, condition, warranty and delivery information before placing an order.",
+        "1. Return Window & Eligibility",
+        "You may request a return within 7 calendar days of delivery or pickup confirmation if an item arrives damaged, defective, incomplete, counterfeit, or materially different from the listing description.",
       ],
       [
-        "Report an issue",
-        "If an item is materially different, damaged or not delivered, contact support promptly and preserve relevant evidence.",
+        "2. Item Condition Requirements",
+        "Returned items must be unused, unwashed, and in the same condition in which you received them, with original packaging, seals, tags, manuals, accessories, and proof of purchase intact.",
       ],
       [
-        "Resolution",
-        "Eligible cases may result in replacement, return or refund after review. Custom, consumed or misused items may not qualify.",
+        "3. Non-Returnable Items",
+        "For health, safety, and authenticity reasons, perishable goods, personal care and hygiene products, intimate apparel, digital goods or vouchers, custom or made-to-order items, and products damaged through misuse or unauthorized repair are not eligible for return unless they arrived defective or incorrect.",
+      ],
+      [
+        "4. How to Request a Return",
+        "Initiate a return from your My Orders page or email support@kudumart.com within the 7-day window. Please include your Order ID, a clear description of the issue, and supporting photos or unboxing video.",
+      ],
+      [
+        "5. Verification & Return Shipping",
+        "Our support team reviews every return claim with the seller. Where an item is confirmed defective, damaged in transit, or incorrect, KuduMart coordinates return pickup or covers verified return shipping. Where a seller accepts a change-of-mind return, return shipping costs are borne by the buyer.",
+      ],
+      [
+        "6. Refund Processing & Timelines",
+        "Once a returned item is received and inspected, approved refunds are issued within 3 to 7 business days to your KuduMart wallet or original payment method, depending on your bank or payment provider.",
+      ],
+      [
+        "7. Installment & Layaway Orders",
+        "Orders placed on an installment or layaway plan are also governed by our Installment Agreement. Cancellations prior to full settlement are subject to the applicable restocking fee shown at checkout; fulfilled items that arrive defective or materially different qualify for return under this policy.",
+      ],
+      [
+        "8. Need Assistance?",
+        "If you have questions about a return or refund, contact our support team at support@kudumart.com or via the Contact Us page.",
+      ],
+    ],
+  },
+  installment: {
+    eyebrow: "FINANCING & LAYAWAY",
+    title: "Installment & Layaway Agreement",
+    intro:
+      "This Installment & Layaway Agreement sets out the terms governing installment and layaway purchases made on KuduMart. By selecting an installment or layaway plan at checkout, you agree to these terms.",
+    sections: [
+      [
+        "1. Eligibility & Availability",
+        "Installment and layaway plans are available on eligible Nigerian Naira (NGN) orders that meet KuduMart's minimum and maximum order value thresholds displayed at checkout. KuduMart reserves the right to determine product, seller, and account eligibility.",
+      ],
+      [
+        "2. How Your Plan Works (Layaway vs. Pay Later)",
+        "Depending on the plan mode active at checkout: under Layaway (Reserve & Pay), your item is removed from public inventory and reserved exclusively for you once your deposit is confirmed, and dispatched upon 100% completion of all scheduled payments; under Buy Now, Pay Later (BNPL), your order is verified and dispatched after your initial deposit, while you settle the remaining milestones on their due dates.",
+      ],
+      [
+        "3. Initial Deposit & Milestone Schedule",
+        "To activate a plan, you must pay the required initial deposit (typically 25% or the percentage selected at checkout) along with any applicable wallet credit. Your remaining balance, number of payments, and milestone due dates are fixed and displayed before you confirm payment and remain viewable anytime under Account > Installments.",
+      ],
+      [
+        "4. Grace Period & Payment Reminders",
+        "KuduMart provides a grace period (typically 7 days, or as stated at checkout) following each scheduled milestone due date. We send reminders before and after due dates, but keeping payments current remains your responsibility.",
+      ],
+      [
+        "5. Cancellation, Default & Restocking Fee",
+        "If you cancel a reserved layaway plan before full payment, or if a plan defaults after the grace period expires, your reservation is cancelled and the item is returned to public inventory. Payments made toward the plan are refunded to your KuduMart wallet or original payment method minus the applicable cancellation/restocking fee (typically 8% or the percentage displayed at checkout). For dispatched BNPL orders, unpaid balances remain legally due and may result in account suspension and collection steps.",
+      ],
+      [
+        "6. Delivery, Pickup & Transfer of Ownership",
+        "Delivery fees or pickup location options are calculated and locked in at checkout. Full ownership and title to the item transfer to you only after all scheduled installment payments have been settled in full.",
+      ],
+      [
+        "7. Returns & Refunds on Installment Orders",
+        "Once a fulfilled installment order is delivered or picked up, eligible claims for damaged, defective, or materially different items are handled under KuduMart's Return and Refund Policy. Approved refunds are credited proportionally to your KuduMart wallet or original payment method.",
+      ],
+      [
+        "8. Changes, Support & Governing Law",
+        "KuduMart may update this agreement to reflect platform or regulatory changes; updates apply prospectively to new plans. For assistance with an active plan, contact support@kudumart.com. This agreement is governed by the laws of the Federal Republic of Nigeria.",
       ],
     ],
   },

@@ -262,6 +262,10 @@ function App() {
               path="return-policy"
               element={<ContentPage kind="returns" />}
             />
+            <Route
+              path="installment-agreement"
+              element={<ContentPage kind="installment" />}
+            />
             <Route path="testimonials" element={<Testimonials />} />
             <Route path="download-app" element={<DownloadApp />} />
             <Route path="advertise-with-us" element={<AdvertiseWithUs />} />
