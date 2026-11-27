@@ -1,4 +1,4 @@
-import { ArrowRight, Gavel, ImageOff, Sparkles } from 'lucide-react';
+import { ArrowRight, Gavel, ImageOff, Play, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { catalogApi } from '../api/catalog';
 import { Button, EmptyState, Skeleton } from '../components/ui';
@@ -42,6 +42,26 @@ export default function Discovery({ type }) {
                   {isAuction && (
                     <span className={`discovery-status discovery-status--${item.auctionStatus || 'ended'}`}>
                       {item.auctionStatus === 'ongoing' ? 'Ongoing' : item.auctionStatus === 'upcoming' ? 'Upcoming' : item.auctionStatus === 'cancelled' ? 'Cancelled' : 'Ended'}
+                    </span>
+                  )}
+                  {isAuction && item.video && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: 10,
+                        left: 10,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        padding: '4px 9px',
+                        borderRadius: 999,
+                        background: 'rgba(15, 23, 42, 0.82)',
+                        color: '#fff',
+                        fontSize: 12,
+                        fontWeight: 600,
+                      }}
+                    >
+                      <Play size={12} fill="currentColor" /> Video
                     </span>
                   )}
                 </Link>
