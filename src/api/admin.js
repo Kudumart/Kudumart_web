@@ -129,10 +129,16 @@ export const adminApi = {
     }
     return profile;
   },
-  customers: (page = 1, signal) =>
-    adminRequest("/admin/customers", { params: { page }, signal }),
-  vendors: (page = 1, signal) =>
-    adminRequest("/admin/vendors", { params: { page }, signal }),
+  customers: (page = 1, signal, params = {}) =>
+    adminRequest("/admin/customers", {
+      params: { page, ...params },
+      signal,
+    }),
+  vendors: (page = 1, signal, params = {}) =>
+    adminRequest("/admin/vendors", {
+      params: { page, ...params },
+      signal,
+    }),
   vendor: (userId, signal) =>
     adminRequest("/admin/user/details", { params: { userId }, signal }),
   toggleUserStatus: (userId) =>
@@ -315,7 +321,7 @@ export const adminApi = {
       body: { subAdminId },
     }),
   products: (page = 1, signal, filters = {}) =>
-    adminRequest("/admin/general/products", {
+    adminPageRequest("/admin/general/products", {
       params: { page, ...filters },
       signal,
     }),

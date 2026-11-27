@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   CreditCard,
+  Download,
   FileText,
   Gavel,
   ImagePlus,
@@ -58,6 +59,7 @@ import {
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useResource } from "../../hooks/useResource";
 import { useApp } from "../../contexts/AppContext";
+import { downloadSpreadsheet, mapRowsForExport } from "../../utils/exportData";
 import AdminPlanForm from "./AdminPlanForm";
 import "./AdminNavigation.css";
 
@@ -554,29 +556,33 @@ export function AdminOverview() {
 }
 
 export function AdminList({ kind }) {
+  const { notify } = useApp();
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
+  const [exportingFormat, setExportingFormat] = useState("");
+  const debouncedQuery = useDebouncedValue(query.trim(), 350);
+
+  useEffect(() => {
+    setPage(1);
+  }, [kind, debouncedQuery]);
+
   const source = {
     vendors: adminApi.vendors,
     customers: adminApi.customers,
     products: adminApi.products,
     orders: adminApi.orders,
   }[kind];
-  const resource = useResource((signal) => source(page, signal), [kind, page]);
-  const rows = rowsFrom(resource.data);
-  const filtered = rows.filter((item) =>
-    JSON.stringify([
-      item.name,
-      item.firstName,
-      item.lastName,
-      item.email,
-      item.refId,
-      item.title,
-      item.status,
-    ])
-      .toLowerCase()
-      .includes(query.toLowerCase()),
+
+  const resource = useResource(
+    (signal) =>
+      source(page, signal, {
+        search: debouncedQuery,
+        limit: 20,
+      }),
+    [kind, page, debouncedQuery],
   );
+
+  const rows = rowsFrom(resource.data);
   const total = totalFrom(
     resource.data,
     kind === "vendors"
@@ -585,6 +591,53 @@ export function AdminList({ kind }) {
         ? "totalCustomers"
         : undefined,
   );
+  const totalPages = Math.max(
+    1,
+    Number(
+      resource.data?.pagination?.pages ||
+        resource.data?.meta?.totalPages ||
+        Math.ceil(Number(total || rows.length) / 20) ||
+        1,
+    ),
+  );
+
+  const handleExport = async (format) => {
+    setExportingFormat(format);
+    try {
+      const response = await source(1, undefined, {
+        search: debouncedQuery,
+        limit: 10000,
+      });
+      const allRows = rowsFrom(response);
+      if (!allRows.length) {
+        notify(`No ${kind} found to export.`, "info");
+        return;
+      }
+      const mapped = mapRowsForExport(kind, allRows);
+      downloadSpreadsheet({
+        rows: mapped,
+        filename: `kudumart-${kind}`,
+        format,
+        sheetName: kind[0].toUpperCase() + kind.slice(1),
+      });
+      notify(
+        `Exported ${mapped.length.toLocaleString()} ${kind} to ${format.toUpperCase()}.`,
+        "success",
+      );
+    } catch (error) {
+      notify(error?.message || `Failed to export ${kind}.`, "error");
+    } finally {
+      setExportingFormat("");
+    }
+  };
+
+  const searchPlaceholder =
+    kind === "vendors"
+      ? "Search all vendors by name, email, phone, or tracking ID..."
+      : kind === "customers"
+        ? "Search all customers by name, email, or phone..."
+        : `Search all ${kind}...`;
+
   return (
     <>
       <div className="admin-page-head">
@@ -594,19 +647,69 @@ export function AdminList({ kind }) {
           <p>
             {resource.error
               ? "The list could not be loaded."
-              : `${Number(total).toLocaleString()} total`}
+              : debouncedQuery
+                ? `${Number(total).toLocaleString()} matching ${kind} for "${debouncedQuery}"`
+                : `${Number(total).toLocaleString()} total`}
           </p>
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Download}
+            loading={exportingFormat === "xlsx"}
+            disabled={Boolean(exportingFormat)}
+            onClick={() => handleExport("xlsx")}
+          >
+            Export Excel
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Download}
+            loading={exportingFormat === "csv"}
+            disabled={Boolean(exportingFormat)}
+            onClick={() => handleExport("csv")}
+          >
+            Export CSV
+          </Button>
         </div>
       </div>
       <section className="admin-card">
         <div className="admin-list-toolbar">
-          <input
-            aria-label={`Search ${kind} on this page`}
-            placeholder={`Search ${kind} on this page`}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <span>Page {page}</span>
+          <div style={{ position: "relative", flex: 1, maxWidth: 440 }}>
+            <input
+              aria-label={searchPlaceholder}
+              placeholder={searchPlaceholder}
+              value={query}
+              style={{ width: "100%", paddingRight: query ? 32 : undefined }}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            {query && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setQuery("")}
+                style={{
+                  position: "absolute",
+                  right: 8,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  border: 0,
+                  background: "transparent",
+                  color: "#748092",
+                  cursor: "pointer",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          <span>
+            Page {page} of {totalPages}
+          </span>
         </div>
         {resource.loading ? (
           <Skeleton className="admin-table-skeleton" />
@@ -615,7 +718,7 @@ export function AdminList({ kind }) {
             {resource.error.message}
           </div>
         ) : (
-          <AdminTable rows={filtered} kind={kind} />
+          <AdminTable rows={rows} kind={kind} />
         )}
         <div className="admin-pagination">
           <Button
@@ -627,13 +730,7 @@ export function AdminList({ kind }) {
           </Button>
           <Button
             variant="outline"
-            disabled={
-              resource.loading ||
-              !rows.length ||
-              (resource.data?.pagination?.pages
-                ? page >= resource.data.pagination.pages
-                : false)
-            }
+            disabled={resource.loading || !rows.length || page >= totalPages}
             onClick={() => setPage((current) => current + 1)}
           >
             Next
@@ -2106,6 +2203,7 @@ export function AdminProducts() {
   const [productModalError, setProductModalError] = useState("");
   const [deletingProduct, setDeletingProduct] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState("");
   const [feedback, setFeedback] = useState("");
 
   const debouncedQuery = useDebouncedValue(query.trim(), 350);
@@ -2121,6 +2219,7 @@ export function AdminProducts() {
     (signal) =>
       tab === "all"
         ? adminApi.products(page, signal, {
+            search: debouncedQuery,
             name: debouncedQuery,
             status,
             categoryId,
@@ -2287,6 +2386,45 @@ export function AdminProducts() {
     }
   };
 
+  const handleExportProducts = async (format) => {
+    setExportingFormat(format);
+    try {
+      let allRows = [];
+      if (tab === "all") {
+        const response = await adminApi.products(1, undefined, {
+          search: debouncedQuery,
+          name: debouncedQuery,
+          status,
+          categoryId,
+          condition,
+          limit: 10000,
+        });
+        allRows = rowsFrom(response);
+      } else {
+        allRows = rows;
+      }
+      if (!allRows.length) {
+        notify("No products found to export.", "info");
+        return;
+      }
+      const mapped = mapRowsForExport("products", allRows);
+      downloadSpreadsheet({
+        rows: mapped,
+        filename: tab === "my" ? "kudumart-my-products" : "kudumart-products",
+        format,
+        sheetName: "Products",
+      });
+      notify(
+        `Exported ${mapped.length.toLocaleString()} products to ${format.toUpperCase()}.`,
+        "success",
+      );
+    } catch (error) {
+      notify(error?.message || "Failed to export products.", "error");
+    } finally {
+      setExportingFormat("");
+    }
+  };
+
   return (
     <>
       <div className="admin-page-head">
@@ -2301,15 +2439,37 @@ export function AdminProducts() {
                 : `${rows.length} products owned by administrator`}
           </p>
         </div>
-        <Button
-          icon={Plus}
-          onClick={() => {
-            setProductModalError("");
-            setProductModal({ open: true, item: null });
-          }}
-        >
-          Add a product
-        </Button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Download}
+            loading={exportingFormat === "xlsx"}
+            disabled={Boolean(exportingFormat)}
+            onClick={() => handleExportProducts("xlsx")}
+          >
+            Export Excel
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            icon={Download}
+            loading={exportingFormat === "csv"}
+            disabled={Boolean(exportingFormat)}
+            onClick={() => handleExportProducts("csv")}
+          >
+            Export CSV
+          </Button>
+          <Button
+            icon={Plus}
+            onClick={() => {
+              setProductModalError("");
+              setProductModal({ open: true, item: null });
+            }}
+          >
+            Add a product
+          </Button>
+        </div>
       </div>
 
       {feedback && (
