@@ -612,6 +612,11 @@ export function JobDetail() {
 export function NotFound() {
   return (
     <div className="not-found container">
+      <SEO
+        title="Page Not Found"
+        description="The page you are looking for does not exist or has moved."
+        noindex={true}
+      />
       <span>404</span>
       <h1>That page wandered off.</h1>
       <p>The link may be old, or the page may have moved.</p>

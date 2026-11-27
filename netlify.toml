@@ -2,6 +2,22 @@
   publish = "dist"
   command = "npm run build"
 
+[[edge_functions]]
+  path = "/product/*"
+  function = "product-seo"
+
+[[redirects]]
+  from = "/see-all"
+  to = "/catalog"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/see-all/*"
+  to = "/catalog"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/sitemap.xml"
   to = "https://api.kudumart.com/api/sitemap.xml"
