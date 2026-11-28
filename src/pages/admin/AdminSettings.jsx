@@ -3,6 +3,7 @@ import { Banknote, Camera, Check, Lock, MapPin, PackageCheck, Phone, ShieldCheck
 import { adminApi, adminSession } from "../../api/admin";
 import { uploadImage } from "../../api/upload";
 import { Button, Skeleton } from "../../components/ui";
+import { useApp } from "../../contexts/AppContext";
 import { useResource } from "../../hooks/useResource";
 import PhoneField from "../../components/PhoneField";
 import {
@@ -12,6 +13,7 @@ import {
 } from "../../utils/phone";
 
 export function AdminSettings() {
+  const { notify } = useApp();
   const [tab, setTab] = useState("profile");
   const [feedback, setFeedback] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -186,14 +188,18 @@ export function AdminSettings() {
         pickupAddress: pickupAddress.trim(),
         pickupNote: pickupNote.trim(),
       });
+      const msg = "Pickup address settings updated successfully.";
+      notify(msg, "success");
       setFeedback({
         type: "success",
-        message: "Pickup address settings updated successfully. Buyers will see this immediately at checkout.",
+        message: `${msg} Buyers will see this immediately at checkout.`,
       });
     } catch (err) {
+      const msg = err.message || "Failed to update pickup settings.";
+      notify(msg, "error");
       setFeedback({
         type: "error",
-        message: err.message || "Failed to update pickup settings.",
+        message: msg,
       });
     } finally {
       setBusy(false);
@@ -216,15 +222,18 @@ export function AdminSettings() {
         podFee: Number(podFee) || 0,
         note: podNote.trim(),
       });
+      const msg = "Pay on Delivery settings updated successfully.";
+      notify(msg, "success");
       setFeedback({
         type: "success",
-        message:
-          "Pay on Delivery settings updated. Buyers will see the updated rules immediately at checkout.",
+        message: `${msg} Buyers will see the updated rules immediately at checkout.`,
       });
     } catch (err) {
+      const msg = err.message || "Failed to update Pay on Delivery settings.";
+      notify(msg, "error");
       setFeedback({
         type: "error",
-        message: err.message || "Failed to update Pay on Delivery settings.",
+        message: msg,
       });
     } finally {
       setBusy(false);
