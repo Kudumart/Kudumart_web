@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Camera, Check, Lock, MapPin, PackageCheck, Phone, ShieldCheck, User } from "lucide-react";
+import { Banknote, Camera, Check, Lock, MapPin, PackageCheck, Phone, ShieldCheck, User } from "lucide-react";
 import { adminApi, adminSession } from "../../api/admin";
 import { uploadImage } from "../../api/upload";
 import { Button, Skeleton } from "../../components/ui";
@@ -24,6 +24,11 @@ export function AdminSettings() {
     [],
   );
 
+  const podResource = useResource(
+    (signal) => adminApi.podSettings(signal).catch(() => null),
+    [],
+  );
+
   // Profile Form State
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -36,6 +41,16 @@ export function AdminSettings() {
   const [pickupLabel, setPickupLabel] = useState("Pick up from KuduMart");
   const [pickupAddress, setPickupAddress] = useState("");
   const [pickupNote, setPickupNote] = useState("");
+
+  // Pay on Delivery Form State
+  const [podEnabled, setPodEnabled] = useState(true);
+  const [podMaxAmount, setPodMaxAmount] = useState("200000");
+  const [podAllowedStates, setPodAllowedStates] = useState("");
+  const [podExcludeDropship, setPodExcludeDropship] = useState(true);
+  const [podFee, setPodFee] = useState("0");
+  const [podNote, setPodNote] = useState(
+    "Pay in cash or via POS transfer when your order arrives or at pickup.",
+  );
 
   // Security Form State
   const [currentPassword, setCurrentPassword] = useState("");
@@ -53,6 +68,22 @@ export function AdminSettings() {
       setPickupNote(data.pickupNote || "");
     }
   }, [pickupResource.data]);
+
+  useEffect(() => {
+    const data = podResource.data?.data || podResource.data;
+    if (data && typeof data === "object") {
+      setPodEnabled(typeof data.enabled === "boolean" ? data.enabled : true);
+      setPodMaxAmount(String(data.maxOrderAmount ?? 200000));
+      setPodAllowedStates(
+        Array.isArray(data.allowedStates) ? data.allowedStates.join(", ") : "",
+      );
+      setPodExcludeDropship(
+        typeof data.excludeDropship === "boolean" ? data.excludeDropship : true,
+      );
+      setPodFee(String(data.podFee ?? 0));
+      if (data.note) setPodNote(data.note);
+    }
+  }, [podResource.data]);
 
   useEffect(() => {
     if (profileResource.data || adminSession.getUser()) {
@@ -169,6 +200,37 @@ export function AdminSettings() {
     }
   };
 
+  const handlePodSubmit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setFeedback(null);
+    try {
+      await adminApi.savePodSettings({
+        enabled: podEnabled,
+        maxOrderAmount: Number(podMaxAmount) || 0,
+        allowedStates: podAllowedStates
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        excludeDropship: podExcludeDropship,
+        podFee: Number(podFee) || 0,
+        note: podNote.trim(),
+      });
+      setFeedback({
+        type: "success",
+        message:
+          "Pay on Delivery settings updated. Buyers will see the updated rules immediately at checkout.",
+      });
+    } catch (err) {
+      setFeedback({
+        type: "error",
+        message: err.message || "Failed to update Pay on Delivery settings.",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <>
       <div className="admin-page-head">
@@ -201,6 +263,16 @@ export function AdminSettings() {
           }}
         >
           <MapPin size={16} /> Pickup Address
+        </button>
+        <button
+          type="button"
+          className={tab === "pod" ? "active" : ""}
+          onClick={() => {
+            setTab("pod");
+            setFeedback(null);
+          }}
+        >
+          <Banknote size={16} /> Pay on Delivery
         </button>
         <button
           type="button"
@@ -446,6 +518,118 @@ export function AdminSettings() {
             <div style={{ marginTop: 14 }}>
               <Button type="submit" loading={busy}>
                 Save Pickup Settings
+              </Button>
+            </div>
+          </form>
+        </section>
+      ) : tab === "pod" ? (
+        <section className="admin-card" style={{ maxWidth: 640 }}>
+          <form className="admin-content-form" onSubmit={handlePodSubmit}>
+            <div style={{ marginBottom: 12 }}>
+              <h3 style={{ margin: "0 0 4px", fontSize: 16, color: "#17233c" }}>
+                Pay on Delivery (Cash / POS) Rules
+              </h3>
+              <p style={{ margin: 0, fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
+                Control when Nigerian Naira (₦) buyers can choose Pay on Delivery at checkout.
+              </p>
+            </div>
+
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                padding: "12px 14px",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: 10,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={podEnabled}
+                onChange={(e) => setPodEnabled(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: "#dd5821" }}
+              />
+              <span style={{ fontWeight: 600, fontSize: 14, color: "#17233c" }}>
+                Enable Pay on Delivery at checkout
+              </span>
+            </label>
+
+            <label>
+              Maximum Order Amount (₦) — set 0 for unlimited
+              <input
+                type="number"
+                min="0"
+                step="500"
+                value={podMaxAmount}
+                onChange={(e) => setPodMaxAmount(e.target.value)}
+                placeholder="e.g. 200000"
+              />
+            </label>
+
+            <label>
+              Allowed States (comma-separated — leave blank for all Nigerian states)
+              <input
+                type="text"
+                value={podAllowedStates}
+                onChange={(e) => setPodAllowedStates(e.target.value)}
+                placeholder="e.g. Lagos, Abuja, Rivers"
+              />
+            </label>
+
+            <label>
+              Optional Pay on Delivery Handling Fee (₦)
+              <input
+                type="number"
+                min="0"
+                step="100"
+                value={podFee}
+                onChange={(e) => setPodFee(e.target.value)}
+                placeholder="0"
+              />
+            </label>
+
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 14px",
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: 10,
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={podExcludeDropship}
+                onChange={(e) => setPodExcludeDropship(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: "#dd5821" }}
+              />
+              <span style={{ fontSize: 13.5, color: "#17233c" }}>
+                Exclude international / dropship items (recommended)
+              </span>
+            </label>
+
+            <label>
+              Checkout Instructions Note
+              <textarea
+                rows={2}
+                value={podNote}
+                onChange={(e) => setPodNote(e.target.value)}
+                placeholder="Pay in cash or via POS transfer when your order arrives or at pickup."
+                maxLength={300}
+              />
+            </label>
+
+            <div style={{ marginTop: 14 }}>
+              <Button type="submit" loading={busy}>
+                Save Pay on Delivery Settings
               </Button>
             </div>
           </form>

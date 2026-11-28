@@ -1871,6 +1871,65 @@ export function AdminOrderDetail() {
           ₦{Number(order.totalAmount).toLocaleString()}
         </strong>
       </div>
+      {order.paymentMethod === "pay_on_delivery" && (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: "14px 18px",
+            borderRadius: 12,
+            border:
+              order.paymentStatus === "paid"
+                ? "1px solid #bbf7d0"
+                : "1px solid #fed7aa",
+            background:
+              order.paymentStatus === "paid" ? "#f0fdf4" : "#fff7ed",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 12,
+          }}
+        >
+          <div>
+            <strong style={{ display: "block", fontSize: 14, color: "#0f172a" }}>
+              Pay on Delivery —{" "}
+              {order.paymentStatus === "paid"
+                ? "Payment Collected"
+                : "Payment Pending on Delivery"}
+            </strong>
+            <span style={{ fontSize: 12.5, color: "#475569" }}>
+              {order.paymentStatus === "paid"
+                ? `Confirmed ${order.podCollectedAt ? new Date(order.podCollectedAt).toLocaleString() : ""}${order.podCollectedBy ? ` by ${order.podCollectedBy}` : ""}`
+                : "Collect ₦" +
+                  Number(order.totalAmount || 0).toLocaleString() +
+                  " in cash or POS transfer, then confirm below to settle vendor earnings."}
+            </span>
+          </div>
+          {order.paymentStatus !== "paid" && (
+            <Button
+              size="sm"
+              loading={busy}
+              onClick={async () => {
+                setBusy(true);
+                setFeedback(null);
+                try {
+                  const res = await adminApi.confirmPodPayment(order.id);
+                  setFeedback({
+                    message: res.message || "POD payment confirmed.",
+                  });
+                  setRefresh((v) => v + 1);
+                } catch (err) {
+                  setFeedback({ error: true, message: err.message });
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Confirm POD Payment Collected
+            </Button>
+          )}
+        </div>
+      )}
       {feedback && (
         <div
           className={

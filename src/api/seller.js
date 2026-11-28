@@ -67,6 +67,7 @@ export const sellerApi = {
   serviceCategories: async signal => unwrap(await request('/service/categories', { params: { page: 1, limit: 50 }, signal })),
   serviceSubCategories: async (categoryId, signal) => unwrap(await request(`/service/subcategories/${categoryId}`, { params: { page: 1, limit: 50 }, signal })),
   serviceAttributes: async (categoryId, signal) => unwrap(await request(`/services/categories/${categoryId}/attributes`, { params: { page: 1, limit: 50 }, signal })),
+  confirmPodPayment: async orderId => unwrap(await request(`/vendor/orders/${orderId}/confirm-pod-payment`, { method: 'POST', authenticated: true })),
 };
 
 export async function uploadSellerImage(file) {

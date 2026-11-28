@@ -21,6 +21,8 @@ export const checkoutApi = {
   // Installment & Layaway API
   installmentConfig: async signal => unwrap(await request('/installments/config', { signal })),
   pickupAddress: async signal => unwrap(await request('/pickup-address', { signal })),
+  podSettings: async signal => unwrap(await request('/pod-settings', { signal })),
+  placePayOnDelivery: async payload => unwrap(await request('/user/checkout/pay-on-delivery', { method: 'POST', authenticated: true, body: payload })),
   prepareInstallment: async payload => unwrap(await request('/user/installments/prepare', { method: 'POST', authenticated: true, body: payload })),
   confirmInstallment: async payload => unwrap(await request('/user/installments/confirm', { method: 'POST', authenticated: true, body: payload })),
   installmentPlans: async (params, signal) => unwrap(await request('/user/installments/plans', { authenticated: true, params, signal })),

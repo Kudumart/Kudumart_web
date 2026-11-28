@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CalendarClock, CheckCircle2, Clock, CreditCard, Info, MapPin, MessageCircle, PackageCheck, Phone, ShieldCheck, Wallet } from 'lucide-react';
+import { ArrowLeft, Banknote, CalendarClock, CheckCircle2, Clock, CreditCard, Info, MapPin, MessageCircle, PackageCheck, Phone, ShieldCheck, Wallet } from 'lucide-react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import PaystackPop from '@paystack/inline-js';
@@ -63,6 +63,12 @@ export default function Checkout() {
   const pickupLabel = pickupSettings.pickupLabel || 'Pick up from KuduMart';
   const pickupAddressText = pickupSettings.pickupAddress || 'Pickup details will be shared upon order confirmation.';
   const pickupNote = pickupSettings.pickupNote || '';
+
+  const podResource = useResource(
+    (signal) => checkoutApi.podSettings(signal).catch(() => null),
+    [],
+  );
+  const podConfig = podResource.data?.data || podResource.data || { enabled: false };
 
   const cart = useResource(signal => user ? accountApi.cart(signal) : Promise.resolve([]), [user?.id]);
   const items = Array.isArray(cart.data) ? cart.data : cart.data?.data || [];
@@ -290,6 +296,53 @@ export default function Checkout() {
     }
   };
 
+  const podStatus = useMemo(() => {
+    const hasDropshipItem = items.some((i) => isDropship(i.product));
+    const podFee = Number(podConfig?.podFee || 0);
+    const podTotal = (quote?.total || 0) + podFee;
+    const allowedStates = Array.isArray(podConfig?.allowedStates) ? podConfig.allowedStates : [];
+    const customerState = String(location?.state || '').trim().toLowerCase();
+    const stateOk =
+      !needsDelivery ||
+      allowedStates.length === 0 ||
+      (customerState &&
+        allowedStates.some((s) => {
+          const t = String(s || '').trim().toLowerCase();
+          return t && (customerState === t || customerState.includes(t) || t.includes(customerState));
+        }));
+    let reason = '';
+    if (!podConfig?.enabled) reason = 'Currently unavailable';
+    else if (podConfig.excludeDropship && hasDropshipItem) reason = 'Not available for international/dropship items';
+    else if (Number(podConfig.maxOrderAmount) > 0 && podTotal > Number(podConfig.maxOrderAmount)) reason = `Orders up to ${money(podConfig.maxOrderAmount)} only`;
+    else if (!stateOk) reason = `Available in ${allowedStates.join(', ')}`;
+    return {
+      eligible: Boolean(mode === 'NGN' && podConfig?.enabled && !reason),
+      reason,
+      podFee,
+      podTotal,
+    };
+  }, [items, podConfig, quote?.total, location?.state, needsDelivery, mode]);
+
+  const startPayOnDelivery = async () => {
+    if (!canPay || !podStatus.eligible) return;
+    setPreparing(true);
+    setConfirmationError('');
+    try {
+      await checkoutApi.placePayOnDelivery({
+        shippingAddress: addressText,
+        deliveryOption: needsDelivery ? 'customer' : 'store',
+        deliveryFee: needsDelivery ? Number(quote?.delivery || 0) : 0,
+        productCharges: Number(quote?.charges || 0),
+      });
+      setCartCount(0);
+      setOrderSuccess(true);
+    } catch (error) {
+      setConfirmationError(error.message || 'Could not place Pay on Delivery order.');
+    } finally {
+      setPreparing(false);
+    }
+  };
+
   const startInstallment = async () => {
     if (!canPay || !activeTenure || !items.length || !installmentBreakdown) return;
     setPreparing(true);
@@ -419,48 +472,100 @@ export default function Checkout() {
             : needsDelivery && !hasAddress ? <div className="checkout-warning"><MapPin size={20}/><div><strong>Add a delivery address to continue</strong><p>We’ll show the final delivery cost and unlock payment once your address is saved.</p></div></div>
             : mode === 'NGN' ? quoteError ? <div className="checkout-warning"><div><strong>{deliveryError ? 'Delivery is unavailable for this address' : 'We couldn’t verify the current product charges'}</strong><p>{(quoteError.message || 'Please try again before continuing to payment.').replace(/contact the seller\.?/i, 'choose contact options.')}</p><div className="checkout-warning__actions">{deliveryError && canPickup && <Button variant="outline" size="sm" onClick={() => { setDeliveryOption('store'); setPaymentReady(null); }}>Use pickup instead</Button>}{activeStoreVendor?.vendorId && <Button variant="outline" size="sm" icon={MessageCircle} onClick={() => openMessageModalForStore(troubledStore || activeStoreVendor)}>Message {troubledStore ? troubledStore.storeName : 'seller'}</Button>}<a className="button button--outline button--sm checkout-support-btn" href={`tel:${supportPhone}`}><Phone size={14}/> Contact support ({supportPhoneDisplay})</a></div></div></div> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {isInstallmentEligible && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div
-                      onClick={() => setPaymentPlan('full')}
-                      style={{
-                        padding: '14px',
-                        borderRadius: '10px',
-                        border: paymentPlan === 'full' ? '2px solid #0f172a' : '1px solid #cbd5e1',
-                        background: paymentPlan === 'full' ? '#f8fafc' : '#fff',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a' }}>Pay in Full</div>
-                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                        Pay {money(quote.total)} now in full
-                      </div>
-                    </div>
+                {(() => {
+                  const hasDropshipItem = items.some((i) => isDropship(i.product));
+                  const podFeeVal = Number(podConfig?.podFee || 0);
+                  const podTotal = (quote?.total || 0) + podFeeVal;
+                  const allowedStates = Array.isArray(podConfig?.allowedStates) ? podConfig.allowedStates : [];
+                  const customerState = String(location?.state || '').trim().toLowerCase();
+                  const stateOk =
+                    !needsDelivery ||
+                    allowedStates.length === 0 ||
+                    (customerState &&
+                      allowedStates.some((s) => {
+                        const t = String(s || '').trim().toLowerCase();
+                        return t && (customerState === t || customerState.includes(t) || t.includes(customerState));
+                      }));
+                  let podReason = '';
+                  if (!podConfig?.enabled) podReason = 'Currently unavailable';
+                  else if (podConfig.excludeDropship && hasDropshipItem) podReason = 'Not available for international/dropship items';
+                  else if (Number(podConfig.maxOrderAmount) > 0 && podTotal > Number(podConfig.maxOrderAmount)) podReason = `Orders up to ${money(podConfig.maxOrderAmount)} only`;
+                  else if (!stateOk) podReason = `Available in ${allowedStates.join(', ')}`;
+                  const podEligible = Boolean(podConfig?.enabled && !podReason);
+                  const showOptions = isInstallmentEligible || podConfig?.enabled;
 
-                    <div
-                      onClick={() => setPaymentPlan('installment')}
-                      style={{
-                        padding: '14px',
-                        borderRadius: '10px',
-                        border: paymentPlan === 'installment' ? '2px solid #0f172a' : '1px solid #cbd5e1',
-                        background: paymentPlan === 'installment' ? '#f8fafc' : '#fff',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <CalendarClock size={16} color="#e11d48" /> {instMeta.checkoutOptionTitle}
+                  if (!showOptions) return null;
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '10px' }}>
+                      <div
+                        onClick={() => setPaymentPlan('full')}
+                        style={{
+                          padding: '14px',
+                          borderRadius: '10px',
+                          border: paymentPlan === 'full' ? '2px solid #0f172a' : '1px solid #cbd5e1',
+                          background: paymentPlan === 'full' ? '#f8fafc' : '#fff',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <CreditCard size={15} /> Pay Online
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                          Pay {money(quote.total)} now via Card / Wallet
+                        </div>
                       </div>
-                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                        {instMeta.checkoutOptionDesc}
-                      </div>
+
+                      {podConfig?.enabled && (
+                        <div
+                          onClick={() => { if (podEligible) setPaymentPlan('pod'); }}
+                          style={{
+                            padding: '14px',
+                            borderRadius: '10px',
+                            border: paymentPlan === 'pod' && podEligible ? '2px solid #0f172a' : '1px solid #cbd5e1',
+                            background: paymentPlan === 'pod' && podEligible ? '#f8fafc' : '#fff',
+                            opacity: podEligible ? 1 : 0.55,
+                            cursor: podEligible ? 'pointer' : 'not-allowed',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Banknote size={16} color="#16a34a" /> Pay on Delivery
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                            {podEligible
+                              ? `Pay ${money(podTotal)} on delivery/pickup`
+                              : podReason}
+                          </div>
+                        </div>
+                      )}
+
+                      {isInstallmentEligible && (
+                        <div
+                          onClick={() => setPaymentPlan('installment')}
+                          style={{
+                            padding: '14px',
+                            borderRadius: '10px',
+                            border: paymentPlan === 'installment' ? '2px solid #0f172a' : '1px solid #cbd5e1',
+                            background: paymentPlan === 'installment' ? '#f8fafc' : '#fff',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <CalendarClock size={16} color="#e11d48" /> {instMeta.checkoutOptionTitle}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                            {instMeta.checkoutOptionDesc}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* KuduMart Wallet Balance Toggle */}
-                {mode === 'NGN' && walletBalance > 0 && (
+                {mode === 'NGN' && walletBalance > 0 && paymentPlan !== 'pod' && (
                   <div
                     style={{
                       background: '#f8fafc',
@@ -498,7 +603,39 @@ export default function Checkout() {
                   </div>
                 )}
 
-                {isInstallmentEligible && paymentPlan === 'installment' && installmentBreakdown ? (
+                {paymentPlan === 'pod' && podStatus.eligible ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Order subtotal + delivery:</span>
+                        <strong>{money(quote.total)}</strong>
+                      </div>
+                      {podStatus.podFee > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>Pay on Delivery handling fee:</span>
+                          <strong>{money(podStatus.podFee)}</strong>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid #e2e8f0' }}>
+                        <strong style={{ color: '#0f172a' }}>Total payable on delivery:</strong>
+                        <strong style={{ color: '#0f172a', fontSize: '15px' }}>{money(podStatus.podTotal)}</strong>
+                      </div>
+                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#475569', lineHeight: 1.45 }}>
+                        {podConfig?.note || 'Pay in cash or via POS transfer when your order arrives or at pickup.'}
+                      </p>
+                    </div>
+                    <Button
+                      className="checkout-pay-button"
+                      type="button"
+                      icon={Banknote}
+                      onClick={startPayOnDelivery}
+                      disabled={!canPay}
+                      loading={preparing}
+                    >
+                      Place Pay on Delivery Order ({money(podStatus.podTotal)})
+                    </Button>
+                  </div>
+                ) : isInstallmentEligible && paymentPlan === 'installment' && installmentBreakdown ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', background: '#f8fafc', padding: '16px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                     <div>
                       <span style={{ fontSize: '12px', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '8px' }}>

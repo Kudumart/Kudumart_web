@@ -581,6 +581,16 @@ export const adminApi = {
   savePickupSettings: (body) =>
     adminRequest("/admin/settings/pickup", { method: "PUT", body }),
 
+  // Platform Pay on Delivery Settings & Confirmation
+  podSettings: (signal) =>
+    adminRequest("/admin/settings/pod", { signal }),
+  savePodSettings: (body) =>
+    adminRequest("/admin/settings/pod", { method: "PUT", body }),
+  confirmPodPayment: (orderId) =>
+    adminRequest(`/admin/orders/${orderId}/confirm-pod-payment`, {
+      method: "POST",
+    }),
+
   // Admin-owned stores
   myStores: (signal) => adminRequest("/admin/store", { signal }),
   createStore: (values) =>
